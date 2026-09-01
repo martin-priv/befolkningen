@@ -414,6 +414,14 @@ body, html {
     white-space: nowrap;
 }
 
+.slider-milestones span:first-child {
+    transform: translateX(0%);
+}
+
+.slider-milestones span:last-child {
+    transform: translateX(-100%);
+}
+
 .slider-milestones span.active-marker {
     color: #00f5d4;
     font-weight: 700;

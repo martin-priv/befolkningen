@@ -169,14 +169,22 @@ class ViewportCanvas {
                 vec3 halfVector = normalize(lightDir + viewDir);
                 float spec = pow(max(dot(normal, halfVector), 0.0), 32.0);
 
-                float rim = 1.0 - z * 2.0;
-                vec3 finalColor = vColor * (0.35 + 0.65 * diff) + vec3(1.0) * spec * 0.8 + vColor * rim * 0.25;
+                // Mjuk kantglans (rim) som definierar pärlans runda kontur mot bakgrunden
+                float rim = pow(1.0 - z * 2.0, 1.8);
+                
+                // Diffus och ambient belysning: säkerställ att sfärens kropp ALLTID syns med samma storlek!
+                vec3 ambient = vColor * 0.50 + vec3(0.04, 0.045, 0.06);
+                vec3 diffuse = vColor * diff * 0.65;
+                vec3 specular = vec3(1.0) * spec * 0.70;
+                vec3 rimLight = mix(vColor, vec3(0.35, 0.45, 0.55), 0.4) * rim * 0.45;
+
+                vec3 finalColor = ambient + diffuse + specular + rimLight;
 
                 if (uHighlightAge >= 0.0) {
                     if (abs(vAge - uHighlightAge) <= 0.8) {
                         finalColor = mix(vColor, vec3(1.0), 0.4) * 1.8 + vec3(0.9) * spec;
                     } else {
-                        finalColor *= 0.20;
+                        finalColor *= 0.22;
                     }
                 }
 
@@ -200,53 +208,53 @@ class ViewportCanvas {
 
     getBeadColor(age, index) {
         const candyPalette = [
-            [1.00, 0.15, 0.52],
-            [0.00, 0.95, 0.88],
-            [1.00, 0.88, 0.08],
-            [0.72, 0.30, 1.00],
-            [0.10, 0.95, 0.42],
-            [1.00, 0.45, 0.12],
-            [0.05, 0.65, 1.00],
-            [0.98, 0.22, 0.32]
+            [1.00, 0.22, 0.56], // Neon Korallrosa
+            [0.00, 0.96, 0.88], // Elektrisk Cyan
+            [1.00, 0.88, 0.15], // Solgul
+            [0.72, 0.35, 1.00], // Neonviolett
+            [0.12, 0.95, 0.45], // Limegrön
+            [1.00, 0.50, 0.18], // Clementin
+            [0.08, 0.68, 1.00], // Himmelsblå
+            [0.98, 0.26, 0.36]  // Hallonröd
         ];
 
         const base = candyPalette[index % candyPalette.length];
         const a = Math.max(0, Math.min(105, age));
 
+        // KONTINUERLIG LUMINISCENS & FÄRGSKALA
+        // Alla pärlor behåller exakt samma fysiska och visuella storlek!
+        // 0-12 år: 100% luminiscens, maximal godislyster
+        // 13-28 år: 85% luminiscens, klara krispiga ädelstenar
+        // 29-55 år: 65% luminiscens, djup bärnsten och juveler
+        // 56-75 år: 48% luminiscens, rökig kvarts och mörk brons
+        // 76-105+ år: 32% luminiscens, skimrande mörk pärla / hematit / obsidian
         let brightness, saturation;
         if (a <= 12) {
             brightness = 1.0;
             saturation = 1.0;
         } else if (a <= 28) {
             const t = (a - 12) / 16.0;
-            brightness = 1.0 - t * 0.22;
-            saturation = 1.0 - t * 0.12;
-        } else if (a <= 50) {
-            const t = (a - 28) / 22.0;
-            brightness = 0.78 - t * 0.32;
-            saturation = 0.88 - t * 0.30;
-        } else if (a <= 72) {
-            const t = (a - 50) / 22.0;
-            brightness = 0.46 - t * 0.26;
-            saturation = 0.58 - t * 0.35;
-        } else if (a <= 90) {
-            const t = (a - 72) / 18.0;
-            brightness = 0.20 - t * 0.12;
-            saturation = 0.23 - t * 0.15;
+            brightness = 1.0 - t * 0.15; // 1.0 -> 0.85
+            saturation = 1.0 - t * 0.10;
+        } else if (a <= 55) {
+            const t = (a - 28) / 27.0;
+            brightness = 0.85 - t * 0.22; // 0.85 -> 0.63
+            saturation = 0.90 - t * 0.25; // 0.90 -> 0.65
+        } else if (a <= 78) {
+            const t = (a - 55) / 23.0;
+            brightness = 0.63 - t * 0.18; // 0.63 -> 0.45
+            saturation = 0.65 - t * 0.35; // 0.65 -> 0.30
         } else {
-            const t = (a - 90) / 15.0;
-            brightness = 0.08 - t * 0.03;
-            saturation = 0.08 - t * 0.05;
+            const t = (a - 78) / 27.0;
+            brightness = 0.45 - t * 0.15; // 0.45 -> 0.30 (Alltid synlig pärlkropp!)
+            saturation = 0.30 - t * 0.20; // 0.30 -> 0.10
         }
 
-        const neutral = 0.10;
-        const r = (base[0] * saturation + neutral * (1.0 - saturation)) * brightness;
-        const g = (base[1] * saturation + neutral * (1.0 - saturation)) * brightness;
-        const b = (base[2] * saturation + neutral * (1.0 - saturation)) * brightness;
-
-        if (a >= 95 && (index % 5 === 0)) {
-            return [0.22, 0.22, 0.25];
-        }
+        // Basfärg för den äldsta mörka pärlan: elegant sval skiffer/grafit/tahitisk pärla
+        const slatePearl = [0.24, 0.26, 0.32];
+        const r = (base[0] * saturation + slatePearl[0] * (1.0 - saturation)) * brightness;
+        const g = (base[1] * saturation + slatePearl[1] * (1.0 - saturation)) * brightness;
+        const b = (base[2] * saturation + slatePearl[2] * (1.0 - saturation)) * brightness;
 
         return [r, g, b];
     }
