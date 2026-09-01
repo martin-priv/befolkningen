@@ -252,21 +252,46 @@ class PopulationEngine {
         };
     }
 
+    initWallClockCounters() {
+        if (!this.data) return;
+        const rates = this.data.liveRates2026 || this.data.liveRates2024;
+        const now = new Date();
+        const secToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        // Fördela tiderna jämnt så händelser sprids ut i realtid
+        this.liveBirthCounter = secToday % rates.birthIntervalSec;
+        this.liveImmigrantCounter = (secToday + 110) % rates.immigrateIntervalSec;
+        this.liveDeathCounter = (secToday + 55) % rates.deathIntervalSec;
+        this.liveEmigrantCounter = (secToday + 180) % rates.emigrateIntervalSec;
+    }
+
+    getNextEventCountdowns() {
+        if (!this.data) return null;
+        const rates = this.data.liveRates2026 || this.data.liveRates2024;
+        const mult = this.speedMultiplier || 1.0;
+        return {
+            nextBirthSec: Math.max(0, Math.round((rates.birthIntervalSec - this.liveBirthCounter) / mult)),
+            nextImmigrantSec: Math.max(0, Math.round((rates.immigrateIntervalSec - this.liveImmigrantCounter) / mult)),
+            nextDeathSec: Math.max(0, Math.round((rates.deathIntervalSec - this.liveDeathCounter) / mult))
+        };
+    }
+
     tickRealtime(dtSeconds = 1.0) {
         if (!this.data || !this.isLive) return null;
 
         const rates = this.data.liveRates2026 || this.data.liveRates2024;
-        this.liveBirthCounter += dtSeconds;
-        this.liveDeathCounter += dtSeconds;
-        this.liveImmigrantCounter += dtSeconds;
-        this.liveEmigrantCounter += dtSeconds;
+        const effectiveDt = dtSeconds * (this.speedMultiplier || 1.0);
+
+        this.liveBirthCounter += effectiveDt;
+        this.liveDeathCounter += effectiveDt;
+        this.liveImmigrantCounter += effectiveDt;
+        this.liveEmigrantCounter += effectiveDt;
 
         const events = [];
 
         // Födsel (~var 331:e sekund = 5.5 min)
         if (this.liveBirthCounter >= rates.birthIntervalSec) {
             this.liveBirthCounter -= rates.birthIntervalSec;
-            events.push({ type: 'birth', text: 'Nyfödd i Sverige (+1)', color: '#ff2a7a' });
+            events.push({ type: 'birth', text: 'Nyfödd pärla föll in i Sverige (+1)!', color: '#ff2a7a' });
         }
 
         // Dödsfall (~var 324:e sekund = 5.4 min)
@@ -278,7 +303,7 @@ class PopulationEngine {
         // Invandring (~var 363:e sekund = 6.1 min)
         if (this.liveImmigrantCounter >= rates.immigrateIntervalSec) {
             this.liveImmigrantCounter -= rates.immigrateIntervalSec;
-            events.push({ type: 'immigrate', text: 'Invandring till Sverige (+1)', color: '#00f5a0' });
+            events.push({ type: 'immigrate', text: 'Invandrad pärla föll in i Sverige (+1)!', color: '#00f5a0' });
         }
 
         // Utvandring (~var 516:e sekund = 8.6 min)

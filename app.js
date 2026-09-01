@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         popNumber.textContent = "Kunde ej ladda SCB-data";
         return;
     }
+    engine.initWallClockCounters();
 
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -216,6 +217,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Manuella släppknappar
     const dropBirthBtn = document.getElementById("dropBirthBtn");
     const dropImmigrantBtn = document.getElementById("dropImmigrantBtn");
+    const speedBtn = document.getElementById("speedBtn");
+
+    const speeds = [
+        { mult: 1.0, label: "⚡ 1x Real" },
+        { mult: 10.0, label: "⚡ 10x Fart" },
+        { mult: 60.0, label: "⚡ 60x Demo" }
+    ];
+    let currentSpeedIndex = 0;
+
+    if (speedBtn) {
+        speedBtn.addEventListener("click", () => {
+            currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+            const chosen = speeds[currentSpeedIndex];
+            engine.speedMultiplier = chosen.mult;
+            speedBtn.textContent = chosen.label;
+            if (chosen.mult > 1.0) {
+                speedBtn.classList.add("active");
+            } else {
+                speedBtn.classList.remove("active");
+            }
+        });
+    }
 
     if (dropBirthBtn) {
         dropBirthBtn.addEventListener("click", () => {
@@ -235,7 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Live Klocka & Realtidsrytm
+    // Live Klocka, Nedräknare & Realtidsrytm
     function updateClock() {
         const now = new Date();
         const h = String(now.getHours()).padStart(2, "0");
@@ -260,6 +283,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
                         popNumber.textContent = formatNumber(currentVal - 1);
                     }
+                }
+            } else {
+                const cd = engine.getNextEventCountdowns();
+                if (cd) {
+                    const bMin = Math.floor(cd.nextBirthSec / 60);
+                    const bSec = String(cd.nextBirthSec % 60).padStart(2, "0");
+                    const iMin = Math.floor(cd.nextImmigrantSec / 60);
+                    const iSec = String(cd.nextImmigrantSec % 60).padStart(2, "0");
+                    const speedNote = engine.speedMultiplier > 1 ? ` (${engine.speedMultiplier}x)` : '';
+                    tickerText.textContent = `🔴 Live 2026${speedNote}: Nästa födsel om ${bMin}m ${bSec}s • Nästa invandring om ${iMin}m ${iSec}s`;
                 }
             }
         }
