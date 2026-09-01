@@ -9,7 +9,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentYearBadge = document.getElementById("currentYearBadge");
     const eraNote = document.getElementById("eraNote");
     const liveClock = document.getElementById("liveClock");
-    const tickerText = document.getElementById("tickerText");
+    const liveRhythmBar = document.getElementById("liveRhythmBar");
+    const birthCountVal = document.getElementById("birthCountVal");
+    const deathCountVal = document.getElementById("deathCountVal");
+    const immigrateCountVal = document.getElementById("immigrateCountVal");
+    const emigrateCountVal = document.getElementById("emigrateCountVal");
+    const rhythmToast = document.getElementById("rhythmToast");
+    const rhythmBirth = document.getElementById("rhythmBirth");
+    const rhythmDeath = document.getElementById("rhythmDeath");
+    const rhythmImmigrant = document.getElementById("rhythmImmigrant");
+    const rhythmEmigrant = document.getElementById("rhythmEmigrant");
     const yearSlider = document.getElementById("yearSlider");
     const selectedYearDisplay = document.getElementById("selectedYearDisplay");
     const liveModeBtn = document.getElementById("liveModeBtn");
@@ -58,7 +67,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         personCard.classList.remove("hidden");
-        tickerText.textContent = `Inspekterar: ${profile.displayTitle} från ${profile.municipality}, ${profile.county}`;
     };
 
     // Skapa Viewport Canvas
@@ -96,6 +104,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         canvas.updateFromPopulation(popData);
         updateAgeRuler(canvas, popData);
+
+        if (liveRhythmBar) {
+            liveRhythmBar.style.opacity = (year === 2026 && engine.isLive) ? "1.0" : "0.30";
+            liveRhythmBar.style.filter = (year === 2026 && engine.isLive) ? "none" : "grayscale(0.6)";
+        }
     }
 
     // Dynamisk Ålderslinjal som anpassar höjd och markörer efter folkmängd och demografi
@@ -160,12 +173,35 @@ document.addEventListener("DOMContentLoaded", async () => {
         showYear(yr);
     });
 
+    // Toast-meddelande vid händelser i live-rytmen
+    let toastTimer = null;
+    function showRhythmToast(type, text) {
+        if (!rhythmToast) return;
+        rhythmToast.textContent = text;
+        rhythmToast.classList.remove("hidden");
+
+        const targetEl = (type === 'birth') ? rhythmBirth :
+                         (type === 'death') ? rhythmDeath :
+                         (type === 'immigrate') ? rhythmImmigrant :
+                         (type === 'emigrate') ? rhythmEmigrant : null;
+
+        if (targetEl) {
+            targetEl.classList.add("flash-pulse");
+            setTimeout(() => targetEl.classList.remove("flash-pulse"), 1400);
+        }
+
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            rhythmToast.classList.add("hidden");
+        }, 3400);
+    }
+
     // Live Mode
     liveModeBtn.addEventListener("click", () => {
         engine.isLive = true;
         liveModeBtn.classList.add("active");
         showYear(2026);
-        tickerText.textContent = "Realtidsläge 2026 aktivt: Räknar födslar, dödsfall och migration";
+        showRhythmToast('live', '🔴 Realtidsläge 2026 aktivt');
     });
 
     // Play / Pause
@@ -183,14 +219,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             playPauseBtn.classList.add("active");
 
             playInterval = setInterval(() => {
-                let nextYear = engine.currentYear + 1;
-                if (nextYear > 2070) nextYear = 1860;
-                showYear(nextYear);
-            }, 350);
+                let yr = engine.currentYear + 1;
+                if (yr > 2070) yr = 1860;
+                showYear(yr);
+            }, 250);
         }
     });
 
-    // Kohort Modal
+    // Kohort Modal (Hitta din årskull)
     findCohortBtn.addEventListener("click", () => {
         cohortModal.classList.remove("hidden");
     });
@@ -250,7 +286,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const events = engine.tickRealtime(1.0);
             if (events) {
                 for (let ev of events) {
-                    tickerText.textContent = `${h}:${m}:${s} — ${ev.text}`;
+                    showRhythmToast(ev.type, `${h}:${m}:${s} — ${ev.text}`);
                     if (ev.type === 'birth') {
                         canvas.spawnDroppingBead('birth');
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
@@ -260,20 +296,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
                         popNumber.textContent = formatNumber(currentVal + 1);
                     } else if (ev.type === 'death') {
+                        canvas.spawnDepartingBead('death');
+                        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
+                        popNumber.textContent = formatNumber(currentVal - 1);
+                    } else if (ev.type === 'emigrate') {
+                        canvas.spawnDepartingBead('emigrate');
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
                         popNumber.textContent = formatNumber(currentVal - 1);
                     }
                 }
-            } else {
-                const cd = engine.getNextEventCountdowns();
-                if (cd) {
-                    const bMin = Math.floor(cd.nextBirthSec / 60);
-                    const bSec = String(cd.nextBirthSec % 60).padStart(2, "0");
-                    const iMin = Math.floor(cd.nextImmigrantSec / 60);
-                    const iSec = String(cd.nextImmigrantSec % 60).padStart(2, "0");
-                    const speedNote = engine.speedMultiplier > 1 ? ` (${engine.speedMultiplier}x)` : '';
-                    tickerText.textContent = `🔴 Live 2026${speedNote}: Nästa födsel om ${bMin}m ${bSec}s • Nästa invandring om ${iMin}m ${iSec}s`;
-                }
+            }
+
+            // Uppdatera alla 4 organiska nedräkningar i kontrollpanelen
+            const cd = engine.getNextEventCountdowns();
+            if (cd) {
+                const fmt = (sec) => {
+                    const min = Math.floor(sec / 60);
+                    const remS = String(sec % 60).padStart(2, "0");
+                    return `om ${min}m ${remS}s`;
+                };
+                if (birthCountVal) birthCountVal.textContent = fmt(cd.nextBirthSec);
+                if (deathCountVal) deathCountVal.textContent = fmt(cd.nextDeathSec);
+                if (immigrateCountVal) immigrateCountVal.textContent = fmt(cd.nextImmigrantSec);
+                if (emigrateCountVal) emigrateCountVal.textContent = fmt(cd.nextEmigrantSec);
             }
         }
     }

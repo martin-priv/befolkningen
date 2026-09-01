@@ -42,12 +42,6 @@
         <div class="pop-sub" id="popSub">Skala: 1 pärla = 100 invånare • Dra i tidslinjen och se Sverige tätas & växa</div>
     </div>
 
-    <!-- Live Event Ticker (Födslar, Dödsfall, Invandring) -->
-    <div class="event-ticker" id="eventTicker">
-        <div class="ticker-dot live-pulse"></div>
-        <div class="ticker-text" id="tickerText">Realtidsrytm 2026: 1 födsel var 5,5 min • 1 dödsfall var 5,4 min • 1 invandrare var 6,1 min</div>
-    </div>
-
     <!-- Dynamisk Ålderslinjal som anpassar höjd och markörer efter folkmängden -->
     <div class="age-ruler" id="ageRuler">
         <div class="ruler-track"></div>
@@ -81,6 +75,32 @@
                 <span class="year-val" id="selectedYearDisplay">2026</span>
                 <span class="era-note" id="eraNote">(Idag: Aktuell SCB-framskrivning)</span>
             </div>
+
+            <!-- Inbyggd Live Rytm (Födsel, Dödsfall, Invandring, Utvandring) -->
+            <div class="live-rhythm-bar" id="liveRhythmBar">
+                <div class="rhythm-item" id="rhythmBirth" title="Organisk takt: ~1 födsel var 5,5 min">
+                    <span class="rhythm-dot dot-birth"></span>
+                    <span class="rhythm-label">Födsel</span>
+                    <span class="rhythm-val" id="birthCountVal">om 2m 14s</span>
+                </div>
+                <div class="rhythm-item" id="rhythmDeath" title="Organisk takt: ~1 dödsfall var 5,4 min">
+                    <span class="rhythm-dot dot-death"></span>
+                    <span class="rhythm-label">Dödsfall</span>
+                    <span class="rhythm-val" id="deathCountVal">om 3m 05s</span>
+                </div>
+                <div class="rhythm-item" id="rhythmImmigrant" title="Organisk takt: ~1 invandrad var 6,1 min">
+                    <span class="rhythm-dot dot-immigrate"></span>
+                    <span class="rhythm-label">Invandring</span>
+                    <span class="rhythm-val" id="immigrateCountVal">om 1m 40s</span>
+                </div>
+                <div class="rhythm-item" id="rhythmEmigrant" title="Organisk takt: ~1 utvandrad var 8,6 min">
+                    <span class="rhythm-dot dot-emigrate"></span>
+                    <span class="rhythm-label">Utvandring</span>
+                    <span class="rhythm-val" id="emigrateCountVal">om 4m 15s</span>
+                </div>
+                <div class="rhythm-toast hidden" id="rhythmToast"></div>
+            </div>
+
             <div class="timeline-actions">
                 <button id="liveModeBtn" class="pill-btn active">🔴 Live Nu</button>
                 <button id="speedBtn" class="pill-btn" title="Växla tempo: 1x (realtid) / 10x / 60x">⚡ 1x Real</button>

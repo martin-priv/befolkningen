@@ -42,6 +42,8 @@ class ViewportCanvas {
 
         // Fallande pärlor (födslar & invandrare)
         this.fallingBeads = [];
+        // Lämnande pärlor (dödsfall & utvandrare)
+        this.departingBeads = [];
 
         this.init();
     }
@@ -490,6 +492,80 @@ class ViewportCanvas {
         }
     }
 
+    spawnDepartingBead(type = 'death') {
+        const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
+        const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
+        const popHeight = surfaceY - botY;
+
+        let x, y, colorHex, vy, maxLife;
+        const halfW = (this.worldWidth / 2) * 0.85;
+
+        if (type === 'death') {
+            // Dödsfall sker bland de äldre i botten
+            x = (Math.random() - 0.5) * 2.0 * halfW;
+            y = botY + Math.random() * (popHeight * 0.22);
+            colorHex = 0xd4d4d8; // Mjuk silvrig ljusgnista som stilla slocknar
+            vy = 0.006;
+            maxLife = 75; // ~1.2 sek
+            this.createRipple(x, y, 0.16, 0.12, 3.5);
+        } else {
+            // Utvandring sker bland vuxna i mitten som lyfter och reser bort
+            x = (Math.random() - 0.5) * 2.0 * halfW;
+            y = botY + (popHeight * 0.35) + Math.random() * (popHeight * 0.35);
+            colorHex = 0x38bdf8; // Himmelsblå som stiger mot rymden
+            vy = 0.07;
+            maxLife = 95; // ~1.6 sek
+            this.createRipple(x, y, 0.20, 0.14, 4.0);
+        }
+
+        const beadGeo = new THREE.SphereGeometry(0.40, 16, 16);
+        const beadMat = new THREE.MeshStandardMaterial({
+            color: colorHex,
+            roughness: 0.1,
+            emissive: colorHex,
+            emissiveIntensity: 1.1,
+            transparent: true,
+            opacity: 1.0
+        });
+
+        const mesh = new THREE.Mesh(beadGeo, beadMat);
+        mesh.position.set(x, y, 0.5);
+        this.scene.add(mesh);
+
+        this.departingBeads.push({
+            mesh: mesh,
+            type: type,
+            vy: vy,
+            life: 0,
+            maxLife: maxLife
+        });
+    }
+
+    updateDepartingBeads() {
+        for (let i = this.departingBeads.length - 1; i >= 0; i--) {
+            const d = this.departingBeads[i];
+            d.life++;
+            d.mesh.position.y += d.vy;
+
+            const progress = d.life / d.maxLife;
+            if (d.type === 'death') {
+                // Gnistan pulserar mjukt och tonar stillsamt bort
+                d.mesh.scale.setScalar(1.0 + Math.sin(progress * Math.PI) * 0.35);
+                d.mesh.material.opacity = Math.max(0, 1.0 - Math.pow(progress, 1.4));
+            } else {
+                // Utvandraren stiger och löses upp mot skyn
+                d.mesh.material.opacity = Math.max(0, 1.0 - progress);
+            }
+
+            if (d.life >= d.maxLife) {
+                this.scene.remove(d.mesh);
+                d.mesh.geometry.dispose();
+                d.mesh.material.dispose();
+                this.departingBeads.splice(i, 1);
+            }
+        }
+    }
+
     setupEventListeners() {
         const screenToWorld = (clientX, clientY) => {
             const nx = (clientX / this.width) * 2 - 1;
@@ -597,6 +673,7 @@ class ViewportCanvas {
         requestAnimationFrame(this.animate);
         this.updateFluidPhysics();
         this.updateFallingBeads();
+        this.updateDepartingBeads();
 
         // Pulsera markörringen runt den klickade personen mjukt
         if (this.selectionRing && this.selectionRing.material.opacity > 0) {

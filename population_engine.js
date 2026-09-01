@@ -289,7 +289,8 @@ class PopulationEngine {
         return {
             nextBirthSec: Math.max(0, Math.round((this.currentBirthInterval - this.liveBirthTimer) / mult)),
             nextImmigrantSec: Math.max(0, Math.round((this.currentImmigrantInterval - this.liveImmigrantTimer) / mult)),
-            nextDeathSec: Math.max(0, Math.round((this.currentDeathInterval - this.liveDeathTimer) / mult))
+            nextDeathSec: Math.max(0, Math.round((this.currentDeathInterval - this.liveDeathTimer) / mult)),
+            nextEmigrantSec: Math.max(0, Math.round((this.currentEmigrantInterval - this.liveEmigrantTimer) / mult))
         };
     }
 
