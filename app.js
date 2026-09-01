@@ -115,6 +115,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    // Manuella Knappar för att testa att släppa pärlor uppifrån
+    const dropBirthBtn = document.getElementById("dropBirthBtn");
+    const dropImmigrantBtn = document.getElementById("dropImmigrantBtn");
+
+    if (dropBirthBtn) {
+        dropBirthBtn.addEventListener("click", () => {
+            jar.spawnDroppingBead('birth');
+            const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
+            popNumber.textContent = formatNumber(currentVal + 1);
+            tickerText.textContent = "Nyfödd pärla föll ner i burken (+1)!";
+        });
+    }
+
+    if (dropImmigrantBtn) {
+        dropImmigrantBtn.addEventListener("click", () => {
+            jar.spawnDroppingBead('immigrate');
+            const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
+            popNumber.textContent = formatNumber(currentVal + 1);
+            tickerText.textContent = "Invandrad pärla föll ner och sjunker till sin åldersnivå (+1)!";
+        });
+    }
+
     // Live Klocka & Realtidsrytm
     function updateClock() {
         const now = new Date();

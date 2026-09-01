@@ -1,5 +1,5 @@
 /**
- * Jar3D: 3D-Scen, Optisk Glasburk och 1:1 Pärl-Shader
+ * Jar3D: 3D-Scen, Öppen Optisk Glasburk, Kontinuerlig Granulär Pärl-Shader & Fallande Partiklar
  */
 class Jar3D {
     constructor(containerId) {
@@ -16,19 +16,20 @@ class Jar3D {
         this.jarRadius = 6.2;
         this.jarHeight = 22.0;
         this.jarBaseY = -9.0;
+        this.currentSurfaceY = -9.0 + (22.0 * 0.85); // Håller koll på pärlytan
 
-        // Pärlor
+        // Pärlor (Mikro-partiklar för 10.5 miljoner individer)
         this.beadsMesh = null;
         this.beadsGeometry = null;
         this.beadsMaterial = null;
-        this.maxBeads = 120000; // Representativa mikropärlor med 1:1 proportionell densitet
+        this.maxBeads = 120000;
         this.activeBeadCount = 0;
 
-        // Fallande pärlor (födslar / invandring)
+        // Fallande och sjunkande pärlor (födslar & invandring)
         this.fallingBeads = [];
 
         // Kohort-markering
-        this.highlightAge = -1; // -1 = ingen markering
+        this.highlightAge = -1;
 
         this.init();
     }
@@ -56,15 +57,15 @@ class Jar3D {
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 14;
         this.controls.maxDistance = 65;
-        this.controls.maxPolarAngle = Math.PI / 2 + 0.1; // Förhindra att kameran går under bordet
+        this.controls.maxPolarAngle = Math.PI / 2 + 0.1;
         this.controls.target.set(0, 2.0, 0);
 
-        // Ljussättning (Studiomiljö för optiskt glas och pärlglans)
+        // Ljussättning
         this.setupLighting();
 
-        // 3D Objekten: Pedestal, Glasburk, Lock
+        // Sockel och Helt Öppen Glasburk (Inget lock!)
         this.createPedestal();
-        this.createGlassJar();
+        this.createOpenGlassJar();
 
         // Skapa Pärlsystemet
         this.initBeadSystem();
@@ -78,23 +79,22 @@ class Jar3D {
     }
 
     setupLighting() {
-        // Mjukt omgivningsljus
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.50);
         this.scene.add(ambientLight);
 
-        // Huvudljus uppifrån/framifrån
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(12, 28, 20);
+        // Huvudljus uppifrån
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.25);
+        keyLight.position.set(12, 30, 20);
         this.scene.add(keyLight);
 
         // Sval cyan/turkos kantbelysning bakifrån vänster
-        const rimLightLeft = new THREE.PointLight(0x00f5d4, 2.5, 45);
-        rimLightLeft.position.set(-18, 12, -10);
+        const rimLightLeft = new THREE.PointLight(0x00f5d4, 2.8, 50);
+        rimLightLeft.position.set(-20, 14, -12);
         this.scene.add(rimLightLeft);
 
         // Varm korall/bärnsten kantbelysning bakifrån höger
-        const rimLightRight = new THREE.PointLight(0xff5e7e, 2.0, 45);
-        rimLightRight.position.set(18, 10, -10);
+        const rimLightRight = new THREE.PointLight(0xff5e7e, 2.2, 50);
+        rimLightRight.position.set(20, 12, -12);
         this.scene.add(rimLightRight);
     }
 
@@ -123,8 +123,8 @@ class Jar3D {
         this.scene.add(ring);
     }
 
-    createGlassJar() {
-        // Optisk cylindrisk glasburk
+    createOpenGlassJar() {
+        // Optisk cylindrisk glasburk - HELT ÖPPEN UPPTILL (INGET LOCK!)
         const jarGeo = new THREE.CylinderGeometry(
             this.jarRadius,
             this.jarRadius,
@@ -136,16 +136,16 @@ class Jar3D {
 
         const glassMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
-            transmission: 0.94,
+            transmission: 0.95,
             opacity: 1,
             transparent: true,
-            roughness: 0.05,
+            roughness: 0.04,
             ior: 1.52,
             thickness: 0.9,
             specularIntensity: 1.0,
             clearcoat: 1.0,
-            clearcoatRoughness: 0.05,
-            depthWrite: false, // Mycket viktigt för att pärlor inuti ska synas knivskarpt!
+            clearcoatRoughness: 0.04,
+            depthWrite: false,
             side: THREE.DoubleSide
         });
 
@@ -153,57 +153,33 @@ class Jar3D {
         jarMesh.position.y = this.jarBaseY + (this.jarHeight / 2);
         this.scene.add(jarMesh);
 
-        // Tjock glasbotten
+        // Tjock bottenplatta i glas
         const bottomGeo = new THREE.CylinderGeometry(this.jarRadius, this.jarRadius, 0.6, 64);
         const bottomMesh = new THREE.Mesh(bottomGeo, glassMaterial);
         bottomMesh.position.y = this.jarBaseY + 0.3;
         this.scene.add(bottomMesh);
 
-        // Mässingskant och trälock överst på burken
+        // Rundad glasläpp (öppen mynning) överst på burken
         const topY = this.jarBaseY + this.jarHeight;
-
-        // Glasläpp/ring upptill
         const lipGeo = new THREE.TorusGeometry(this.jarRadius, 0.22, 16, 64);
         const lipMesh = new THREE.Mesh(lipGeo, glassMaterial);
         lipMesh.rotation.x = Math.PI / 2;
         lipMesh.position.y = topY;
         this.scene.add(lipMesh);
-
-        // Minimalistiskt lock i mörkt valnötsträ och borstad mässing
-        const lidGeo = new THREE.CylinderGeometry(this.jarRadius + 0.3, this.jarRadius + 0.3, 0.8, 64);
-        const lidMat = new THREE.MeshStandardMaterial({
-            color: 0x1e1b18,
-            roughness: 0.6,
-            metalness: 0.2
-        });
-        const lidMesh = new THREE.Mesh(lidGeo, lidMat);
-        lidMesh.position.y = topY + 0.6;
-        this.scene.add(lidMesh);
-
-        const handleGeo = new THREE.SphereGeometry(0.7, 32, 16);
-        const handleMat = new THREE.MeshStandardMaterial({
-            color: 0xd4af37,
-            roughness: 0.3,
-            metalness: 0.85
-        });
-        const handleMesh = new THREE.Mesh(handleGeo, handleMat);
-        handleMesh.position.y = topY + 1.4;
-        this.scene.add(handleMesh);
     }
 
     initBeadSystem() {
-        // Skapa instanced / point particle-system för de 10.5 miljoner individerna
         const count = this.maxBeads;
         const positions = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
-        const ages = new Float32Array(count); // Ålder 0-110
+        const ages = new Float32Array(count);
 
         this.beadsGeometry = new THREE.BufferGeometry();
         this.beadsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         this.beadsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         this.beadsGeometry.setAttribute('age', new THREE.BufferAttribute(ages, 1));
 
-        // Anpassad WebGL2 Shader som renderar varje punkt som en äkta ljusbrytande 3D-gelékula!
+        // Anpassad WebGL2 Shader som renderar varje punkt som en äkta 3D-gelékula med ljusbrytning
         const vertexShader = `
             attribute float age;
             attribute vec3 color;
@@ -219,11 +195,10 @@ class Jar3D {
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                 vViewPos = -mvPosition.xyz;
 
-                // Storlek på pärlorna med perspektivskalning
                 float baseSize = 8.5;
                 if (uHighlightAge >= 0.0) {
-                    if (abs(age - uHighlightAge) <= 0.5) {
-                        baseSize = 13.0; // Förstora den valda årskullen!
+                    if (abs(age - uHighlightAge) <= 0.8) {
+                        baseSize = 14.0; // Förstora och belys den valda årskullen!
                     }
                 }
                 gl_PointSize = baseSize * (24.0 / -mvPosition.z);
@@ -238,36 +213,28 @@ class Jar3D {
             uniform float uHighlightAge;
 
             void main() {
-                // Skapa en rund sfär från gl_PointCoord
                 vec2 coord = gl_PointCoord - vec2(0.5);
                 float distSq = dot(coord, coord);
                 if (distSq > 0.25) discard;
 
-                // Beräkna 3D-normal för sfären
                 float z = sqrt(0.25 - distSq);
                 vec3 normal = normalize(vec3(coord.x, -coord.y, z));
 
-                // Studiomiljö ljussättning på varje pärla
                 vec3 lightDir = normalize(vec3(0.5, 0.8, 0.6));
                 float diff = max(dot(normal, lightDir), 0.0);
 
-                // Spegelglans (Specular highlight som på glaspärlor/orbeez)
                 vec3 viewDir = vec3(0.0, 0.0, 1.0);
                 vec3 halfVector = normalize(lightDir + viewDir);
                 float spec = pow(max(dot(normal, halfVector), 0.0), 32.0);
 
-                // Translucens / Inre glöd
                 float rim = 1.0 - z * 2.0;
                 vec3 finalColor = vColor * (0.35 + 0.65 * diff) + vec3(1.0) * spec * 0.75 + vColor * rim * 0.25;
 
-                // Hantera kohort-markering
                 if (uHighlightAge >= 0.0) {
-                    if (abs(vAge - uHighlightAge) <= 0.5) {
-                        // Den markerade generationen lyser kraftfullt neon!
-                        finalColor = mix(vColor, vec3(1.0), 0.3) * 1.6 + vec3(0.8) * spec;
+                    if (abs(vAge - uHighlightAge) <= 0.8) {
+                        finalColor = mix(vColor, vec3(1.0), 0.35) * 1.7 + vec3(0.85) * spec;
                     } else {
-                        // Övriga generationer tonas ner diskret
-                        finalColor *= 0.25;
+                        finalColor *= 0.20; // Mjuka ner övriga årskullar
                     }
                 }
 
@@ -289,63 +256,70 @@ class Jar3D {
         this.scene.add(this.beadsMesh);
     }
 
-    // Färgpalett för livscykeln (Orbeez-godisfärger för unga -> djupa ädelstenar -> obsidian)
+    /**
+     * KONTINUERLIG, MJUK ÅLDERSFÄRG (HELT UTAN SKARPA SKIKT!)
+     * Varje person föds med en klar, vacker godisfärg (rosa, cyan, solgul, violett, etc.)
+     * Med åldern mörknar personens färg kontinuerligt år för år från 0 till 105+:
+     * 0-15: 100% klara Orbeez-godisfärger
+     * 15-45: Mjuk övergång till rika, djupa ädelstenar (safir, rubin, smaragd)
+     * 45-75: Mjuk övergång till varm bärnsten, brons och rökig kvarts
+     * 75-105+: Mjuk övergång till djup obsidian och grafit
+     */
     getBeadColor(age, index) {
-        // En rik palett av sprudlande karamellfärger för de unga (0-15 år)
-        const candyPalette = [
-            [1.0, 0.16, 0.48],  // Neonrosa
-            [0.0, 0.96, 0.83],  // Klar Cyan
-            [1.0, 0.90, 0.25],  // Solgul
-            [0.65, 0.33, 0.97], // Lysande Lila
-            [0.13, 0.85, 0.45], // Friskt Grön
-            [1.0, 0.42, 0.20],  // Korallorange
-            [0.10, 0.60, 0.98]  // Himmelblå
+        const baseHues = [
+            [1.00, 0.18, 0.52], // Neon Korallrosa
+            [0.00, 0.96, 0.84], // Elektrisk Cyan
+            [1.00, 0.88, 0.12], // Solgul
+            [0.70, 0.32, 1.00], // Neonviolett
+            [0.10, 0.92, 0.45], // Friskt Smaragd/Lime
+            [1.00, 0.46, 0.14], // Varm Mandarin
+            [0.06, 0.62, 1.00], // Himmelsblå
+            [0.98, 0.28, 0.28]  // Hallonröd
         ];
 
-        if (age <= 14) {
-            // Välj en glad karamellfärg
-            const choice = candyPalette[index % candyPalette.length];
-            return choice;
-        } else if (age <= 28) {
-            // Friska ädelstenstoner (ung vuxen)
-            const youngPal = [
-                [0.0, 0.55, 0.85],
-                [0.06, 0.72, 0.50],
-                [0.90, 0.22, 0.27],
-                [0.96, 0.62, 0.05]
-            ];
-            return youngPal[index % youngPal.length];
-        } else if (age <= 58) {
-            // Djupa, rika juveltoner (vuxen)
-            const adultPal = [
-                [0.12, 0.23, 0.54],
-                [0.02, 0.37, 0.27],
-                [0.51, 0.09, 0.26],
-                [0.57, 0.25, 0.05]
-            ];
-            return adultPal[index % adultPal.length];
-        } else if (age <= 82) {
-            // Mörknande rökig kvarts och grafit (senior)
-            const t = (age - 59) / (82 - 59);
-            const r = 0.35 * (1.0 - t) + 0.18 * t;
-            const g = 0.25 * (1.0 - t) + 0.18 * t;
-            const b = 0.20 * (1.0 - t) + 0.20 * t;
-            return [r, g, b];
+        const base = baseHues[index % baseHues.length];
+        const a = Math.max(0, Math.min(105, age));
+
+        let brightness, saturation;
+
+        if (a <= 16) {
+            // Ungdom & Barn: Maximal färglyster
+            brightness = 1.0;
+            saturation = 1.0;
+        } else if (a <= 46) {
+            // Ung vuxen till medelålder: Mjukt djupnande ädelstenstoner
+            const t = (a - 16) / 30.0;
+            brightness = 1.0 - t * 0.28; // 1.0 -> 0.72
+            saturation = 1.0 - t * 0.12;
+        } else if (a <= 76) {
+            // Äldre: Mjuk övergång till bärnsten, mörk brons och rökig kvarts
+            const t = (a - 46) / 30.0;
+            brightness = 0.72 - t * 0.44; // 0.72 -> 0.28
+            saturation = 0.88 - t * 0.45;
         } else {
-            // Djup obsidian-svart med subtilt skimmer (83 - 105+ år)
-            const sparkle = ((index % 7) === 0) ? 0.22 : 0.08;
-            return [sparkle, sparkle, sparkle * 1.1];
+            // Äldst (76 - 105+): Mjuk övergång till djupaste sotiga obsidian
+            const t = (a - 76) / 29.0;
+            brightness = 0.28 - t * 0.20; // 0.28 -> 0.08
+            saturation = 0.43 - t * 0.35;
         }
+
+        const r = base[0] * saturation + (1.0 - saturation) * 0.18;
+        const g = base[1] * saturation + (1.0 - saturation) * 0.18;
+        const b = base[2] * saturation + (1.0 - saturation) * 0.18;
+
+        return [r * brightness, g * brightness, b * brightness];
     }
 
-    // Uppdatera burkens innehåll utifrån SCB-år och ålderskohorter
+    // Uppdatera burkens innehåll utifrån SCB-år och ålderskohorter med organisk vertikal blandning
     updateFromPopulation(popData) {
         if (!popData) return;
 
         const maxExpected = 12500000;
         const total = popData.total;
         const fillFraction = Math.min(1.0, total / maxExpected);
-        const fillHeight = this.jarHeight * 0.88 * fillFraction;
+        const fillHeight = this.jarHeight * 0.86 * fillFraction;
+
+        this.currentSurfaceY = this.jarBaseY + 0.4 + fillHeight;
 
         const positions = this.beadsGeometry.attributes.position.array;
         const colors = this.beadsGeometry.attributes.color.array;
@@ -354,9 +328,17 @@ class Jar3D {
         let beadIndex = 0;
         const totalBeadsToDraw = this.maxBeads;
 
-        // Beräkna hur många pärlor varje ettårsklass ska få
-        // Sortera från äldst (botten) till yngst (toppen)
-        let currentY = this.jarBaseY + 0.5;
+        // Beräkna kumulativ fördelning (CDF) för kontinuerlig vertikal placering
+        let cumSum = 0;
+        const ageCDF = [];
+        for (let age = 105; age >= 0; age--) {
+            const cohort = popData.ages[age] || [0, 0];
+            const cTot = cohort[0] + cohort[1];
+            cumSum += cTot;
+            ageCDF[age] = cumSum / total;
+        }
+
+        let currentY = this.jarBaseY + 0.4;
 
         for (let age = 105; age >= 0; age--) {
             const cohort = popData.ages[age] || [0, 0];
@@ -365,17 +347,19 @@ class Jar3D {
 
             const cohortFraction = cohortTotal / total;
             const countForAge = Math.max(1, Math.round(cohortFraction * totalBeadsToDraw));
-            const slabHeight = (cohortFraction * fillHeight);
+            const targetCenterY = currentY + (cohortFraction * fillHeight * 0.5);
 
             for (let i = 0; i < countForAge && beadIndex < totalBeadsToDraw; i++) {
-                // Cylindrisk packning
-                const u = Math.random() * 0.93; // Lämna 7% marginal till glasväggen
+                const u = Math.random() * 0.93;
                 const r = (this.jarRadius - 0.25) * Math.sqrt(u);
                 const theta = Math.random() * Math.PI * 2;
 
                 const x = r * Math.cos(theta);
                 const z = r * Math.sin(theta);
-                const y = currentY + (Math.random() * Math.max(0.2, slabHeight));
+
+                // Organisk dispersion (mjuk överlappning mellan årskullar så inga hårda ränder bildas)
+                const dispersion = (Math.random() - 0.5) * (fillHeight * 0.025);
+                const y = Math.max(this.jarBaseY + 0.3, Math.min(this.currentSurfaceY, targetCenterY + dispersion));
 
                 const i3 = beadIndex * 3;
                 positions[i3] = x;
@@ -392,7 +376,7 @@ class Jar3D {
                 beadIndex++;
             }
 
-            currentY += slabHeight;
+            currentY += (cohortFraction * fillHeight);
         }
 
         this.activeBeadCount = beadIndex;
@@ -402,7 +386,6 @@ class Jar3D {
         this.beadsGeometry.attributes.age.needsUpdate = true;
     }
 
-    // Belys en viss generation
     setHighlightAge(age) {
         this.highlightAge = age;
         if (this.beadsMaterial) {
@@ -410,51 +393,101 @@ class Jar3D {
         }
     }
 
-    // Animera en nyfödd pärla eller invandrare som faller ner i burken!
+    /**
+     * FÖDSLAR & INVANDRING: TRILLAR NER UPPIFRÅN GENOM DEN ÖPPNA BURKMUNNEN!
+     * - Födda: Klar neonrosa/cyan pärla faller ner uppifrån, studsar och lägger sig på toppen.
+     * - Invandring: Ljus smaragd/safir faller ner uppifrån, studsar och sjunker sedan sakta
+     *   genom massan ner till sin faktiska åldersnivå (~28 år)!
+     */
     spawnDroppingBead(type = 'birth') {
-        const topY = this.jarBaseY + this.jarHeight + 3.0;
-        const targetY = this.jarBaseY + (this.jarHeight * 0.75);
+        const topY = this.jarBaseY + this.jarHeight + 4.5;
+        const surfaceY = this.currentSurfaceY;
 
-        // Skapa en liten fysisk 3D-kula som faller ner och studsar mjukt
-        const beadGeo = new THREE.SphereGeometry(0.35, 16, 16);
-        const color = type === 'birth' ? 0xff2a7a : 0x00f5d4;
+        const beadGeo = new THREE.SphereGeometry(0.36, 16, 16);
+
+        let colorHex, emissiveHex;
+        if (type === 'birth') {
+            const birthColors = [0xff2a7a, 0x00f5d4, 0xfee440, 0xa855f7, 0x00f080, 0xff7b00];
+            colorHex = birthColors[Math.floor(Math.random() * birthColors.length)];
+            emissiveHex = colorHex;
+        } else {
+            // Invandring: Strålande smaragdgrön med guldglimt
+            colorHex = 0x00f5a0;
+            emissiveHex = 0x00d480;
+        }
+
         const beadMat = new THREE.MeshStandardMaterial({
-            color: color,
-            roughness: 0.1,
+            color: colorHex,
+            roughness: 0.15,
             metalness: 0.1,
-            emissive: color,
-            emissiveIntensity: 0.6
+            emissive: emissiveHex,
+            emissiveIntensity: 0.8
         });
 
         const mesh = new THREE.Mesh(beadGeo, beadMat);
         const theta = Math.random() * Math.PI * 2;
-        const r = Math.random() * (this.jarRadius - 1.5);
+        const r = Math.random() * (this.jarRadius - 1.2);
         mesh.position.set(r * Math.cos(theta), topY, r * Math.sin(theta));
 
         this.scene.add(mesh);
 
+        // Måldjup för invandrare (medianålder ca 28 år)
+        let finalDepthY = surfaceY;
+        if (type === 'immigrate') {
+            const ageFraction = 28.0 / 85.0;
+            finalDepthY = surfaceY - (surfaceY - this.jarBaseY) * ageFraction * 0.55;
+        }
+
         this.fallingBeads.push({
             mesh: mesh,
-            vy: -0.15,
-            targetY: targetY,
-            bounces: 0
+            type: type,
+            vy: -0.25,
+            surfaceY: surfaceY,
+            finalDepthY: finalDepthY,
+            state: 'falling',
+            bounces: 0,
+            life: 0
         });
     }
 
     updatePhysics() {
-        // Uppdatera fallande pärlor
         for (let i = this.fallingBeads.length - 1; i >= 0; i--) {
             const b = this.fallingBeads[i];
-            b.vy -= 0.015; // Gravitation
-            b.mesh.position.y += b.vy;
+            b.life += 1;
 
-            if (b.mesh.position.y <= b.targetY) {
-                b.mesh.position.y = b.targetY;
-                b.vy = -b.vy * 0.45; // Studs
-                b.bounces++;
+            if (b.state === 'falling' || b.state === 'bouncing') {
+                b.vy -= 0.018; // Gravitation
+                b.mesh.position.y += b.vy;
 
-                if (b.bounces >= 3) {
-                    // Försvinn mjukt in i massan
+                // Träffa pärlytan i burken
+                if (b.mesh.position.y <= b.surfaceY) {
+                    b.mesh.position.y = b.surfaceY;
+                    b.vy = -b.vy * 0.42; // Mjuk elastisk studs
+                    b.bounces++;
+
+                    if (b.bounces >= 3) {
+                        if (b.type === 'immigrate') {
+                            b.state = 'sinking'; // Invandraren börjar sakta sjunka till sin ålder!
+                            b.vy = -0.04;
+                        } else {
+                            b.state = 'settled';
+                        }
+                    }
+                }
+            } else if (b.state === 'sinking') {
+                // Invandraren rör sig långsamt nedåt genom pärlmassan mot sin målnivå
+                b.mesh.position.y += b.vy;
+                b.mesh.rotation.y += 0.05;
+
+                if (b.mesh.position.y <= b.finalDepthY) {
+                    b.state = 'settled';
+                }
+            } else if (b.state === 'settled') {
+                // Tona mjukt in i massan
+                b.mesh.material.opacity = Math.max(0, 1.0 - (b.life - 120) * 0.02);
+                b.mesh.material.transparent = true;
+
+                if (b.life > 170) {
                     this.scene.remove(b.mesh);
                     b.mesh.geometry.dispose();
                     b.mesh.material.dispose();
@@ -477,7 +510,6 @@ class Jar3D {
         this.controls.update();
         this.updatePhysics();
 
-        // Subtil långsam rotation av scenen när användaren inte drar
         if (!this.controls.state || this.controls.state === -1) {
             this.beadsMesh.rotation.y += 0.0008;
         }
