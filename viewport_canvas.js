@@ -16,8 +16,8 @@ class ViewportCanvas {
         this.worldWidth = 36.0;
         this.worldHeight = 36.0 * (this.height / this.width);
 
-        // Pärlsystemet (10,6 miljoner representerade genom mikropartiklar)
-        this.maxBeads = 120000;
+        // Pärlsystemet (10,6 miljoner representerade genom mikropartiklar: 1 pärla = 100 personer)
+        this.maxBeads = 130000;
         this.activeBeadCount = 0;
         this.beadsMesh = null;
         this.beadsGeometry = null;
@@ -256,7 +256,14 @@ class ViewportCanvas {
 
         const total = popData.total;
         let beadIndex = 0;
-        const totalBeadsToDraw = this.maxBeads;
+
+        // SKALA: 1 pärla = exakt 100 levande invånare i Sverige!
+        // 1860 (3,85 miljoner): ~38 600 pärlor (glest, luftigt, agrart)
+        // 1900 (5,14 miljoner): ~51 400 pärlor
+        // 1969 (8,00 miljoner): ~80 000 pärlor
+        // 2026 (10,62 miljoner): ~106 260 pärlor (tätt & myllrande!)
+        // 2070 (11,80 miljoner): ~118 000 pärlor
+        const totalBeadsToDraw = Math.min(this.maxBeads, Math.round(total / 100));
 
         const halfW = (this.worldWidth / 2) * 0.94;
         const topY = (this.worldHeight / 2) * 0.90;
@@ -273,7 +280,7 @@ class ViewportCanvas {
             if (cohortTotal <= 0) continue;
 
             const cohortFraction = cohortTotal / total;
-            const countForAge = Math.max(1, Math.round(cohortFraction * totalBeadsToDraw));
+            const countForAge = Math.max(1, Math.round(cohortTotal / 100));
             const bandHeight = cohortFraction * availableHeight;
             const centerBandY = currentY + (bandHeight * 0.5);
 
