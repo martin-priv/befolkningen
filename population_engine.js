@@ -252,26 +252,44 @@ class PopulationEngine {
         };
     }
 
+    samplePoissonInterval(meanSec) {
+        // Äkta Poisson-process (Exponentiell fördelning för oberoende naturliga händelser)
+        // Väntevärdet är 100% identiskt med SCB:s årstakt (summan blir exakt densamma).
+        // Men intervallen varierar organiskt: ibland 30-40s (tvillingar / rusning), ibland 8-12 minuter!
+        const u = Math.random();
+        const raw = -meanSec * 1.03 * Math.log(1.0 - Math.min(0.999, u));
+        return Math.max(15, Math.min(1200, raw));
+    }
+
     initWallClockCounters() {
         if (!this.data) return;
         const rates = this.data.liveRates2026 || this.data.liveRates2024;
-        const now = new Date();
-        const secToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-        // Fördela tiderna jämnt så händelser sprids ut i realtid
-        this.liveBirthCounter = secToday % rates.birthIntervalSec;
-        this.liveImmigrantCounter = (secToday + 110) % rates.immigrateIntervalSec;
-        this.liveDeathCounter = (secToday + 55) % rates.deathIntervalSec;
-        this.liveEmigrantCounter = (secToday + 180) % rates.emigrateIntervalSec;
+
+        // Skapa första organiska måltiderna
+        this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
+        this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
+        this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
+        this.currentEmigrantInterval = this.samplePoissonInterval(rates.emigrateIntervalSec);
+
+        // Slumpa en organisk startposition så att inte allt händer samtidigt vid omladdning
+        this.liveBirthTimer = Math.random() * (this.currentBirthInterval * 0.75);
+        this.liveImmigrantTimer = Math.random() * (this.currentImmigrantInterval * 0.75);
+        this.liveDeathTimer = Math.random() * (this.currentDeathInterval * 0.75);
+        this.liveEmigrantTimer = Math.random() * (this.currentEmigrantInterval * 0.75);
     }
 
     getNextEventCountdowns() {
         if (!this.data) return null;
-        const rates = this.data.liveRates2026 || this.data.liveRates2024;
         const mult = this.speedMultiplier || 1.0;
+
+        if (!this.currentBirthInterval) {
+            this.initWallClockCounters();
+        }
+
         return {
-            nextBirthSec: Math.max(0, Math.round((rates.birthIntervalSec - this.liveBirthCounter) / mult)),
-            nextImmigrantSec: Math.max(0, Math.round((rates.immigrateIntervalSec - this.liveImmigrantCounter) / mult)),
-            nextDeathSec: Math.max(0, Math.round((rates.deathIntervalSec - this.liveDeathCounter) / mult))
+            nextBirthSec: Math.max(0, Math.round((this.currentBirthInterval - this.liveBirthTimer) / mult)),
+            nextImmigrantSec: Math.max(0, Math.round((this.currentImmigrantInterval - this.liveImmigrantTimer) / mult)),
+            nextDeathSec: Math.max(0, Math.round((this.currentDeathInterval - this.liveDeathTimer) / mult))
         };
     }
 
@@ -281,34 +299,42 @@ class PopulationEngine {
         const rates = this.data.liveRates2026 || this.data.liveRates2024;
         const effectiveDt = dtSeconds * (this.speedMultiplier || 1.0);
 
-        this.liveBirthCounter += effectiveDt;
-        this.liveDeathCounter += effectiveDt;
-        this.liveImmigrantCounter += effectiveDt;
-        this.liveEmigrantCounter += effectiveDt;
+        if (!this.currentBirthInterval) {
+            this.initWallClockCounters();
+        }
+
+        this.liveBirthTimer += effectiveDt;
+        this.liveDeathTimer += effectiveDt;
+        this.liveImmigrantTimer += effectiveDt;
+        this.liveEmigrantTimer += effectiveDt;
 
         const events = [];
 
-        // Födsel (~var 331:e sekund = 5.5 min)
-        if (this.liveBirthCounter >= rates.birthIntervalSec) {
-            this.liveBirthCounter -= rates.birthIntervalSec;
+        // Födsel (Organiskt Poisson-intervall kring medelvärdet 331s)
+        if (this.liveBirthTimer >= this.currentBirthInterval) {
+            this.liveBirthTimer = 0;
+            this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
             events.push({ type: 'birth', text: 'Nyfödd pärla föll in i Sverige (+1)!', color: '#ff2a7a' });
         }
 
-        // Dödsfall (~var 324:e sekund = 5.4 min)
-        if (this.liveDeathCounter >= rates.deathIntervalSec) {
-            this.liveDeathCounter -= rates.deathIntervalSec;
+        // Dödsfall (Organiskt Poisson-intervall kring medelvärdet 324s)
+        if (this.liveDeathTimer >= this.currentDeathInterval) {
+            this.liveDeathTimer = 0;
+            this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
             events.push({ type: 'death', text: 'Dödsfall i Sverige (-1)', color: '#52525b' });
         }
 
-        // Invandring (~var 363:e sekund = 6.1 min)
-        if (this.liveImmigrantCounter >= rates.immigrateIntervalSec) {
-            this.liveImmigrantCounter -= rates.immigrateIntervalSec;
+        // Invandring (Organiskt Poisson-intervall kring medelvärdet 363s)
+        if (this.liveImmigrantTimer >= this.currentImmigrantInterval) {
+            this.liveImmigrantTimer = 0;
+            this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
             events.push({ type: 'immigrate', text: 'Invandrad pärla föll in i Sverige (+1)!', color: '#00f5a0' });
         }
 
-        // Utvandring (~var 516:e sekund = 8.6 min)
-        if (this.liveEmigrantCounter >= rates.emigrateIntervalSec) {
-            this.liveEmigrantCounter -= rates.emigrateIntervalSec;
+        // Utvandring
+        if (this.liveEmigrantTimer >= this.currentEmigrantInterval) {
+            this.liveEmigrantTimer = 0;
+            this.currentEmigrantInterval = this.samplePoissonInterval(rates.emigrateIntervalSec);
             events.push({ type: 'emigrate', text: 'Utvandring från Sverige (-1)', color: '#94a3b8' });
         }
 
