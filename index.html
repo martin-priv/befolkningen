@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glasburken — Sveriges befolkning i 1:1</title>
+    <meta name="description" content="En levande 3D-glasburk med över 10,5 miljoner pärlor. Varje pärla är en levande människa i Sverige – från nyfödd till 100+ år – baserat på SCB:s officiella befolkningsstatistik.">
+    <meta name="theme-color" content="#0d1117">
+
+    <!-- OpenGraph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Glasburken — Sveriges befolkning i 1:1">
+    <meta property="og:description" content="10,5 miljoner pärlor. Varje pärla en levande person. Se Sveriges befolkning födas, åldras och röra sig i realtid från 1860 till 2070.">
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js & OrbitControls via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- 3D Canvas Container -->
+    <div id="canvasContainer"></div>
+
+    <!-- Minimalistisk Header -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="dot"></span>
+            <h1>GLASBURKEN</h1>
+            <span class="tag">1:1 BEFOLKNINGSSIMULATOR</span>
+        </div>
+        <div class="header-right">
+            <div class="live-clock" id="liveClock">08:48:00</div>
+            <button id="fullscreenBtn" class="icon-btn" title="Fullskärm (F)">⛶</button>
+        </div>
+    </header>
+
+    <!-- Stor levande räknare för befolkningen -->
+    <div class="pop-counter-hud">
+        <div class="pop-label">SVERIGES FOLKMÄNGD <span id="currentYearBadge">2024</span></div>
+        <div class="pop-number" id="popNumber">10 587 710</div>
+        <div class="pop-sub" id="popSub">Varje pärla i burken motsvarar 1 levande människa</div>
+    </div>
+
+    <!-- Live Event Ticker (Födslar, Dödsfall, Invandring) -->
+    <div class="event-ticker" id="eventTicker">
+        <div class="ticker-dot live-pulse"></div>
+        <div class="ticker-text" id="tickerText">Realtidsrytm: 1 födsel var 5:e min • 1 dödsfall var 6:e min • 1 invandrare var 5:e min</div>
+    </div>
+
+    <!-- Interaktiv Tidslinje i botten -->
+    <div class="timeline-panel" id="timelinePanel">
+        <div class="timeline-header">
+            <div class="timeline-title">
+                <span class="caps-label">TIDSLINJE</span>
+                <span class="year-val" id="selectedYearDisplay">2024</span>
+                <span class="era-note" id="eraNote">(Dagens befolkning)</span>
+            </div>
+            <div class="timeline-actions">
+                <button id="liveModeBtn" class="pill-btn active">🔴 Live Nu</button>
+                <button id="playPauseBtn" class="pill-btn">▶ Spela</button>
+                <button id="findCohortBtn" class="pill-btn">🔍 Hitta min årskull</button>
+            </div>
+        </div>
+
+        <!-- Slider för 1860 - 2070 -->
+        <div class="slider-wrapper">
+            <div class="slider-milestones">
+                <span style="left: 0%;">1860 (3,8M)</span>
+                <span style="left: 19%;">1900</span>
+                <span style="left: 45%;">1945</span>
+                <span style="left: 60%;">1969 (8M)</span>
+                <span style="left: 80%;">2000</span>
+                <span style="left: 92%;" class="active-marker">2024</span>
+                <span style="left: 100%;">2070 (Prognos)</span>
+            </div>
+            <input type="range" id="yearSlider" min="1860" max="2070" value="2024" step="1">
+        </div>
+    </div>
+
+    <!-- Årskull / Insikt-Modal (Hitta din egen pärla) -->
+    <div class="cohort-modal hidden" id="cohortModal">
+        <div class="modal-header">
+            <span>HITTA DIN ÅRSKULL</span>
+            <button id="closeCohortBtn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+            <p>Ange ditt födelseår så tänds hela din generation upp som en lysande skiva i burken:</p>
+            <div class="cohort-input-row">
+                <input type="number" id="birthYearInput" min="1920" max="2024" value="1990" placeholder="Födelseår (t.ex. 1990)">
+                <button id="highlightCohortBtn" class="pill-btn highlight">Lys upp i burken</button>
+            </div>
+            <div class="cohort-stat" id="cohortStat">
+                Födda 1990 (34 år gamla): <strong>152 410 personer</strong> i Sverige idag
+            </div>
+        </div>
+    </div>
+
+    <!-- Färgskala / Förklaring -->
+    <div class="legend-card" id="legendCard">
+        <div class="legend-header">PÄRLORNAS LIVSCYKEL</div>
+        <div class="legend-items">
+            <div class="legend-item"><span class="legend-color c-newborn"></span> 0–12 år (Klara godisfärger)</div>
+            <div class="legend-item"><span class="legend-color c-young"></span> 13–29 år (Friska ädelstenar)</div>
+            <div class="legend-item"><span class="legend-color c-adult"></span> 30–59 år (Djupa juveltoner)</div>
+            <div class="legend-item"><span class="legend-color c-senior"></span> 60–84 år (Mörknande kvarts)</div>
+            <div class="legend-item"><span class="legend-color c-old"></span> 85–100+ år (Obsidian & kol)</div>
+            <div class="legend-item"><span class="legend-color c-immigrant"></span> ✦ Invandrad (Ny lyster)</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="population_engine.js"></script>
+    <script src="jar_3d.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
