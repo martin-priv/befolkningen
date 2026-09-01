@@ -314,21 +314,33 @@ class PopulationEngine {
         if (this.liveBirthTimer >= this.currentBirthInterval) {
             this.liveBirthTimer = 0;
             this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
-            events.push({ type: 'birth', text: 'Nyfödd pärla föll in i Sverige (+1)!', color: '#ff2a7a' });
+            const muni = this.municipalities[Math.floor(Math.random() * this.municipalities.length)];
+            events.push({ 
+                type: 'birth', 
+                text: `Nyfödd i ${muni.name} (+1)!`, 
+                municipality: muni.name,
+                color: '#ff2a7a' 
+            });
         }
 
         // Dödsfall (Organiskt Poisson-intervall kring medelvärdet 324s)
         if (this.liveDeathTimer >= this.currentDeathInterval) {
             this.liveDeathTimer = 0;
             this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
-            events.push({ type: 'death', text: 'Dödsfall i Sverige (-1)', color: '#52525b' });
+            events.push({ type: 'death', text: 'Ett liv slocknade i Sverige (-1)', color: '#64748b' });
         }
 
         // Invandring (Organiskt Poisson-intervall kring medelvärdet 363s)
         if (this.liveImmigrantTimer >= this.currentImmigrantInterval) {
             this.liveImmigrantTimer = 0;
             this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
-            events.push({ type: 'immigrate', text: 'Invandrad pärla föll in i Sverige (+1)!', color: '#00f5a0' });
+            const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
+            events.push({ 
+                type: 'immigrate', 
+                text: `Invandring till Sverige från ${country.name} (+1)!`, 
+                country: country.name,
+                color: '#00f5a0' 
+            });
         }
 
         // Utvandring
