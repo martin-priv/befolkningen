@@ -214,9 +214,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // Manuella släppknappar
-    const dropBirthBtn = document.getElementById("dropBirthBtn");
-    const dropImmigrantBtn = document.getElementById("dropImmigrantBtn");
+    // Tempo-väljare (1x, 10x, 60x)
     const speedBtn = document.getElementById("speedBtn");
 
     const speeds = [
@@ -237,24 +235,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             } else {
                 speedBtn.classList.remove("active");
             }
-        });
-    }
-
-    if (dropBirthBtn) {
-        dropBirthBtn.addEventListener("click", () => {
-            canvas.spawnDroppingBead('birth');
-            const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-            popNumber.textContent = formatNumber(currentVal + 1);
-            tickerText.textContent = "Nyfödd pärla föll in i myllret (+1)!";
-        });
-    }
-
-    if (dropImmigrantBtn) {
-        dropImmigrantBtn.addEventListener("click", () => {
-            canvas.spawnDroppingBead('immigrate');
-            const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-            popNumber.textContent = formatNumber(currentVal + 1);
-            tickerText.textContent = "Invandrad pärla föll in och söker sin plats i befolkningen (+1)!";
         });
     }
 
