@@ -1,9 +1,8 @@
 /**
- * App: Huvudkontroll för Glasburken
+ * App: Huvudkontroll för Befolkningssimulatorn (Fullskärms Myller)
  */
 document.addEventListener("DOMContentLoaded", async () => {
     const engine = new PopulationEngine();
-    const jar = new Jar3D("canvasContainer");
 
     // UI Referenser
     const popNumber = document.getElementById("popNumber");
@@ -23,6 +22,55 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cohortStat = document.getElementById("cohortStat");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+    // Person Card Inspector UI
+    const personCard = document.getElementById("personCard");
+    const closePersonBtn = document.getElementById("closePersonBtn");
+    const personBadge = document.getElementById("personBadge");
+    const personTitle = document.getElementById("personTitle");
+    const personLocation = document.getElementById("personLocation");
+    const personBirthYear = document.getElementById("personBirthYear");
+    const personMarital = document.getElementById("personMarital");
+    const personMunicipality = document.getElementById("personMunicipality");
+    const personCountry = document.getElementById("personCountry");
+
+    // Callback när användaren klickar på en specifik pärla i myllret!
+    const onPersonClick = (nearestBead, clientX, clientY) => {
+        const profile = engine.generatePersonProfile(nearestBead.age, nearestBead.sex, engine.currentYear);
+
+        personTitle.textContent = profile.displayTitle;
+        personLocation.textContent = `📍 ${profile.displayLocation}`;
+        personBirthYear.textContent = profile.birthYear;
+        personMarital.textContent = profile.marital;
+        personMunicipality.textContent = `${profile.municipality} (${profile.municipalityPop} inv.)`;
+
+        if (profile.isForeignBorn) {
+            personBadge.textContent = `🌍 Född i ${profile.birthCountry} (Invandrad)`;
+            personBadge.style.color = "#00f5a0";
+            personBadge.style.borderColor = "rgba(0, 245, 160, 0.4)";
+            personBadge.style.background = "rgba(0, 245, 160, 0.12)";
+            personCountry.textContent = profile.countryStat || profile.birthCountry;
+        } else {
+            personBadge.textContent = "🇸🇪 Född i Sverige";
+            personBadge.style.color = "#00f5d4";
+            personBadge.style.borderColor = "rgba(0, 245, 212, 0.3)";
+            personBadge.style.background = "rgba(0, 245, 212, 0.12)";
+            personCountry.textContent = "Sverige";
+        }
+
+        personCard.classList.remove("hidden");
+        tickerText.textContent = `Inspekterar: ${profile.displayTitle} från ${profile.municipality}, ${profile.county}`;
+    };
+
+    // Skapa Viewport Canvas
+    const canvas = new ViewportCanvas("canvasContainer", onPersonClick);
+
+    // Stäng person-kort
+    if (closePersonBtn) {
+        closePersonBtn.addEventListener("click", () => {
+            personCard.classList.add("hidden");
+        });
+    }
+
     // Ladda SCB-data
     const loaded = await engine.load();
     if (!loaded) {
@@ -30,12 +78,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    // Formatera siffror med svenska mellanrum (t.ex. 10 587 710)
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
 
-    // Visa data för ett visst år
     function showYear(year) {
         engine.currentYear = year;
         const popData = engine.getDataForYear(year);
@@ -47,13 +93,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         yearSlider.value = year;
         eraNote.textContent = `(${engine.getEraNote(year)})`;
 
-        jar.updateFromPopulation(popData);
+        canvas.updateFromPopulation(popData);
     }
 
-    // Initialisera till 2026 (Idag!)
+    // Starta på 2026 (Idag)
     showYear(2026);
 
-    // Slider Ändring
+    // Slider
     yearSlider.addEventListener("input", (e) => {
         engine.isLive = false;
         liveModeBtn.classList.remove("active");
@@ -61,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         showYear(yr);
     });
 
-    // Live Mode Knapp
+    // Live Mode
     liveModeBtn.addEventListener("click", () => {
         engine.isLive = true;
         liveModeBtn.classList.add("active");
@@ -69,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         tickerText.textContent = "Realtidsläge 2026 aktivt: Räknar födslar, dödsfall och migration";
     });
 
-    // Play / Pause Knapp för historisk tidsresa
+    // Play / Pause
     let playInterval = null;
     playPauseBtn.addEventListener("click", () => {
         if (playInterval) {
@@ -87,18 +133,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                 let nextYear = engine.currentYear + 1;
                 if (nextYear > 2070) nextYear = 1860;
                 showYear(nextYear);
-            }, 350); // 1 år var 350:e millisekund för mjuk visuell resa!
+            }, 350);
         }
     });
 
-    // Kohort Modal (Hitta min årskull)
+    // Kohort Modal
     findCohortBtn.addEventListener("click", () => {
         cohortModal.classList.remove("hidden");
     });
 
     closeCohortBtn.addEventListener("click", () => {
         cohortModal.classList.add("hidden");
-        jar.setHighlightAge(-1); // Återställ belysning
+        canvas.setHighlightAge(-1);
     });
 
     highlightCohortBtn.addEventListener("click", () => {
@@ -111,29 +157,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         const info = engine.getCohortInfo(birthYear, engine.currentYear);
         if (info) {
             cohortStat.innerHTML = `Födda ${info.birthYear} (${info.age} år): <strong>${formatNumber(info.total)} personer</strong> i Sverige (${formatNumber(info.men)} män, ${formatNumber(info.women)} kvinnor). Utgör ${info.shareOfPopulation}% av befolkningen.`;
-            jar.setHighlightAge(info.age);
+            canvas.setHighlightAge(info.age);
         }
     });
 
-    // Manuella Knappar för att testa att släppa pärlor uppifrån
+    // Manuella släppknappar
     const dropBirthBtn = document.getElementById("dropBirthBtn");
     const dropImmigrantBtn = document.getElementById("dropImmigrantBtn");
 
     if (dropBirthBtn) {
         dropBirthBtn.addEventListener("click", () => {
-            jar.spawnDroppingBead('birth');
+            canvas.spawnDroppingBead('birth');
             const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
             popNumber.textContent = formatNumber(currentVal + 1);
-            tickerText.textContent = "Nyfödd pärla föll ner i burken (+1)!";
+            tickerText.textContent = "Nyfödd pärla föll in i myllret (+1)!";
         });
     }
 
     if (dropImmigrantBtn) {
         dropImmigrantBtn.addEventListener("click", () => {
-            jar.spawnDroppingBead('immigrate');
+            canvas.spawnDroppingBead('immigrate');
             const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
             popNumber.textContent = formatNumber(currentVal + 1);
-            tickerText.textContent = "Invandrad pärla föll ner och sjunker till sin åldersnivå (+1)!";
+            tickerText.textContent = "Invandrad pärla föll in och söker sin plats i befolkningen (+1)!";
         });
     }
 
@@ -145,19 +191,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const s = String(now.getSeconds()).padStart(2, "0");
         liveClock.textContent = `${h}:${m}:${s}`;
 
-        // Om i live-läge: kör Poisson-tick
         if (engine.isLive) {
             const events = engine.tickRealtime(1.0);
             if (events) {
                 for (let ev of events) {
                     tickerText.textContent = `${h}:${m}:${s} — ${ev.text}`;
                     if (ev.type === 'birth') {
-                        jar.spawnDroppingBead('birth');
-                        // Öka räknaren subtilt
+                        canvas.spawnDroppingBead('birth');
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
                         popNumber.textContent = formatNumber(currentVal + 1);
                     } else if (ev.type === 'immigrate') {
-                        jar.spawnDroppingBead('immigrate');
+                        canvas.spawnDroppingBead('immigrate');
                         const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
                         popNumber.textContent = formatNumber(currentVal + 1);
                     } else if (ev.type === 'death') {
@@ -187,23 +231,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         } else if (e.key === "Escape") {
             cohortModal.classList.add("hidden");
-            jar.setHighlightAge(-1);
+            personCard.classList.add("hidden");
+            canvas.setHighlightAge(-1);
         }
     });
 
-    // Kiosk Idle Fade (tonar bort kontroller efter 5 sekunders inaktivitet)
+    // Inaktivitets-timer för ambient visning
     let idleTimer = null;
     function resetIdleTimer() {
         document.body.classList.remove("mouse-idle");
         clearTimeout(idleTimer);
         idleTimer = setTimeout(() => {
-            if (cohortModal.classList.contains("hidden")) {
-                document.body.classList.add("mouse-idle");
-            }
-        }, 5000);
+            document.body.classList.add("mouse-idle");
+        }, 8000);
     }
     window.addEventListener("mousemove", resetIdleTimer);
+    window.addEventListener("mousedown", resetIdleTimer);
     window.addEventListener("touchstart", resetIdleTimer);
-    window.addEventListener("keydown", resetIdleTimer);
     resetIdleTimer();
 });

@@ -39,7 +39,7 @@
     <div class="pop-counter-hud">
         <div class="pop-label">SVERIGES FOLKMÄNGD <span id="currentYearBadge">2026</span></div>
         <div class="pop-number" id="popNumber">10 626 026</div>
-        <div class="pop-sub" id="popSub">Varje pärla i burken motsvarar 1 levande människa</div>
+        <div class="pop-sub" id="popSub">10,6 miljoner individer • Dra för att röra om • Klicka på en pärla för att inspektera</div>
     </div>
 
     <!-- Live Event Ticker (Födslar, Dödsfall, Invandring) -->
@@ -136,9 +136,35 @@
         </div>
     </div>
 
+    <!-- 👤 KLICK-INSPEKTORN (Möt en människa!) -->
+    <div class="person-card hidden" id="personCard">
+        <button id="closePersonBtn" class="close-btn">✕</button>
+        <div class="person-badge" id="personBadge">🇸🇪 Född i Sverige</div>
+        <div class="person-title" id="personTitle">45-årig man</div>
+        <div class="person-location" id="personLocation">📍 Krokom, Jämtlands län</div>
+        <div class="person-grid">
+            <div class="person-field">
+                <span class="field-label">FÖDELSEÅR</span>
+                <span class="field-value" id="personBirthYear">1981</span>
+            </div>
+            <div class="person-field">
+                <span class="field-label">CIVILSTÅND</span>
+                <span class="field-value" id="personMarital">Gift</span>
+            </div>
+            <div class="person-field" style="grid-column: span 2;">
+                <span class="field-label">KOMMUN</span>
+                <span class="field-value" id="personMunicipality">Krokom (15 540 invånare)</span>
+            </div>
+            <div class="person-field" id="personCountryField" style="grid-column: span 2;">
+                <span class="field-label">FÖDELSELAND</span>
+                <span class="field-value" id="personCountry">Sverige</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="population_engine.js"></script>
-    <script src="jar_3d.js"></script>
+    <script src="viewport_canvas.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
