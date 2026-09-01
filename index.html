@@ -107,6 +107,7 @@
                 <button id="speedBtn" class="pill-btn" title="Växla tempo: 1x (realtid) / 10x / 60x">⚡ 1x Real</button>
                 <button id="playPauseBtn" class="pill-btn">▶ Spela</button>
                 <button id="findCohortBtn" class="pill-btn">🔍 Hitta årskull</button>
+                <button id="closeTimelineBtn" class="pill-btn icon-btn" title="Minimera panel till kugghjul (T)">✕</button>
             </div>
         </div>
 
@@ -124,6 +125,9 @@
             <input type="range" id="yearSlider" min="1860" max="2070" value="2026" step="1">
         </div>
     </div>
+
+    <!-- Flytande Kugghjul för att öppna/stänga kontrollpanelen (som i solpong) -->
+    <button id="toggleTimelineBtn" class="gear-btn active" title="Visa/dölj kontrollpanel & tidslinje (eller tryck T)" aria-label="Visa kontrollpanel">⚙️</button>
 
     <!-- Årskull / Insikt-Modal (Hitta din egen pärla) -->
     <div class="cohort-modal hidden" id="cohortModal">

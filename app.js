@@ -21,6 +21,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rhythmEmigrant = document.getElementById("rhythmEmigrant");
     const yearSlider = document.getElementById("yearSlider");
     const selectedYearDisplay = document.getElementById("selectedYearDisplay");
+    const timelinePanel = document.getElementById("timelinePanel");
+    const toggleTimelineBtn = document.getElementById("toggleTimelineBtn");
+    const closeTimelineBtn = document.getElementById("closeTimelineBtn");
     const liveModeBtn = document.getElementById("liveModeBtn");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const findCohortBtn = document.getElementById("findCohortBtn");
@@ -325,6 +328,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     setInterval(updateClock, 1000);
     updateClock();
 
+    // Växla kontrollpanelen (fäll ihop till ett diskret kugghjul som i solpong)
+    function setTimelineCollapsed(collapsed) {
+        if (!timelinePanel) return;
+        if (collapsed) {
+            timelinePanel.classList.add("collapsed");
+            if (toggleTimelineBtn) toggleTimelineBtn.classList.remove("active");
+        } else {
+            timelinePanel.classList.remove("collapsed");
+            if (toggleTimelineBtn) toggleTimelineBtn.classList.add("active");
+        }
+    }
+
+    if (toggleTimelineBtn && timelinePanel) {
+        toggleTimelineBtn.addEventListener("click", () => {
+            const isCollapsed = timelinePanel.classList.contains("collapsed");
+            setTimelineCollapsed(!isCollapsed);
+        });
+    }
+
+    if (closeTimelineBtn && timelinePanel) {
+        closeTimelineBtn.addEventListener("click", () => {
+            setTimelineCollapsed(true);
+        });
+    }
+
     // Fullskärm
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
@@ -338,6 +366,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (e.key === "f" || e.key === "F") {
             if (e.target.tagName !== "INPUT") {
                 toggleFullscreen();
+            }
+        } else if ((e.key === "t" || e.key === "T") && e.target.tagName !== "INPUT") {
+            if (timelinePanel) {
+                const isCollapsed = timelinePanel.classList.contains("collapsed");
+                setTimelineCollapsed(!isCollapsed);
             }
         } else if (e.key === "Escape") {
             cohortModal.classList.add("hidden");
