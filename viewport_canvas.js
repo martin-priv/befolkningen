@@ -257,20 +257,23 @@ class ViewportCanvas {
         const total = popData.total;
         let beadIndex = 0;
 
-        // SKALA: 1 pärla = exakt 100 levande invånare i Sverige!
-        // 1860 (3,85 miljoner): ~38 600 pärlor (glest, luftigt, agrart)
-        // 1900 (5,14 miljoner): ~51 400 pärlor
-        // 1969 (8,00 miljoner): ~80 000 pärlor
-        // 2026 (10,62 miljoner): ~106 260 pärlor (tätt & myllrande!)
-        // 2070 (11,80 miljoner): ~118 000 pärlor
-        const totalBeadsToDraw = Math.min(this.maxBeads, Math.round(total / 100));
+        // 1:1 SKALA & NATURLIG FYLLNADSHÖJD:
+        // Varje pärla har konstant storlek och volym (1 pärla = 100 invånare).
+        // Befolkningen fyller skärmen från botten och uppåt som ett hav:
+        // 1860 (3,85 miljoner): Fyller ca 31% av skärmen (lägre höjd i äldre tid)
+        // 1900 (5,14 miljoner): Fyller ca 42% av skärmen
+        // 1969 (8,00 miljoner): Fyller ca 65% av skärmen
+        // 2026 (10,62 miljoner): Fyller ca 86% av skärmen
+        // 2070 (11,80 miljoner): Fyller ca 95% av skärmen
+        const maxCapacity = 12200000;
+        const fillFraction = Math.min(0.94, (total / maxCapacity) * 0.94);
 
         const halfW = (this.worldWidth / 2) * 0.94;
-        const topY = (this.worldHeight / 2) * 0.90;
-        const botY = (-this.worldHeight / 2) * 0.90;
-        const availableHeight = topY - botY;
+        this.botY = (-this.worldHeight / 2) + 1.2;
+        const fillHeight = this.worldHeight * fillFraction;
+        this.currentSurfaceY = this.botY + fillHeight;
 
-        let currentY = botY;
+        let currentY = this.botY;
 
         for (let age = 105; age >= 0; age--) {
             const cohort = popData.ages[age] || [0, 0];
@@ -281,13 +284,13 @@ class ViewportCanvas {
 
             const cohortFraction = cohortTotal / total;
             const countForAge = Math.max(1, Math.round(cohortTotal / 100));
-            const bandHeight = cohortFraction * availableHeight;
+            const bandHeight = cohortFraction * fillHeight;
             const centerBandY = currentY + (bandHeight * 0.5);
 
-            for (let i = 0; i < countForAge && beadIndex < totalBeadsToDraw; i++) {
+            for (let i = 0; i < countForAge && beadIndex < this.maxBeads; i++) {
                 const x = (Math.random() - 0.5) * 2.0 * halfW;
-                const disp = (Math.random() - 0.5) * Math.max(0.4, bandHeight * 1.2);
-                const y = Math.max(botY - 0.5, Math.min(topY + 0.5, centerBandY + disp));
+                const disp = (Math.random() - 0.5) * Math.max(0.25, bandHeight * 0.95);
+                const y = Math.max(this.botY, Math.min(this.currentSurfaceY, centerBandY + disp));
 
                 const i3 = beadIndex * 3;
                 this.positions[i3] = x;
@@ -417,7 +420,12 @@ class ViewportCanvas {
 
     spawnDroppingBead(type = 'birth') {
         const topY = (this.worldHeight / 2) + 2.0;
-        const targetY = (this.worldHeight / 2) * (type === 'birth' ? 0.85 : 0.20);
+        const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
+        const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
+        const targetY = (type === 'birth') 
+            ? surfaceY 
+            : Math.max(botY + 0.5, surfaceY - (surfaceY - botY) * 0.42);
+
         const spawnX = (Math.random() - 0.5) * this.worldWidth * 0.8;
 
         const beadGeo = new THREE.SphereGeometry(0.42, 16, 16);

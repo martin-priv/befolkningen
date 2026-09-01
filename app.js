@@ -94,6 +94,58 @@ document.addEventListener("DOMContentLoaded", async () => {
         eraNote.textContent = `(${engine.getEraNote(year)})`;
 
         canvas.updateFromPopulation(popData);
+        updateAgeRuler(canvas, popData);
+    }
+
+    // Dynamisk Ålderslinjal som anpassar höjd och markörer efter folkmängd och demografi
+    function updateAgeRuler(canvas, popData) {
+        const ageRuler = document.getElementById("ageRuler");
+        if (!ageRuler || !canvas || !popData) return;
+
+        const surfaceY = canvas.currentSurfaceY;
+        const botY = canvas.botY;
+        const worldH = canvas.worldHeight;
+
+        if (surfaceY === undefined || botY === undefined || !worldH) return;
+
+        // Skärmprocent från fönstrets överkant
+        const topPct = (0.5 - (surfaceY / worldH)) * 100;
+        const botPct = (0.5 - (botY / worldH)) * 100;
+        const heightPct = botPct - topPct;
+
+        ageRuler.style.top = `${topPct.toFixed(2)}%`;
+        ageRuler.style.height = `${heightPct.toFixed(2)}%`;
+
+        // Beräkna kumulativ andel äldre för att placera 25, 50, 75 år på rätt fysisk höjd
+        const total = popData.total;
+        let sumOlder25 = 0;
+        let sumOlder50 = 0;
+        let sumOlder75 = 0;
+
+        for (let age = 105; age >= 0; age--) {
+            const c = popData.ages[age] || [0, 0];
+            const cnt = c[0] + c[1];
+            if (age >= 25) sumOlder25 += cnt;
+            if (age >= 50) sumOlder50 += cnt;
+            if (age >= 75) sumOlder75 += cnt;
+        }
+
+        // top: 0% är nyfödda (ytan), top: 100% är äldst (botten)
+        const pct25 = (1.0 - (sumOlder25 / total)) * 100;
+        const pct50 = (1.0 - (sumOlder50 / total)) * 100;
+        const pct75 = (1.0 - (sumOlder75 / total)) * 100;
+
+        const r0 = document.getElementById("ruler0");
+        const r25 = document.getElementById("ruler25");
+        const r50 = document.getElementById("ruler50");
+        const r75 = document.getElementById("ruler75");
+        const r100 = document.getElementById("ruler100");
+
+        if (r0) r0.style.top = "0%";
+        if (r25) r25.style.top = `${pct25.toFixed(1)}%`;
+        if (r50) r50.style.top = `${pct50.toFixed(1)}%`;
+        if (r75) r75.style.top = `${pct75.toFixed(1)}%`;
+        if (r100) r100.style.top = "100%";
     }
 
     // Starta på 2026 (Idag)
@@ -248,5 +300,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.addEventListener("mousemove", resetIdleTimer);
     window.addEventListener("mousedown", resetIdleTimer);
     window.addEventListener("touchstart", resetIdleTimer);
+    window.addEventListener("resize", () => {
+        updateAgeRuler(canvas, engine.getDataForYear(engine.currentYear));
+    });
+
     resetIdleTimer();
 });
