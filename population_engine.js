@@ -4,7 +4,7 @@
 class PopulationEngine {
     constructor() {
         this.data = null;
-        this.currentYear = 2024;
+        this.currentYear = 2026;
         this.highlightedCohort = null; // Födelseår att belysa (t.ex. 1990)
         this.isLive = true;
         this.isPlaying = false;
@@ -29,9 +29,12 @@ class PopulationEngine {
             2004: "Sverige passerar 9 miljoner invånare.",
             2015: "Flyktingvågen: Rekordhög invandring till Sverige.",
             2017: "Sverige passerar historiska 10 miljoner invånare!",
-            2024: "Dagens befolkning: 10 587 710 personer.",
-            2050: "SCB Framskrivning: Sveriges befolkning beräknas till 11,3 miljoner.",
-            2070: "SCB Framskrivning: 11,8 miljoner invånare."
+            2024: "Historiskt utfall: 10 587 710 personer.",
+            2025: "SCB: 10 602 310 personer.",
+            2026: "Idag: 10 626 026 personer (aktuell SCB-framskrivning).",
+            2030: "SCB Framskrivning: 10,72 miljoner invånare.",
+            2050: "SCB Framskrivning: Sveriges befolkning beräknas till 11,29 miljoner.",
+            2070: "SCB Framskrivning: 11,80 miljoner invånare."
         };
     }
 
@@ -52,7 +55,8 @@ class PopulationEngine {
         if (year < 1900) return "Tidig industrialisering och utvandring.";
         if (year < 1940) return "Mellankrigstid och folkhemsbygge.";
         if (year < 1975) return "Rekordåren i svensk industri.";
-        if (year <= 2024) return "Modern tid och globalisering.";
+        if (year < 2025) return "Modern tid och globalisering.";
+        if (year === 2026) return "Idag: Aktuell SCB-framskrivning.";
         return "SCB:s officiella befolkningsframskrivning.";
     }
 

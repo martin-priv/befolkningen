@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         jar.updateFromPopulation(popData);
     }
 
-    // Initialisera till 2024
-    showYear(2024);
+    // Initialisera till 2026 (Idag!)
+    showYear(2026);
 
     // Slider Ändring
     yearSlider.addEventListener("input", (e) => {
@@ -65,8 +65,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     liveModeBtn.addEventListener("click", () => {
         engine.isLive = true;
         liveModeBtn.classList.add("active");
-        showYear(2024);
-        tickerText.textContent = "Realtidsläge aktivt: Räknar födslar, dödsfall och migration";
+        showYear(2026);
+        tickerText.textContent = "Realtidsläge 2026 aktivt: Räknar födslar, dödsfall och migration";
     });
 
     // Play / Pause Knapp för historisk tidsresa
@@ -103,8 +103,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     highlightCohortBtn.addEventListener("click", () => {
         const birthYear = parseInt(birthYearInput.value, 10);
-        if (isNaN(birthYear) || birthYear < 1915 || birthYear > 2024) {
-            cohortStat.textContent = "Ange ett giltigt födelseår mellan 1915 och 2024.";
+        if (isNaN(birthYear) || birthYear < 1915 || birthYear > 2026) {
+            cohortStat.textContent = "Ange ett giltigt födelseår mellan 1915 och 2026.";
             return;
         }
 
