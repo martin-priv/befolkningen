@@ -1,5 +1,5 @@
 /**
- * ViewportCanvas: Fullskärms Ocean av Människor med Taktil Fluid-Fysik & Individinspektion
+ * ViewportCanvas: Fullskärms Ocean av Människor med Mjuka Ringvågor (Ripples) & Individinspektion
  */
 class ViewportCanvas {
     constructor(containerId, onPersonClick) {
@@ -16,25 +16,29 @@ class ViewportCanvas {
         this.worldWidth = 36.0;
         this.worldHeight = 36.0 * (this.height / this.width);
 
-        // Pärlsystemet
+        // Pärlsystemet (10,6 miljoner representerade genom mikropartiklar)
         this.maxBeads = 120000;
         this.activeBeadCount = 0;
         this.beadsMesh = null;
         this.beadsGeometry = null;
         this.beadsMaterial = null;
 
-        // Arrayer för positioner och hempositioner (för fjäderfysik)
+        // Arrayer för positioner och hempositioner (för mjuk fjäderfysik)
         this.positions = null;
         this.homePositions = null;
         this.velocities = null;
         this.colors = null;
         this.ages = null;
-        this.sexes = null; // 1 = män, 2 = kvinnor
+        this.sexes = null;
 
-        // Interaktion och Musfysik
-        this.mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, vx: 0, vy: 0, isDown: false };
-        this.highlightIndex = -1;
-        this.highlightPulse = 0;
+        // Ringvågor (Ripples) - Inga tomma hål, bara mjuka vågor!
+        this.ripples = [];
+        this.lastRippleX = -9999;
+        this.lastRippleY = -9999;
+
+        // Vald person (markörring)
+        this.selectionRing = null;
+        this.selectedBeadIndex = -1;
 
         // Fallande pärlor (födslar & invandrare)
         this.fallingBeads = [];
@@ -45,7 +49,6 @@ class ViewportCanvas {
     init() {
         this.scene = new THREE.Scene();
 
-        // Ortografisk kamera för perfekt edge-to-edge canvas utan kantdistorsion
         const aspect = this.width / this.height;
         const viewSize = 34.0;
         this.worldHeight = viewSize;
@@ -67,6 +70,7 @@ class ViewportCanvas {
 
         this.setupLighting();
         this.initBeadSystem();
+        this.initSelectionRing();
         this.setupEventListeners();
 
         this.animate = this.animate.bind(this);
@@ -74,12 +78,39 @@ class ViewportCanvas {
     }
 
     setupLighting() {
-        const ambient = new THREE.AmbientLight(0xffffff, 0.65);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.70);
         this.scene.add(ambient);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
         dirLight.position.set(10, 15, 25);
         this.scene.add(dirLight);
+    }
+
+    initSelectionRing() {
+        // En pulserande neon-aura som markerar den person man klickat på!
+        const ringGeo = new THREE.RingGeometry(0.38, 0.65, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x00f5d4,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false
+        });
+        this.selectionRing = new THREE.Mesh(ringGeo, ringMat);
+        this.selectionRing.position.z = 1.0;
+        this.scene.add(this.selectionRing);
+    }
+
+    setSelectedBead(index) {
+        this.selectedBeadIndex = index;
+        if (index >= 0 && index < this.activeBeadCount) {
+            const x = this.positions[index * 3];
+            const y = this.positions[index * 3 + 1];
+            this.selectionRing.position.set(x, y, 1.0);
+            this.selectionRing.material.opacity = 0.95;
+        } else {
+            this.selectionRing.material.opacity = 0;
+        }
     }
 
     initBeadSystem() {
@@ -96,7 +127,6 @@ class ViewportCanvas {
         this.beadsGeometry.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
         this.beadsGeometry.setAttribute('age', new THREE.BufferAttribute(this.ages, 1));
 
-        // Shader med ljusbrytande sfär-normaler för saftig Orbeez-glans
         const vertexShader = `
             attribute float age;
             attribute vec3 color;
@@ -111,7 +141,7 @@ class ViewportCanvas {
                 float baseSize = 8.8;
                 if (uHighlightAge >= 0.0) {
                     if (abs(age - uHighlightAge) <= 0.8) {
-                        baseSize = 15.0; // Belys och förstora generationen!
+                        baseSize = 15.0;
                     }
                 }
                 gl_PointSize = baseSize;
@@ -170,14 +200,14 @@ class ViewportCanvas {
 
     getBeadColor(age, index) {
         const candyPalette = [
-            [1.00, 0.15, 0.52], // Neon Korallrosa
-            [0.00, 0.95, 0.88], // Elektrisk Cyan
-            [1.00, 0.88, 0.08], // Solgul
-            [0.72, 0.30, 1.00], // Neonviolett
-            [0.10, 0.95, 0.42], // Limegrön
-            [1.00, 0.45, 0.12], // Clementin
-            [0.05, 0.65, 1.00], // Himmelsblå
-            [0.98, 0.22, 0.32]  // Hallonröd
+            [1.00, 0.15, 0.52],
+            [0.00, 0.95, 0.88],
+            [1.00, 0.88, 0.08],
+            [0.72, 0.30, 1.00],
+            [0.10, 0.95, 0.42],
+            [1.00, 0.45, 0.12],
+            [0.05, 0.65, 1.00],
+            [0.98, 0.22, 0.32]
         ];
 
         const base = candyPalette[index % candyPalette.length];
@@ -221,9 +251,6 @@ class ViewportCanvas {
         return [r, g, b];
     }
 
-    /**
-     * Uppdatera hela skärmens myller utifrån SCB-år och ålderskohorter
-     */
     updateFromPopulation(popData) {
         if (!popData) return;
 
@@ -251,9 +278,7 @@ class ViewportCanvas {
             const centerBandY = currentY + (bandHeight * 0.5);
 
             for (let i = 0; i < countForAge && beadIndex < totalBeadsToDraw; i++) {
-                // Placera jämnt utspritt horisontellt över hela bredden
                 const x = (Math.random() - 0.5) * 2.0 * halfW;
-                // Vertikal organisk dispersion
                 const disp = (Math.random() - 0.5) * Math.max(0.4, bandHeight * 1.2);
                 const y = Math.max(botY - 0.5, Math.min(topY + 0.5, centerBandY + disp));
 
@@ -298,22 +323,44 @@ class ViewportCanvas {
     }
 
     /**
-     * Taktil Fluid-fysik: Dra och rör om i människomassan!
+     * Skapa en mjuk ringvåg (ripple) från musrörelse eller klick
+     */
+    createRipple(x, y, strength = 0.45, speed = 0.26, maxRadius = 9.0) {
+        this.ripples.push({
+            x: x,
+            y: y,
+            radius: 0.1,
+            maxRadius: maxRadius,
+            strength: strength,
+            speed: speed,
+            waveWidth: 1.8
+        });
+
+        if (this.ripples.length > 7) {
+            this.ripples.shift();
+        }
+    }
+
+    /**
+     * Taktil Ripple-Fysik: Inga hål! Bara mjuka vågor som fortplantar sig genom folkhavet
      */
     updateFluidPhysics() {
         if (this.activeBeadCount === 0) return;
 
-        const mx = this.mouse.x;
-        const my = this.mouse.y;
-        const mvx = this.mouse.vx;
-        const mvy = this.mouse.vy;
-        const hasMouse = (mx > -9000);
+        // Uppdatera alla aktiva ringvågor
+        for (let rIdx = this.ripples.length - 1; rIdx >= 0; rIdx--) {
+            const rip = this.ripples[rIdx];
+            rip.radius += rip.speed;
+            rip.strength *= 0.94; // Mjuk dämpning
 
-        const radius = 3.8;
-        const radiusSq = radius * radius;
-        const forceMult = 0.55;
-        const returnSpring = 0.08;
-        const damping = 0.85;
+            if (rip.radius > rip.maxRadius || rip.strength < 0.008) {
+                this.ripples.splice(rIdx, 1);
+            }
+        }
+
+        const numRipples = this.ripples.length;
+        const returnSpring = 0.12;
+        const damping = 0.82;
 
         for (let i = 0; i < this.activeBeadCount; i++) {
             const i3 = i * 3;
@@ -323,34 +370,31 @@ class ViewportCanvas {
             let vx = this.velocities[i3];
             let vy = this.velocities[i3 + 1];
 
-            // 1. Musrepulsion och virveldrag
-            if (hasMouse) {
-                const dx = px - mx;
-                const dy = py - my;
-                const distSq = dx * dx + dy * dy;
+            // Vågpåverkan från ringvågorna
+            for (let rIdx = 0; rIdx < numRipples; rIdx++) {
+                const rip = this.ripples[rIdx];
+                const dx = px - rip.x;
+                const dy = py - rip.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (distSq < radiusSq && distSq > 0.001) {
-                    const dist = Math.sqrt(distSq);
-                    const factor = (1.0 - (dist / radius)) * forceMult;
+                const waveDist = Math.abs(dist - rip.radius);
+                if (waveDist < rip.waveWidth && dist > 0.001) {
+                    // Sinusvåg: mjuk knuff ut och sedan in
+                    const phase = (dist - rip.radius) / rip.waveWidth;
+                    const waveForce = Math.sin(phase * Math.PI) * rip.strength;
                     
-                    // Tryck undan
-                    vx += (dx / dist) * factor * 0.8;
-                    vy += (dy / dist) * factor * 0.8;
-
-                    // Virveldrag i musens rörelseriktning
-                    vx += mvx * factor * 0.4;
-                    vy += mvy * factor * 0.4;
+                    vx += (dx / dist) * waveForce * 0.16;
+                    vy += (dy / dist) * waveForce * 0.16;
                 }
             }
 
-            // 2. Fjäderåtergång mot hemposition
+            // Fjäderåtergång till hemposition (så myllret förblir tätt och jämnt)
             const hx = this.homePositions[i3];
             const hy = this.homePositions[i3 + 1];
 
             vx += (hx - px) * returnSpring;
             vy += (hy - py) * returnSpring;
 
-            // Dämpning
             vx *= damping;
             vy *= damping;
 
@@ -362,15 +406,8 @@ class ViewportCanvas {
         }
 
         this.beadsGeometry.attributes.position.needsUpdate = true;
-
-        // Dämpa musens hastighet
-        this.mouse.vx *= 0.6;
-        this.mouse.vy *= 0.6;
     }
 
-    /**
-     * Födslar & Invandring som faller in i viewporten uppifrån
-     */
     spawnDroppingBead(type = 'birth') {
         const topY = (this.worldHeight / 2) + 2.0;
         const targetY = (this.worldHeight / 2) * (type === 'birth' ? 0.85 : 0.20);
@@ -411,6 +448,11 @@ class ViewportCanvas {
                 b.vy = -b.vy * 0.40;
                 b.bounces++;
 
+                if (b.bounces === 1) {
+                    // Skapa en ringvåg vid nedslaget!
+                    this.createRipple(b.mesh.position.x, b.mesh.position.y, 0.35, 0.20, 6.0);
+                }
+
                 if (b.bounces >= 3) {
                     b.mesh.material.opacity = Math.max(0, 1.0 - (b.life - 90) * 0.03);
                     b.mesh.material.transparent = true;
@@ -426,7 +468,6 @@ class ViewportCanvas {
     }
 
     setupEventListeners() {
-        // Konvertera skärmkoordinater till ortografiska världskoordinater
         const screenToWorld = (clientX, clientY) => {
             const nx = (clientX / this.width) * 2 - 1;
             const ny = -(clientY / this.height) * 2 + 1;
@@ -437,42 +478,44 @@ class ViewportCanvas {
 
         window.addEventListener('mousemove', (e) => {
             const w = screenToWorld(e.clientX, e.clientY);
-            if (this.mouse.prevX > -9000) {
-                this.mouse.vx = w.x - this.mouse.prevX;
-                this.mouse.vy = w.y - this.mouse.prevY;
+            const dx = w.x - this.lastRippleX;
+            const dy = w.y - this.lastRippleY;
+            const dist = Math.hypot(dx, dy);
+
+            // Mjuk ringvåg i musens spår (wake ripple) utan att göra något tomt hål!
+            if (dist > 1.4) {
+                this.createRipple(w.x, w.y, 0.18, 0.20, 3.8);
+                this.lastRippleX = w.x;
+                this.lastRippleY = w.y;
             }
-            this.mouse.x = w.x;
-            this.mouse.y = w.y;
-            this.mouse.prevX = w.x;
-            this.mouse.prevY = w.y;
         });
 
         window.addEventListener('touchmove', (e) => {
             if (e.touches.length > 0) {
                 const t = e.touches[0];
                 const w = screenToWorld(t.clientX, t.clientY);
-                if (this.mouse.prevX > -9000) {
-                    this.mouse.vx = w.x - this.mouse.prevX;
-                    this.mouse.vy = w.y - this.mouse.prevY;
+                const dx = w.x - this.lastRippleX;
+                const dy = w.y - this.lastRippleY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 1.4) {
+                    this.createRipple(w.x, w.y, 0.22, 0.22, 4.0);
+                    this.lastRippleX = w.x;
+                    this.lastRippleY = w.y;
                 }
-                this.mouse.x = w.x;
-                this.mouse.y = w.y;
-                this.mouse.prevX = w.x;
-                this.mouse.prevY = w.y;
             }
         }, { passive: true });
 
-        window.addEventListener('mouseleave', () => {
-            this.mouse.x = -9999;
-            this.mouse.y = -9999;
-            this.mouse.prevX = -9999;
-        });
-
-        // KLICK FÖR ATT INSPEKTERA EN SPECIFIK MÄNNISKA
+        // KLICK PÅ EN PÄRLA: Direkt respons & markering precis där man klickar!
         this.container.addEventListener('click', (e) => {
             const w = screenToWorld(e.clientX, e.clientY);
             const nearest = this.findNearestBead(w.x, w.y);
+            
+            // Starta en tydlig, expanderande ringvåg från klickpunkten
+            this.createRipple(w.x, w.y, 0.55, 0.28, 12.0);
+
             if (nearest && this.onPersonClick) {
+                this.setSelectedBead(nearest.index);
                 this.onPersonClick(nearest, e.clientX, e.clientY);
             }
         });
@@ -486,6 +529,7 @@ class ViewportCanvas {
         let closestDistSq = Infinity;
         let closestIndex = -1;
 
+        // Eftersom det inte finns något tomt hål ligger en pärla precis intill klicket!
         for (let i = 0; i < this.activeBeadCount; i++) {
             const i3 = i * 3;
             const dx = this.positions[i3] - wx;
@@ -497,7 +541,7 @@ class ViewportCanvas {
             }
         }
 
-        if (closestIndex >= 0 && closestDistSq < 16.0) { // Inom rimligt klickavstånd
+        if (closestIndex >= 0 && closestDistSq < 6.0) {
             return {
                 index: closestIndex,
                 age: Math.round(this.ages[closestIndex]),
@@ -530,6 +574,13 @@ class ViewportCanvas {
         requestAnimationFrame(this.animate);
         this.updateFluidPhysics();
         this.updateFallingBeads();
+
+        // Pulsera markörringen runt den klickade personen mjukt
+        if (this.selectionRing && this.selectionRing.material.opacity > 0) {
+            const pulse = 1.0 + 0.15 * Math.sin(Date.now() * 0.008);
+            this.selectionRing.scale.set(pulse, pulse, 1.0);
+        }
+
         this.renderer.render(this.scene, this.camera);
     }
 }
