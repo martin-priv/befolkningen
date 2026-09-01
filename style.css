@@ -96,20 +96,28 @@ body, html {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Stor Befolkningsräknare (HUD) */
+/* Stor Befolkningsräknare (HUD) - Halvtransparent frostad bakgrund */
 .pop-counter-hud {
     position: absolute;
     top: 75px;
     left: 24px;
-    z-index: 10;
+    z-index: 15;
     pointer-events: none;
+    background: rgba(14, 20, 27, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 18px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
 }
 
 .pop-label {
     font-family: 'SF Mono', Monaco, monospace;
     font-size: 10px;
     letter-spacing: 2px;
-    color: #64748b;
+    color: #94a3b8;
     font-weight: 600;
 }
 
@@ -125,13 +133,13 @@ body, html {
     color: #ffffff;
     letter-spacing: -0.5px;
     margin-top: 2px;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
 }
 
 .pop-sub {
     font-size: 11px;
-    color: #64748b;
-    margin-top: 2px;
+    color: #94a3b8;
+    margin-top: 4px;
 }
 
 /* Live Rytm Panel överst i Tidslinjepanelen - Full bredd, centrerat */

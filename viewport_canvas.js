@@ -267,16 +267,17 @@ class ViewportCanvas {
         const total = popData.total;
         let beadIndex = 0;
 
-        // 1:1 SKALA & NATURLIG FYLLNADSHÖJD:
+        // 1:1 SKALA & NATURLIG FYLLNADSHÖJD MED TAKHÖJD (HEADROOM):
         // Varje pärla har konstant storlek och volym (1 pärla = 100 invånare).
         // Befolkningen fyller skärmen från botten och uppåt som ett hav:
-        // 1860 (3,85 miljoner): Fyller ca 31% av skärmen (lägre höjd i äldre tid)
-        // 1900 (5,14 miljoner): Fyller ca 42% av skärmen
-        // 1969 (8,00 miljoner): Fyller ca 65% av skärmen
-        // 2026 (10,62 miljoner): Fyller ca 86% av skärmen
-        // 2070 (11,80 miljoner): Fyller ca 95% av skärmen
+        // 1860 (3,85 miljoner): Fyller ca 25% av skärmen (lägre höjd i äldre tid)
+        // 1900 (5,14 miljoner): Fyller ca 33% av skärmen
+        // 1969 (8,00 miljoner): Fyller ca 51% av skärmen
+        // 2026 (10,62 miljoner): Fyller ca 68% av skärmen
+        // 2070 (11,80 miljoner): Fyller ca 75% av skärmen (lämnar ren rymd för header & fallande pärlor)
         const maxCapacity = 12200000;
-        const fillFraction = Math.min(0.94, (total / maxCapacity) * 0.94);
+        const maxFillRatio = 0.78;
+        const fillFraction = Math.min(maxFillRatio, (total / maxCapacity) * maxFillRatio);
 
         const halfW = (this.worldWidth / 2) * 0.94;
         this.botY = (-this.worldHeight / 2) + 1.2;
