@@ -1,62 +1,74 @@
-# 🏺 Glasburken — Sveriges befolkning i 1:1
+# 🇸🇪 Sveriges befolkning (1860–2070)
 
-> **Ett levande slow art-monument över Sveriges befolkning.**  
-> En 3D-glasburk fylld med över 10,5 miljoner pärlor. Varje pärla är en levande människa i Sverige – styrd i realtid av officiell statistik från Statistiska centralbyrån (SCB).
+> **Ett levande digitalt monument över Sveriges befolkning.**  
+> Ett taktilt hav av över 100 000 skimrande pärlor där varje pärla representerar 100 levande människor. Drivs i realtid av officiell befolkningsstatistik från Statistiska centralbyrån (SCB).
 
----
-
-## 🎨 Koncept & Metafor
-
-Tänk dig en vacker apotekarburk i optiskt glas som vilar på en mörk utställningssockel. Inuti glaset vilar hela Sveriges befolkning i form av miljontals skimrande gelépärlor:
-
-* **1:1 Representation:** Varje enskild individ som lever i Sverige idag ($10\,587\,710$ personer) har sin egen unika pärla i burken.
-* **Pärlornas Livscykel:**
-  * **Nyfödda (0–12 år):** Klara, självlysande karamellfärger (neonrosa, cyan, solgult, violett, limegrönt).
-  * **Unga vuxna (13–29 år):** Friska, spänstiga ädelstenstoner (safir, smaragd, rubin).
-  * **Medelålder (30–59 år):** Mättade, djupa juveltoner.
-  * **Seniorer (60–84 år):** Mörknar gradvis mot rökig kvarts och grafitgrått.
-  * **Äldst (85–100+ år):** Djup obsidian-svart med subtilt skimmer i botten av burken.
-* **Födslar & Invandring:** Nya klara pärlor faller mjukt ner i burken från ovan och studsar till rätta på ytan.
-* **Dödsfall:** De mörknade pärlorna djupt nere i burken löses stilla upp, varpå massan ovanför sjunker en mikroskopisk fraktion neråt.
-* **Utvandring:** Pärlor försvinner i den färg de hade utan att först ha mörknat.
+🌐 **Live demo:** [https://martin-priv.github.io/befolkningen/](https://martin-priv.github.io/befolkningen/)
 
 ---
 
-## 📊 SCB Datakällor (Officiell Statistik)
+## 🎨 Koncept & Estetik
 
-Hämtat via **SCB MCP** (PxWebAPI 2.0):
-1. **Historik 1860–2024:** Tabell `TAB5890` (*"Folkmängden efter ålder och kön. År 1860-2024"*). Samtliga 112 ettårsklasser ($0\text{–}110+$ år) för alla 165 år!
-2. **Framskrivning 2025–2070:** Tabell `TAB4161` (*"Översikt över antal födda, döda, invandrare, utvandrare samt folkmängd"*).
-3. **Realtidstakt 2024:**
-   * ~99 000 födslar/år $\to$ **1 födsel var 5,3 minut**
-   * ~89 500 dödsfall/år $\to$ **1 dödsfall var 5,9 minut**
-   * ~94 000 invandrare/år $\to$ **1 invandrare var 5,6 minut**
-   * ~45 000 utvandrare/år $\to$ **1 utvandrare var 11,7 minut**
+Hela Sveriges befolkning framställd som en levande, taktil partikelmassa – från nyfödda barn i ytskiktet till de äldsta seniorerna i botten:
+
+* **Skala (1:100):** Varje pärla motsvarar exakt 100 invånare. År 2026 rymmer installationen ca 106 260 individuella sfärer, renderade med anpassade GLSL-shaders i Three.js för att ge stabila 60 FPS med spegelreflexer, ljusbrytning och dynamiska ringvågor.
+* **Åldrarnas palett & luminescens:**
+  * **Nyfödda (0–12 år):** Klara, självlysande karamell- och neonfärger i ytskiktet.
+  * **Unga & vuxna (13–59 år):** Djupa, klara ädelstenstoner (cyan, azurblått, smaragd).
+  * **Seniorer (60–75 år):** Dämpade, mörkare skiffer- och grafitnyanser.
+  * **Äldst (76–105+ år):** Polerade svarta Tahitiska pärlor och obsidian i bottenlagret – samma fysiska sfärstorlek som alla andra åldrar med subtilt kantskimmer.
+* **Fysisk fyllnadshöjd:** Skärmens fyllnadsgrad speglar befolkningens faktiska volym. År 1860 (3,8 miljoner) vilar befolkningen i den nedre tredjedelen, år 1969 når den mitten, och år 2026/2070 fyller den tre fjärdedelar med luftig takhöjd för atmosfären.
 
 ---
 
-## 🚀 Kom igång lokalt
+## 💓 Organisk Demografisk Rytm (Live 2026)
 
-Projektet är helt fristående och kräver inga externa byggsteg:
+Alla fyra demografiska krafter drivs av oberoende **Poisson-processer** (exponentialfördelning) baserade på SCB:s verkliga årstakter:
+
+* 👶 **Födslar (~var 5,5 min):** Faller ner från himlen, plaskar i ytan och skapar expanderande ringvågor.
+* 🛬 **Invandring (~var 6,1 min):** Faller ner från skyn, plaskar och glider ner i sitt vuxna skikt. Visar ursprungsland baserat på SCB:s data.
+* 🕊️ **Dödsfall (~var 5,4 min):** En slumpvis vald seniorpärla i botten flammar upp i ett mjukt silverskimmer, ger ifrån sig en stillsam mikro-våg och tonar bort i mörkret.
+* 🛫 **Utvandring (~var 8,6 min):** En vuxen pärla lyser upp i himmelsblått, svävar stilla uppåt mot atmosfären och löses upp när den lämnar landet.
+
+---
+
+## 🕹️ Funktioner & Interaktion
+
+* **⚙️ Solpong-inspirerat kontrollgränssnitt:**
+  * Kontrollpanelen startar **dold** för en ren och ostörd konstupplevelse.
+  * Klicka på det lilla kugghjulet **`⚙️`** i nedre högra hörnet (eller tryck **`T`**) för att fälla upp tidslinjen.
+  * Klicka på **`✕`** för att fälla ner panelen i golvet igen.
+* **⏱️ Tidslinje (1860–2070):** Dra i reglaget för att se 210 års svensk historia, från emigrationen på 1800-talet till SCB:s framskrivning 2070.
+* **▶ Spela:** Automatisk cinematisk tidsresa genom 210 år.
+* **🔍 Hitta din årskull:** Skriv in ditt födelseår (1915–2026) så tänds hela din generation upp som en lysande skiva med SCB-statistik om antal och könsfördelning.
+* **👆 Klicka på en pärla:** Klicka var som helst i myllret för att starta en ringvåg och öppna en kompakt personprofil (fiktiv representant ur SCB:s register med ålder, kön, civilstånd, kommun och härkomst).
+* **⚡ Tempon:** Växla mellan `⚡ 1x Real` (realtid), `⚡ 10x Fart` och `⚡ 60x Demo`.
+* **⛶ Fullskärm:** Tryck `F` eller klicka på `⛶` för ambient visningsläge.
+
+---
+
+## 📊 Datakällor
+
+All data hämtad från **Statistiska centralbyrån (SCB)** via PxWebAPI 2.0:
+1. **Historisk befolkning 1860–2024:** Tabell `TAB5890` (folkmängd per ettårsklass 0–110+ år och kön).
+2. **Befolkningsframskrivning 2025–2070:** Tabell `TAB4161` (Sveriges framtida befolkning, födda, döda, invandring och utvandring).
+3. **Kommunal & regional fördelning:** SCB:s officiella kommun- och utrikesfödda-statistik.
+
+---
+
+## 🚀 Köra lokalt
+
+Projektet är helt fristående utan externa byggsteg eller paketberoenden:
 
 ```bash
-cd glasburken
 python3 -m http.server 8085
 ```
+
 Öppna sedan i din webbläsare:
 👉 `http://localhost:8085`
 
 ---
 
-## 🕹️ Interaktiva Funktioner
-
-* **🔴 Live Nu:** Klockan tickar sekund för sekund. När ett barn föds eller en invandrare anländer ploppar en ny pärla ner i burken och befolkningstalet räknas upp i realtid!
-* **⏱️ Tidslinje (1860–2070):** Dra i reglaget för att se burken fyllas från 1860 (3,8 miljoner), svälla genom babyboomen, passera 10 miljoner år 2017, och gå mot 11,8 miljoner år 2070.
-* **▶ Spela:** Luta dig tillbaka och se 210 års svensk befolkningshistoria spelas upp i en mjuk cinematisk resa.
-* **🔍 Hitta min årskull:** Skriv in ditt födelseår (t.ex. 1990) så tänds hela din generation upp som en lysande skiva i burken medan övriga generationer dämpas!
-* **⛶ Fullskärm:** Tryck `F` eller klicka på `⛶` för ambient kiosk-läge. Kontrollerna tonar automatiskt bort vid inaktivitet.
-
----
-
 ## 📜 Licens
+
 MIT © Martin
