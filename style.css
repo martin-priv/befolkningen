@@ -191,6 +191,58 @@ body, html {
     text-overflow: ellipsis;
 }
 
+/* Ålderslinjal bredvid burken */
+.age-ruler {
+    position: absolute;
+    left: 24px;
+    top: 225px;
+    bottom: 140px;
+    width: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.ruler-track {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 2px;
+    width: 2px;
+    background: linear-gradient(180deg, #00f5d4 0%, #3b82f6 30%, #f59e0b 60%, #374151 85%, #111317 100%);
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(0, 245, 212, 0.4);
+}
+
+.ruler-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 12px;
+}
+
+.ruler-tick {
+    position: absolute;
+    left: 0;
+    width: 6px;
+    height: 1px;
+    background: #64748b;
+}
+
+.ruler-label {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 9px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 2px 6px;
+    border-radius: 4px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
 /* Färgförklaring (Legend) */
 .legend-card {
     position: absolute;
@@ -476,6 +528,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 body.mouse-idle .app-header,
 body.mouse-idle .pop-counter-hud,
 body.mouse-idle .event-ticker,
+body.mouse-idle .age-ruler,
 body.mouse-idle .legend-card,
 body.mouse-idle .timeline-panel {
     opacity: 0;

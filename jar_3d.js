@@ -280,34 +280,51 @@ class Jar3D {
         const base = baseHues[index % baseHues.length];
         const a = Math.max(0, Math.min(105, age));
 
+        // DRAMATISK & TYDLIG ÅLDRANDEMÖRKNING:
+        // Ålder 0-12: 100% lyster, max mättnad (Sprudlande Orbeez-godis i toppen)
+        // Ålder 13-28: 82% lyster, friska klara ädelstenstoner (ung vuxen)
+        // Ålder 29-50: 52% lyster, djupa juveler och mörk bärnsten (medelålder)
+        // Ålder 51-72: 26% lyster, mörk brons, rökig kvarts och skogsgrön (seniorer)
+        // Ålder 73-90: 14% lyster, mörk grafit och sot
+        // Ålder 91-105+: 7% lyster, kolsvart obsidian i botten
         let brightness, saturation;
 
-        if (a <= 16) {
-            // Ungdom & Barn: Maximal färglyster
+        if (a <= 12) {
             brightness = 1.0;
             saturation = 1.0;
-        } else if (a <= 46) {
-            // Ung vuxen till medelålder: Mjukt djupnande ädelstenstoner
-            const t = (a - 16) / 30.0;
-            brightness = 1.0 - t * 0.28; // 1.0 -> 0.72
-            saturation = 1.0 - t * 0.12;
-        } else if (a <= 76) {
-            // Äldre: Mjuk övergång till bärnsten, mörk brons och rökig kvarts
-            const t = (a - 46) / 30.0;
-            brightness = 0.72 - t * 0.44; // 0.72 -> 0.28
-            saturation = 0.88 - t * 0.45;
+        } else if (a <= 28) {
+            const t = (a - 12) / 16.0;
+            brightness = 1.0 - t * 0.22; // 1.0 -> 0.78
+            saturation = 1.0 - t * 0.12; // 1.0 -> 0.88
+        } else if (a <= 50) {
+            const t = (a - 28) / 22.0;
+            brightness = 0.78 - t * 0.32; // 0.78 -> 0.46
+            saturation = 0.88 - t * 0.30; // 0.88 -> 0.58
+        } else if (a <= 72) {
+            const t = (a - 50) / 22.0;
+            brightness = 0.46 - t * 0.26; // 0.46 -> 0.20
+            saturation = 0.58 - t * 0.35; // 0.58 -> 0.23
+        } else if (a <= 90) {
+            const t = (a - 72) / 18.0;
+            brightness = 0.20 - t * 0.12; // 0.20 -> 0.08
+            saturation = 0.23 - t * 0.15; // 0.23 -> 0.08
         } else {
-            // Äldst (76 - 105+): Mjuk övergång till djupaste sotiga obsidian
-            const t = (a - 76) / 29.0;
-            brightness = 0.28 - t * 0.20; // 0.28 -> 0.08
-            saturation = 0.43 - t * 0.35;
+            const t = (a - 90) / 15.0;
+            brightness = 0.08 - t * 0.03; // 0.08 -> 0.05 (kolsvart!)
+            saturation = 0.08 - t * 0.05;
         }
 
-        const r = base[0] * saturation + (1.0 - saturation) * 0.18;
-        const g = base[1] * saturation + (1.0 - saturation) * 0.18;
-        const b = base[2] * saturation + (1.0 - saturation) * 0.18;
+        const neutral = 0.10;
+        const r = (base[0] * saturation + neutral * (1.0 - saturation)) * brightness;
+        const g = (base[1] * saturation + neutral * (1.0 - saturation)) * brightness;
+        const b = (base[2] * saturation + neutral * (1.0 - saturation)) * brightness;
 
-        return [r * brightness, g * brightness, b * brightness];
+        // Subtilt diamantglitter på de allra äldsta pärlorna (95+ år)
+        if (a >= 95 && (index % 5 === 0)) {
+            return [0.22, 0.22, 0.25];
+        }
+
+        return [r, g, b];
     }
 
     // Uppdatera burkens innehåll utifrån SCB-år och ålderskohorter med organisk vertikal blandning
