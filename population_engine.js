@@ -617,6 +617,18 @@ class PopulationEngine {
     }
 
     /**
+     * HÄMTA KÖNSBENÄMNING BASERAT PÅ ÅLDER
+     * Barn under 18 benämns pojke/flicka, vuxna man/kvinna
+     */
+    getPersonSexTitle(sex, age) {
+        const isMale = (sex === 'män' || sex === 1 || sex === 'man' || sex === 'pojke');
+        if (age < 18) {
+            return isMale ? "pojke" : "flicka";
+        }
+        return isMale ? "man" : "kvinna";
+    }
+
+    /**
      * GENERERA EN DETALJERAD MÄNSKLIG PROFIL VID KLICK
      * Baserat på SCB:s verkliga sannolikheter och historiska epoker
      */
@@ -645,7 +657,7 @@ class PopulationEngine {
             else marital = year < 1970 ? "Ogift" : "Skild";
         }
 
-        const sexTitle = (sex === 'män' || sex === 1) ? "man" : "kvinna";
+        const sexTitle = this.getPersonSexTitle(sex, age);
 
         // Barnantal
         const children = this.getHistoricalChildren(age, year, marital);
@@ -669,6 +681,8 @@ class PopulationEngine {
             countryStat = `En av ca ${cChoice.countInSweden.toLocaleString('sv-SE')} personer födda i ${cChoice.name} i Sverige`;
         }
 
+        const displayTitle = age === 0 ? `Nyfödd ${sexTitle}` : `${age}-årig ${sexTitle}`;
+
         return {
             age: age,
             sex: sexTitle,
@@ -683,7 +697,7 @@ class PopulationEngine {
             isForeignBorn: isForeignBorn,
             birthCountry: birthCountry,
             countryStat: countryStat,
-            displayTitle: `${age}-årig ${sexTitle}`,
+            displayTitle: displayTitle,
             displayLocation: `${chosenMuni.name}, ${chosenMuni.county}`
         };
     }
@@ -742,11 +756,12 @@ class PopulationEngine {
         } else if (type === 'death') {
             const muni = this.getRandomMunicipality();
             const isMan = Math.random() < 0.50;
-            const sexTitle = isMan ? "man" : "kvinna";
             const age = this.sampleDeathAge();
+            const sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
+            const title = age === 0 ? `Spädbarn (${sexTitle})` : `${age}-årig ${sexTitle}`;
             return {
                 type: 'death',
-                narrative: `${age}-årig ${sexTitle} från ${muni.name} avliden`,
+                narrative: `${title} från ${muni.name} avliden`,
                 shortText: `Ett liv slocknade i Sverige (-1)`,
                 delta: '-1',
                 color: '#f1f5f9',
@@ -757,11 +772,12 @@ class PopulationEngine {
         } else if (type === 'immigrate') {
             const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
             const isMan = Math.random() < 0.51;
-            const sexTitle = isMan ? "man" : "kvinna";
-            const age = Math.min(65, Math.max(18, Math.round(27 + (Math.random() - 0.4) * 16)));
+            const age = Math.min(65, Math.max(1, Math.round(27 + (Math.random() - 0.4) * 16)));
+            const sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
+            const title = age === 0 ? `Nyfödd ${sexTitle}` : `${age}-årig ${sexTitle}`;
             return {
                 type: 'immigrate',
-                narrative: `${age}-årig ${sexTitle} från ${country.name} invandrar`,
+                narrative: `${title} från ${country.name} invandrar`,
                 shortText: `Invandring från ${country.name} (+1)`,
                 delta: '+1',
                 color: '#00f5a0',
@@ -773,20 +789,22 @@ class PopulationEngine {
             const muni = this.getRandomMunicipality();
             const dest = this.getRandomEmigrationDestination();
             const isMan = Math.random() < 0.52;
-            const sexTitle = isMan ? "man" : "kvinna";
 
-            let age, narrative;
+            let age, narrative, sexTitle;
             if (dest.isRetiree && Math.random() < 0.38) {
                 // Senior / pensionär som flyttar söderut (Spanien, Portugal, Frankrike)
                 age = Math.round(62 + Math.random() * 12);
+                sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} flyttar till ${dest.name}`;
             } else if (dest.isReturn) {
                 // Återvandring / cirkulär migration (Polen, Indien, Finland, Irak, Syrien, Kina m.fl.)
                 age = Math.round(24 + Math.random() * 22);
+                sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} återvänder till ${dest.name}`;
             } else {
                 // Utvandring för arbete, studier eller karriär (Norge, Danmark, Storbritannien, Tyskland, USA m.fl.)
                 age = Math.round(21 + Math.random() * 18);
+                sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} utvandrar till ${dest.name}`;
             }
 
