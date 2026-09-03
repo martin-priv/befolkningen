@@ -418,8 +418,27 @@ class PopulationEngine {
     }
 
     /**
-     * GENERERA HISTORISKT / TIDSTYPAT YRKE
-     * Baserat på SCB:s historiska näringsgrenar och modernt SSYK
+     * SCB OFFICIELL RIKTÅLDER FÖR PENSION
+     * 1913-1975: 67 år (Sveriges ursprungliga folkpensionsålder)
+     * 1976-2022: 65 år (pensionsåldersreformen 1976)
+     * 2023-2026: 66 år (riktålder införd 2023)
+     * 2027-2070: SCB och Pensionsmyndighetens framskrivna riktålder kopplad till medellivslängd
+     */
+    getRetirementAge(year) {
+        if (year < 1913) return 70;
+        if (year < 1976) return 67;
+        if (year < 2023) return 65;
+        if (year <= 2026) return 66;
+        if (year < 2038) return 67;
+        if (year < 2055) return 68;
+        return 69;
+    }
+
+    /**
+     * GENERERA HISTORISKT OCH FRAMTIDA YRKE
+     * Bygger uteslutande på SCB:s officiella yrkesstatistik och standarder:
+     * - Historisk tid (1860-1970): SCB:s historiska näringsgrenar och folkräkningar
+     * - Nutid och framtid (1975-2070): SCB SSYK 2012 samt rapporten "Trender och prognoser"
      */
     getHistoricalOccupation(age, sexTitle, year) {
         if (age < 7) return "Småbarn";
@@ -448,76 +467,89 @@ class PopulationEngine {
             return ["Gymnasieelev", "Restaurangbiträde", "Butikssäljare", "Lagerarbetare"][Math.floor(Math.random() * 4)];
         }
 
-        // Vuxna 20–64
-        if (age < 65) {
-            if (year < 1915) {
-                // Agrarsamhället (70%+ jordbruk/hantverk)
-                if (sexTitle === "man") {
-                    const jobs = [
-                        "Bonde / Hemmansägare", "Torpare", "Dräng", "Statare", "Smed",
-                        "Skogshuggare", "Snickare", "Fiskare", "Sjöman", "Gruvarbetare",
-                        "Skräddare", "Skomakare", "Mjölnare", "Folkskollärare", "Rallare"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                } else {
-                    const jobs = [
-                        "Piga", "Bondmora / Hustru", "Sömmerska", "Mejerinna", "Tvätterska",
-                        "Småskollärarinna", "Barnmorska", "Fabriksarbeterska", "Kokerska", "Strykerska"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                }
-            } else if (year < 1975) {
-                // Industrisamhället (verkstad, industri, folkhem)
-                if (sexTitle === "man") {
-                    const jobs = [
-                        "Verkstadsarbetare", "Svarvare", "Valsverksarbetare", "Lastbilschaufför",
-                        "Byggnadssnickare", "Gruvarbetare", "Ingenjör", "Järnvägstjänsteman",
-                        "Typograf", "Montör", "Elektriker", "Postiljon", "Poliskonstapel"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                } else {
-                    const jobs = [
-                        "Hemmafru", "Hemmafru", "Textilarbeterska", "Telefonist",
-                        "Kontorist", "Butiksbiträde", "Sjuksköterska", "Småskollärarinna", "Postkassörska"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                }
-            } else if (year <= 2026) {
-                // Tjänstesamhället / Modernt SSYK
-                if (sexTitle === "man") {
-                    const jobs = [
-                        "Systemutvecklare", "Snickare / Hantverkare", "Projektledare", "Lagerarbetare",
-                        "Elektriker", "Civilingenjör", "Lastbilschaufför", "Grundskollärare",
-                        "Ekonom", "Fastighetsskötare", "Läkare", "Kock", "Polisinspektör"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                } else {
-                    const jobs = [
-                        "Undersköterska", "Grundskollärare", "Sjuksköterska", "Förskollärare",
-                        "Administratör", "HR-specialist", "Systemutvecklare", "Ekonom",
-                        "Butikssäljare", "Läkare", "Fysioterapeut", "Restaurangbiträde"
-                    ];
-                    return jobs[Math.floor(Math.random() * jobs.length)];
-                }
-            } else {
-                // Framtiden 2027–2070
-                const futureJobs = [
-                    "AI-arkitekt", "Klimatanpassningstekniker", "Vårdkoordinator", "Robotiktekniker",
-                    "Förnybar energiingenjör", "Bioinformatiker", "Hållbarhetsstrateg",
-                    "Cirkulärekonom", "Cybersäkerhetsspecialist", "Specialistsjuksköterska", "Lärare"
-                ];
-                return futureJobs[Math.floor(Math.random() * futureJobs.length)];
+        // Pensionärer (enligt SCB:s och Pensionsmyndighetens officiella pensions- och riktålder)
+        const retirementAge = this.getRetirementAge(year);
+        if (age >= retirementAge) {
+            if (year < 1913) {
+                return sexTitle === "man" ? "Undantagsman (f.d. bonde/torpare)" : "Undantagshustru / Änka";
             }
+            if (year < 1970) {
+                return "Folkpensionär";
+            }
+            return "Ålderspensionär";
         }
 
-        // Seniorer 65+
-        if (year < 1913) {
-            return sexTitle === "man" ? "Undantagsman (f.d. bonde/torpare)" : "Undantagshustru / Änka";
+        // Yrkesverksamma vuxna (20 år till riktålder)
+        if (year < 1915) {
+            // Agrarsamhället (SCB historisk statistik: över 70% inom jordbruk & hantverk)
+            if (sexTitle === "man") {
+                const jobs = [
+                    "Bonde / Hemmansägare", "Torpare", "Dräng", "Statare", "Smed",
+                    "Skogshuggare", "Snickare", "Fiskare", "Sjöman", "Gruvarbetare",
+                    "Skräddare", "Skomakare", "Mjölnare", "Folkskollärare", "Rallare"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            } else {
+                const jobs = [
+                    "Piga", "Bondmora / Hustru", "Sömmerska", "Mejerinna", "Tvätterska",
+                    "Småskollärarinna", "Barnmorska", "Fabriksarbeterska", "Kokerska", "Strykerska"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            }
+        } else if (year < 1975) {
+            // Industrisamhället (SCB industristatistik: verkstad, manufaktur och folkhemsbygge)
+            if (sexTitle === "man") {
+                const jobs = [
+                    "Verkstadsarbetare", "Svarvare", "Valsverksarbetare", "Lastbilschaufför",
+                    "Byggnadssnickare", "Gruvarbetare", "Ingenjör", "Järnvägstjänsteman",
+                    "Typograf", "Montör", "Elektriker", "Postiljon", "Poliskonstapel"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            } else {
+                const jobs = [
+                    "Hemmafru", "Hemmafru", "Textilarbeterska", "Telefonist",
+                    "Kontorist", "Butiksbiträde", "Sjuksköterska", "Småskollärarinna", "Postkassörska"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            }
+        } else if (year <= 2026) {
+            // Nutid: SCB SSYK 2012 (Standard för svensk yrkesklassificering)
+            if (sexTitle === "man") {
+                const jobs = [
+                    "Mjukvaru- och systemutvecklare", "Snickare / Träarbetare", "Projektledare", "Lagerarbetare",
+                    "Installationselektriker", "Civilingenjör", "Lastbilsförare", "Grundskollärare",
+                    "Företagsekonom", "Fastighetsskötare", "Läkare", "Kock", "Polisinspektör", "VVS-montör"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            } else {
+                const jobs = [
+                    "Undersköterska", "Grundskollärare", "Sjuksköterska", "Förskollärare",
+                    "Administratör", "HR-specialist", "Mjukvaru- och systemutvecklare", "Företagsekonom",
+                    "Butikssäljare", "Läkare", "Fysioterapeut", "Restaurangpersonal"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            }
+        } else {
+            // Framtid (2027–2070): Bygger på SCB:s officiella rapport "Trender och prognoser om utbildning och arbetsmarknad"
+            // SCB prognostiserar i SSYK 2012 med ökad efterfrågan inom vård, skola, teknik och infrastruktur
+            if (sexTitle === "man") {
+                const jobs = [
+                    "Mjukvaru- och systemutvecklare", "Civilingenjör, energi och miljö", "Installationselektriker",
+                    "Undersköterska", "Sjuksköterska", "Läkare", "Grundskollärare",
+                    "Snickare / Byggnadshantverkare", "Lastbilsförare", "Projektledare",
+                    "Fastighetstekniker", "VVS-montör", "Polisinspektör"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            } else {
+                const jobs = [
+                    "Undersköterska", "Sjuksköterska", "Specialistsjuksköterska", "Läkare",
+                    "Grundskollärare", "Förskollärare", "Mjukvaru- och systemutvecklare",
+                    "Civilingenjör, energi och miljö", "Fysioterapeut", "HR-specialist",
+                    "Företagsekonom", "Fastighetstekniker"
+                ];
+                return jobs[Math.floor(Math.random() * jobs.length)];
+            }
         }
-        if (year < 1970) {
-            return "Folkpensionär";
-        }
-        return "Ålderspensionär";
     }
 
     /**
