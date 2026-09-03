@@ -429,7 +429,7 @@ body, html {
 /* Färgförklaring (Legend) */
 /* Tidslinjepanel (Botten) med mjuk infällning/utfällning */
 .timeline-panel {
-    position: absolute;
+    position: fixed;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
@@ -480,6 +480,13 @@ body, html {
     transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     padding: 0;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dock-btn:focus,
+.dock-btn:focus-visible {
+    outline: none;
 }
 
 .dock-btn:hover {
@@ -503,10 +510,10 @@ body, html {
 }
 
 .dock-btn.active {
-    border-color: rgba(0, 245, 212, 0.6);
+    border-color: rgba(0, 245, 212, 0.8);
     color: #00f5d4;
     opacity: 1.0;
-    box-shadow: 0 0 16px rgba(0, 245, 212, 0.35);
+    box-shadow: 0 0 14px rgba(0, 245, 212, 0.4);
 }
 
 /* Info-panel för Källor & Metod — Fälls ut på samma sätt som tidslinjepanelen */
@@ -871,8 +878,8 @@ body.mouse-idle .timeline-panel {
     transition: opacity 1.2s ease;
 }
 
-/* Responsivitet & Mobil-anpassning (iPhone / Android / tablets) */
-@media (max-width: 768px) {
+/* Responsivitet & Mobil-anpassning (iPhone / Android / tablets upp till 860px) */
+@media (max-width: 860px) {
     /* Header & Befolkningsräknare */
     .pop-counter-hud {
         top: 12px;
@@ -941,6 +948,7 @@ body.mouse-idle .timeline-panel {
 
     /* Tidslinje & Kontrollpanel som elegant Bottom Sheet */
     .timeline-panel {
+        position: fixed;
         bottom: 0;
         left: 0;
         transform: none;
@@ -954,12 +962,15 @@ body.mouse-idle .timeline-panel {
     .timeline-panel.collapsed {
         transform: translateY(100%);
     }
-    .rhythm-bar {
+
+    /* Live-rytm i rent 2x2 rutnät utan horisontellt spill */
+    .live-rhythm-bar {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 4px 6px;
         padding: 5px 8px;
         margin-bottom: 8px;
+        overflow: hidden;
     }
     .rhythm-divider {
         display: none;
@@ -999,6 +1010,7 @@ body.mouse-idle .timeline-panel {
         flex: 1;
         padding: 6px 4px;
         font-size: 10px;
+        white-space: nowrap;
         justify-content: center;
     }
     .timeline-actions #closeTimelineBtn {
@@ -1020,6 +1032,12 @@ body.mouse-idle .timeline-panel {
     }
     .slider-milestones span {
         font-size: 8.5px;
+    }
+    .slider-milestones span.active-marker {
+        transform: translateX(-70%);
+    }
+    .slider-milestones span:last-child {
+        transform: translateX(-100%);
     }
 
     /* Flytande Dock med Info & Kugghjul */
