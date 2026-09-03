@@ -90,18 +90,37 @@ class PopulationEngine {
             2017: "Sverige passerar historiska 10 miljoner invånare!",
             2024: "Historiskt utfall: 10 587 710 personer.",
             2025: "SCB: 10 602 310 personer.",
-            2026: "Idag: 10 626 026 personer (aktuell SCB-framskrivning).",
+            2026: "Idag: Aktuell SCB-framskrivning och månadsstatistik.",
             2030: "SCB Framskrivning: 10,72 miljoner invånare.",
             2050: "SCB Framskrivning: Sveriges befolkning beräknas till 11,29 miljoner.",
             2070: "SCB Framskrivning: 11,80 miljoner invånare."
         };
+
+        this.monthlyData = null;
+        this.currentLivePopulation = 10626026;
+        this.lastDriftSync = Date.now();
     }
 
     async load() {
         try {
             const resp = await fetch('data/glasburken_data.json');
             this.data = await resp.json();
-            console.log('✅ SCB-data laddad:', this.data.metadata.title);
+            console.log('✅ SCB-grunddata laddad:', this.data.metadata.title);
+
+            // 1. Läs lokal månadssynk från TAB6471
+            try {
+                const mResp = await fetch('data/scb_latest_monthly.json');
+                if (mResp.ok) {
+                    this.monthlyData = await mResp.json();
+                    console.log('✅ Aktuell SCB-månadsstatistik (TAB6471) laddad:', this.monthlyData.latestMonth.name, this.monthlyData.latestMonth.population);
+                }
+            } catch (me) {
+                console.warn('Lokal TAB6471-data kunde inte läsas:', me);
+            }
+
+            // 2. Försök även direkt live-anrop mot SCB:s öppna PxWebApi v2 i bakgrunden
+            this.fetchLiveSCBMonthly().catch(() => {});
+
             return true;
         } catch (e) {
             console.error('Kunde inte ladda SCB-data:', e);
@@ -109,7 +128,106 @@ class PopulationEngine {
         }
     }
 
+    async fetchLiveSCBMonthly() {
+        try {
+            const query = {
+                selection: [
+                    { variableCode: "Region", valueCodes: ["00"] },
+                    { variableCode: "Alder", valueCodes: ["TotSA"] },
+                    { variableCode: "Kon", valueCodes: ["TotSa"] },
+                    { variableCode: "ContentsCode", valueCodes: ["000007SF"] },
+                    { variableCode: "Tid", valueCodes: ["*"] }
+                ]
+            };
+            const resp = await fetch("https://statistikdatabasen.scb.se/api/v2/tables/TAB6471/data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(query)
+            });
+            if (!resp.ok) return;
+            const res = await resp.json();
+            const timeDim = res.dimension?.Tid?.category?.index;
+            const values = res.value;
+            if (!timeDim || !values) return;
+
+            const sorted = Object.entries(timeDim).sort((a, b) => a[1] - b[1]);
+            const [latestCode, idx] = sorted[sorted.length - 1];
+            const latestPop = values[idx];
+            const [yStr, mStr] = latestCode.split('M');
+            const year = parseInt(yStr, 10);
+            const month = parseInt(mStr, 10);
+            const lastDay = new Date(year, month, 0).getDate();
+            const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T23:59:59Z`;
+
+            const svMonths = ["", "januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
+            this.monthlyData = {
+                tableId: "TAB6471",
+                tableName: "Folkmängden per månad efter region, ålder och kön",
+                source: "Statistiska centralbyrån (SCB) PxWebApi v2 (Direktkopplad)",
+                latestMonth: {
+                    code: latestCode,
+                    year: year,
+                    month: month,
+                    name: `${svMonths[month]} ${year}`,
+                    endDate: endDate,
+                    population: latestPop
+                },
+                projectionTarget: {
+                    year: year,
+                    population: (this.data?.projections?.[year]?.total || 10626026)
+                }
+            };
+            console.log('⚡ Direktkontakt med SCB PxWebApi v2 (TAB6471) uppdaterad live!');
+        } catch (e) {
+            // Tyst fallback till lokalt scb_latest_monthly.json
+        }
+    }
+
+    getLiveCalculatedPopulation(date = new Date()) {
+        if (!this.monthlyData || !this.monthlyData.latestMonth) {
+            return {
+                calculatedPop: 10626026,
+                baseMonth: null,
+                basePop: 10626026,
+                growthPerSec: 0
+            };
+        }
+
+        const lm = this.monthlyData.latestMonth;
+        const baseTime = new Date(lm.endDate).getTime();
+        const basePop = lm.population;
+
+        const targetYear = lm.year;
+        const targetPop = (this.monthlyData.projectionTarget?.population || 
+                           this.data?.projections?.[targetYear]?.total || 
+                           10626026);
+        const targetTime = Date.UTC(targetYear, 11, 31, 23, 59, 59);
+
+        const totalDurationSec = Math.max(1, (targetTime - baseTime) / 1000);
+        const deltaPop = targetPop - basePop;
+        const growthPerSec = deltaPop / totalDurationSec;
+
+        const elapsedSec = Math.max(0, (date.getTime() - baseTime) / 1000);
+        const calculatedPop = Math.round(basePop + elapsedSec * growthPerSec);
+
+        return {
+            calculatedPop: calculatedPop,
+            baseMonth: lm.name,
+            baseCode: lm.code,
+            basePop: basePop,
+            growthPerSec: growthPerSec,
+            targetYear: targetYear,
+            targetPop: targetPop
+        };
+    }
+
     getEraNote(year) {
+        if (year === 2026 && this.isLive) {
+            if (this.monthlyData && this.monthlyData.latestMonth) {
+                return `Idag: Realtidskalkyl utifrån SCB ${this.monthlyData.latestMonth.name} (${this.monthlyData.tableId})`;
+            }
+            return "Idag: Realtidskalkyl utifrån aktuell SCB-månadsstatistik.";
+        }
         if (this.eraNotes[year]) return this.eraNotes[year];
         if (year < 1900) return "Tidig industrialisering och utvandring.";
         if (year < 1940) return "Mellankrigstid och folkhemsbygge.";
@@ -265,6 +383,11 @@ class PopulationEngine {
         if (!this.data) return;
         const rates = this.data.liveRates2026 || this.data.liveRates2024;
 
+        // Initiera dagsaktuell befolkning beräknat fram till denna sekund
+        const liveCalc = this.getLiveCalculatedPopulation();
+        this.currentLivePopulation = liveCalc.calculatedPop;
+        this.lastDriftSync = Date.now();
+
         // Skapa första organiska måltiderna
         this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
         this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
@@ -315,6 +438,7 @@ class PopulationEngine {
         if (this.liveBirthTimer >= this.currentBirthInterval) {
             this.liveBirthTimer = 0;
             this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
+            this.currentLivePopulation += 1;
             const muni = this.municipalities[Math.floor(Math.random() * this.municipalities.length)];
             events.push({ 
                 type: 'birth', 
@@ -328,6 +452,7 @@ class PopulationEngine {
         if (this.liveDeathTimer >= this.currentDeathInterval) {
             this.liveDeathTimer = 0;
             this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
+            this.currentLivePopulation -= 1;
             events.push({ type: 'death', text: 'Ett liv slocknade i Sverige (-1)', color: '#64748b' });
         }
 
@@ -335,6 +460,7 @@ class PopulationEngine {
         if (this.liveImmigrantTimer >= this.currentImmigrantInterval) {
             this.liveImmigrantTimer = 0;
             this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
+            this.currentLivePopulation += 1;
             const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
             events.push({ 
                 type: 'immigrate', 
@@ -348,7 +474,19 @@ class PopulationEngine {
         if (this.liveEmigrantTimer >= this.currentEmigrantInterval) {
             this.liveEmigrantTimer = 0;
             this.currentEmigrantInterval = this.samplePoissonInterval(rates.emigrateIntervalSec);
+            this.currentLivePopulation -= 1;
             events.push({ type: 'emigrate', text: 'Utvandring från Sverige (-1)', color: '#94a3b8' });
+        }
+
+        // Synkronisera mot verklig realtidskalkylering var 30:e sekund vid 1x fart
+        const now = Date.now();
+        if (now - this.lastDriftSync > 30000 && (this.speedMultiplier || 1.0) === 1.0) {
+            this.lastDriftSync = now;
+            const targetLive = this.getLiveCalculatedPopulation().calculatedPop;
+            const drift = targetLive - this.currentLivePopulation;
+            if (Math.abs(drift) > 1) {
+                this.currentLivePopulation += Math.sign(drift);
+            }
         }
 
         return events.length > 0 ? events : null;

@@ -100,7 +100,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         const popData = engine.getDataForYear(year);
         if (!popData) return;
 
-        popNumber.textContent = formatNumber(popData.total);
+        if (year === 2026 && engine.isLive) {
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
+            const liveInfo = engine.getLiveCalculatedPopulation();
+            if (popSub) {
+                if (liveInfo.baseMonth) {
+                    popSub.innerHTML = `<span class="live-dot-pulse">●</span> Framräknat i realtid från SCB ${liveInfo.baseMonth} (${formatNumber(liveInfo.basePop)})`;
+                } else {
+                    popSub.innerHTML = `<span class="live-dot-pulse">●</span> Realtidsberäkning (SCB)`;
+                }
+            }
+        } else {
+            popNumber.textContent = formatNumber(popData.total);
+            if (popSub) {
+                popSub.textContent = "Skala: 1 pärla = 100 invånare";
+            }
+        }
+
         currentYearBadge.textContent = year;
         selectedYearDisplay.textContent = year;
         yearSlider.value = year;
@@ -282,23 +298,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     function triggerDemoEvent(type) {
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10) || 10620000;
 
         if (type === 'birth') {
             canvas.spawnDroppingBead('birth');
-            popNumber.textContent = formatNumber(currentVal + 1);
+            engine.currentLivePopulation += 1;
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
             showRhythmToast('birth', `${timeStr} — Nyfödd i Sverige (+1)!`);
         } else if (type === 'immigrate') {
             canvas.spawnDroppingBead('immigrate');
-            popNumber.textContent = formatNumber(currentVal + 1);
+            engine.currentLivePopulation += 1;
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
             showRhythmToast('immigrate', `${timeStr} — Invandring till Sverige (+1)!`);
         } else if (type === 'death') {
             canvas.spawnDepartingBead('death');
-            popNumber.textContent = formatNumber(currentVal - 1);
+            engine.currentLivePopulation -= 1;
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
             showRhythmToast('death', `${timeStr} — Ett liv slocknade i Sverige (-1)`);
         } else if (type === 'emigrate') {
             canvas.spawnDepartingBead('emigrate');
-            popNumber.textContent = formatNumber(currentVal - 1);
+            engine.currentLivePopulation -= 1;
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
             showRhythmToast('emigrate', `${timeStr} — Utvandring från Sverige (-1)`);
         }
     }
@@ -332,22 +351,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                     showRhythmToast(ev.type, `${h}:${m}:${s} — ${ev.text}`);
                     if (ev.type === 'birth') {
                         canvas.spawnDroppingBead('birth');
-                        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-                        popNumber.textContent = formatNumber(currentVal + 1);
                     } else if (ev.type === 'immigrate') {
                         canvas.spawnDroppingBead('immigrate');
-                        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-                        popNumber.textContent = formatNumber(currentVal + 1);
                     } else if (ev.type === 'death') {
                         canvas.spawnDepartingBead('death');
-                        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-                        popNumber.textContent = formatNumber(currentVal - 1);
                     } else if (ev.type === 'emigrate') {
                         canvas.spawnDepartingBead('emigrate');
-                        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10);
-                        popNumber.textContent = formatNumber(currentVal - 1);
                     }
                 }
+            }
+
+            if (engine.currentYear === 2026) {
+                popNumber.textContent = formatNumber(engine.currentLivePopulation);
             }
 
             // Uppdatera alla 4 organiska nedräkningar i kontrollpanelen

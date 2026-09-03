@@ -120,7 +120,35 @@ body, html {
     font-size: 11px;
     color: #94a3b8;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
+
+.pop-sub strong {
+    color: #e2e8f0;
+}
+
+.live-dot-pulse {
+    display: inline-block;
+    color: #ff2a7a;
+    font-size: 9px;
+    animation: liveDotPulseAnim 1.6s infinite ease-in-out;
+}
+
+@keyframes liveDotPulseAnim {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 4px #ff2a7a);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(0.8);
+        filter: drop-shadow(0 0 0 transparent);
+    }
+}
+
 
 /* Live Rytm Panel överst i Tidslinjepanelen - Full bredd, centrerat */
 .live-rhythm-bar {
