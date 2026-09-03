@@ -38,6 +38,7 @@ class PopulationEngine {
             { name: "Växjö", county: "Kronobergs län", pop: 97000, weight: 1.5 },
             { name: "Luleå", county: "Norrbottens län", pop: 79000, weight: 1.5 },
             { name: "Östersund", county: "Jämtlands län", pop: 64000, weight: 1.2 },
+            { name: "Sveg", county: "Jämtlands län / Härjedalen", pop: 10200, weight: 0.8 },
             { name: "Krokom", county: "Jämtlands län", pop: 15540, weight: 0.8 },
             { name: "Kiruna", county: "Norrbottens län", pop: 22400, weight: 0.8 },
             { name: "Visby / Gotland", county: "Gotlands län", pop: 61000, weight: 1.0 },
@@ -370,6 +371,99 @@ class PopulationEngine {
         };
     }
 
+    getRandomMunicipality() {
+        let totalWeight = 0;
+        for (let m of this.municipalities) totalWeight += m.weight;
+        let r = Math.random() * totalWeight;
+        for (let m of this.municipalities) {
+            r -= m.weight;
+            if (r <= 0) return m;
+        }
+        return this.municipalities[0];
+    }
+
+    sampleDeathAge() {
+        // Enligt SCB:s livslängdsstatistik:
+        // Medellivslängd ~83 år. De allra flesta avlider mellan 70 och 98 år.
+        const roll = Math.random();
+        if (roll < 0.82) {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const norm = Math.sqrt(-2.0 * Math.log(Math.max(1e-5, u1))) * Math.cos(2.0 * Math.PI * u2);
+            return Math.min(104, Math.max(68, Math.round(84 + norm * 7.5)));
+        } else if (roll < 0.95) {
+            return Math.round(50 + Math.random() * 17);
+        } else {
+            return Math.round(19 + Math.random() * 30);
+        }
+    }
+
+    createEventDetail(type) {
+        if (type === 'birth') {
+            const muni = this.getRandomMunicipality();
+            const isBoy = Math.random() < 0.514;
+            const childTitle = isBoy ? "Pojke" : "Flicka";
+            return {
+                type: 'birth',
+                narrative: `${childTitle} född i ${muni.name}`,
+                shortText: `Nyfödd i ${muni.name} (+1)`,
+                delta: '+1',
+                color: '#ff2a7a',
+                municipality: muni.name
+            };
+        } else if (type === 'death') {
+            const muni = this.getRandomMunicipality();
+            const isMan = Math.random() < 0.50;
+            const sexTitle = isMan ? "man" : "kvinna";
+            const age = this.sampleDeathAge();
+            return {
+                type: 'death',
+                narrative: `${age}-årig ${sexTitle} från ${muni.name} avliden`,
+                shortText: `Ett liv slocknade i Sverige (-1)`,
+                delta: '-1',
+                color: '#f1f5f9',
+                municipality: muni.name,
+                age: age,
+                sex: sexTitle
+            };
+        } else if (type === 'immigrate') {
+            const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
+            const isMan = Math.random() < 0.51;
+            const sexTitle = isMan ? "man" : "kvinna";
+            const age = Math.min(65, Math.max(18, Math.round(27 + (Math.random() - 0.4) * 16)));
+            return {
+                type: 'immigrate',
+                narrative: `${age}-årig ${sexTitle} från ${country.name} invandrar`,
+                shortText: `Invandring från ${country.name} (+1)`,
+                delta: '+1',
+                color: '#00f5a0',
+                country: country.name,
+                age: age,
+                sex: sexTitle
+            };
+        } else if (type === 'emigrate') {
+            const destCountries = [
+                "Norge", "Danmark", "Storbritannien", "Tyskland", "USA",
+                "Spanien", "Finland", "Frankrike", "Australien", "Nederländerna"
+            ];
+            const dest = destCountries[Math.floor(Math.random() * destCountries.length)];
+            const isMan = Math.random() < 0.52;
+            const sexTitle = isMan ? "man" : "kvinna";
+            const age = Math.min(68, Math.max(21, Math.round(30 + (Math.random() - 0.4) * 15)));
+            return {
+                type: 'emigrate',
+                narrative: `${age}-årig ${sexTitle} utvandrar till ${dest}`,
+                shortText: `Utvandring till ${dest} (-1)`,
+                delta: '-1',
+                color: '#38bdf8',
+                dest: dest,
+                age: age,
+                sex: sexTitle
+            };
+        }
+        return null;
+    }
+
     samplePoissonInterval(meanSec) {
         // Äkta Poisson-process (Exponentiell fördelning för oberoende naturliga händelser)
         // Väntevärdet är 100% identiskt med SCB:s årstakt (summan blir exakt densamma).
@@ -439,13 +533,7 @@ class PopulationEngine {
             this.liveBirthTimer = 0;
             this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
             this.currentLivePopulation += 1;
-            const muni = this.municipalities[Math.floor(Math.random() * this.municipalities.length)];
-            events.push({ 
-                type: 'birth', 
-                text: `Nyfödd i ${muni.name} (+1)!`, 
-                municipality: muni.name,
-                color: '#ff2a7a' 
-            });
+            events.push(this.createEventDetail('birth'));
         }
 
         // Dödsfall (Organiskt Poisson-intervall kring medelvärdet 324s)
@@ -453,7 +541,7 @@ class PopulationEngine {
             this.liveDeathTimer = 0;
             this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
             this.currentLivePopulation -= 1;
-            events.push({ type: 'death', text: 'Ett liv slocknade i Sverige (-1)', color: '#64748b' });
+            events.push(this.createEventDetail('death'));
         }
 
         // Invandring (Organiskt Poisson-intervall kring medelvärdet 363s)
@@ -461,13 +549,7 @@ class PopulationEngine {
             this.liveImmigrantTimer = 0;
             this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
             this.currentLivePopulation += 1;
-            const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
-            events.push({ 
-                type: 'immigrate', 
-                text: `Invandring till Sverige från ${country.name} (+1)!`, 
-                country: country.name,
-                color: '#00f5a0' 
-            });
+            events.push(this.createEventDetail('immigrate'));
         }
 
         // Utvandring
@@ -475,7 +557,7 @@ class PopulationEngine {
             this.liveEmigrantTimer = 0;
             this.currentEmigrantInterval = this.samplePoissonInterval(rates.emigrateIntervalSec);
             this.currentLivePopulation -= 1;
-            events.push({ type: 'emigrate', text: 'Utvandring från Sverige (-1)', color: '#94a3b8' });
+            events.push(this.createEventDetail('emigrate'));
         }
 
         // Synkronisera mot verklig realtidskalkylering var 30:e sekund vid 1x fart

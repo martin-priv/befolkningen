@@ -33,6 +33,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const highlightCohortBtn = document.getElementById("highlightCohortBtn");
     const cohortStat = document.getElementById("cohortStat");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    
+    // Subtil levande händelsenotis i rymden ovanför pärlytan
+    const narrativePill = document.getElementById("narrativePill");
+    const narrativeDot = document.getElementById("narrativeDot");
+    const narrativeTime = document.getElementById("narrativeTime");
+    const narrativeText = document.getElementById("narrativeText");
+    const narrativeDelta = document.getElementById("narrativeDelta");
 
     // Person Card Inspector UI
     const personCard = document.getElementById("personCard");
@@ -222,6 +229,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         }, 3400);
     }
 
+    // Subtil levande berättelse-rad i himlen ovanför pärlytan
+    let narrativeTimer = null;
+    function showSurfaceNarrative(ev) {
+        if (!narrativePill || !ev) return;
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        if (narrativeTime) narrativeTime.textContent = timeStr;
+        if (narrativeText) narrativeText.textContent = ev.narrative || ev.text;
+
+        const delta = ev.delta || (ev.type === 'birth' || ev.type === 'immigrate' ? '+1' : '-1');
+        if (narrativeDelta) {
+            narrativeDelta.textContent = delta;
+            narrativeDelta.className = `narrative-delta ${delta === '+1' ? 'plus' : 'minus'}`;
+        }
+
+        if (narrativeDot) {
+            narrativeDot.style.color = ev.color || '#f8fafc';
+        }
+        narrativePill.style.setProperty('--event-glow', ev.color || 'rgba(255, 255, 255, 0.25)');
+
+        narrativePill.classList.remove("hidden");
+        narrativePill.classList.remove("event-pulse");
+        void narrativePill.offsetWidth; // Force CSS reflow
+        narrativePill.classList.add("event-pulse");
+
+        clearTimeout(narrativeTimer);
+        narrativeTimer = setTimeout(() => {
+            narrativePill.classList.add("hidden");
+        }, 5000);
+    }
+
     // Live Mode
     liveModeBtn.addEventListener("click", () => {
         engine.isLive = true;
@@ -302,30 +342,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Manuella klick på rytm-fälten samt tangentbordsgenvägar (B, I, D, E) för direkt demo
     function triggerDemoEvent(type) {
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        const ev = engine.createEventDetail(type);
+        if (!ev) return;
 
         if (type === 'birth') {
             canvas.spawnDroppingBead('birth');
             engine.currentLivePopulation += 1;
-            popNumber.textContent = formatNumber(engine.currentLivePopulation);
-            showRhythmToast('birth', `${timeStr} — Nyfödd i Sverige (+1)!`);
         } else if (type === 'immigrate') {
             canvas.spawnDroppingBead('immigrate');
             engine.currentLivePopulation += 1;
-            popNumber.textContent = formatNumber(engine.currentLivePopulation);
-            showRhythmToast('immigrate', `${timeStr} — Invandring till Sverige (+1)!`);
         } else if (type === 'death') {
             canvas.spawnDepartingBead('death');
             engine.currentLivePopulation -= 1;
-            popNumber.textContent = formatNumber(engine.currentLivePopulation);
-            showRhythmToast('death', `${timeStr} — Ett liv slocknade i Sverige (-1)`);
         } else if (type === 'emigrate') {
             canvas.spawnDepartingBead('emigrate');
             engine.currentLivePopulation -= 1;
-            popNumber.textContent = formatNumber(engine.currentLivePopulation);
-            showRhythmToast('emigrate', `${timeStr} — Utvandring från Sverige (-1)`);
         }
+        popNumber.textContent = formatNumber(engine.currentLivePopulation);
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        showRhythmToast(type, `${timeStr} — ${ev.shortText || ev.text}`);
+        showSurfaceNarrative(ev);
     }
 
     if (rhythmBirth) rhythmBirth.addEventListener("click", () => triggerDemoEvent('birth'));
@@ -354,7 +392,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             const events = engine.tickRealtime(1.0);
             if (events) {
                 for (let ev of events) {
-                    showRhythmToast(ev.type, `${h}:${m}:${s} — ${ev.text}`);
+                    showRhythmToast(ev.type, `${h}:${m}:${s} — ${ev.shortText || ev.text}`);
+                    showSurfaceNarrative(ev);
                     if (ev.type === 'birth') {
                         canvas.spawnDroppingBead('birth');
                     } else if (ev.type === 'immigrate') {
