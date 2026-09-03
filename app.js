@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     engine.initWallClockCounters();
 
     function formatNumber(num) {
+        if (num === undefined || num === null || isNaN(num)) return "0";
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
 
@@ -101,10 +102,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!popData) return;
 
         if (year === 2026 && engine.isLive) {
-            popNumber.textContent = formatNumber(engine.currentLivePopulation);
-            const liveInfo = engine.getLiveCalculatedPopulation();
+            const liveVal = engine.currentLivePopulation || 
+                            (typeof engine.getLiveCalculatedPopulation === 'function' ? engine.getLiveCalculatedPopulation().calculatedPop : null) || 
+                            popData.total || 
+                            10626026;
+            popNumber.textContent = formatNumber(liveVal);
+
+            const liveInfo = typeof engine.getLiveCalculatedPopulation === 'function' ? engine.getLiveCalculatedPopulation() : null;
             if (popSub) {
-                if (liveInfo.baseMonth) {
+                if (liveInfo && liveInfo.baseMonth) {
                     popSub.innerHTML = `<span class="live-dot-pulse">●</span> Framräknat i realtid från SCB ${liveInfo.baseMonth} (${formatNumber(liveInfo.basePop)})`;
                 } else {
                     popSub.innerHTML = `<span class="live-dot-pulse">●</span> Realtidsberäkning (SCB)`;
