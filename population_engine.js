@@ -77,6 +77,35 @@ class PopulationEngine {
             { name: "Kina", countInSweden: 38000 }
         ];
 
+        // SCB Utvandringsmål & Bakgrund (enligt TAB6656 & TAB6039)
+        this.emigrationDestinations = [
+            { name: "Norge", weight: 12, isReturn: false },
+            { name: "Tyskland", weight: 11, isReturn: false },
+            { name: "Danmark", weight: 10, isReturn: false },
+            { name: "Storbritannien", weight: 9, isReturn: false },
+            { name: "Spanien", weight: 9, isReturn: false, isRetiree: true },
+            { name: "USA", weight: 7, isReturn: false },
+            { name: "Polen", weight: 7, isReturn: true },
+            { name: "Indien", weight: 6, isReturn: true },
+            { name: "Finland", weight: 6, isReturn: true },
+            { name: "Frankrike", weight: 4, isReturn: false, isRetiree: true },
+            { name: "Nederländerna", weight: 4, isReturn: false },
+            { name: "Irak", weight: 4, isReturn: true },
+            { name: "Schweiz", weight: 3, isReturn: false },
+            { name: "Australien", weight: 3, isReturn: false },
+            { name: "Syrien", weight: 3, isReturn: true },
+            { name: "Italien", weight: 3, isReturn: false },
+            { name: "Kina", weight: 3, isReturn: true },
+            { name: "Turkiet", weight: 2, isReturn: true },
+            { name: "Förenade Arabemiraten", weight: 2, isReturn: false },
+            { name: "Kanada", weight: 2, isReturn: false },
+            { name: "Grekland", weight: 2, isReturn: true },
+            { name: "Iran", weight: 2, isReturn: true },
+            { name: "Somalia", weight: 1, isReturn: true },
+            { name: "Portugal", weight: 2, isReturn: false, isRetiree: true },
+            { name: "Japan", weight: 1, isReturn: false }
+        ];
+
         this.eraNotes = {
             1860: "Fattig-Sverige: 3,85 miljoner invånare. Jordbrukssamhälle.",
             1868: "Missväxtåren: Stor nöd och början på Amerikautvandringen.",
@@ -382,6 +411,17 @@ class PopulationEngine {
         return this.municipalities[0];
     }
 
+    getRandomEmigrationDestination() {
+        let totalWeight = 0;
+        for (let d of this.emigrationDestinations) totalWeight += d.weight;
+        let r = Math.random() * totalWeight;
+        for (let d of this.emigrationDestinations) {
+            r -= d.weight;
+            if (r <= 0) return d;
+        }
+        return this.emigrationDestinations[0];
+    }
+
     sampleDeathAge() {
         // Enligt SCB:s livslängdsstatistik:
         // Medellivslängd ~83 år. De allra flesta avlider mellan 70 och 98 år.
@@ -442,21 +482,34 @@ class PopulationEngine {
                 sex: sexTitle
             };
         } else if (type === 'emigrate') {
-            const destCountries = [
-                "Norge", "Danmark", "Storbritannien", "Tyskland", "USA",
-                "Spanien", "Finland", "Frankrike", "Australien", "Nederländerna"
-            ];
-            const dest = destCountries[Math.floor(Math.random() * destCountries.length)];
+            const muni = this.getRandomMunicipality();
+            const dest = this.getRandomEmigrationDestination();
             const isMan = Math.random() < 0.52;
             const sexTitle = isMan ? "man" : "kvinna";
-            const age = Math.min(68, Math.max(21, Math.round(30 + (Math.random() - 0.4) * 15)));
+
+            let age, narrative;
+            if (dest.isRetiree && Math.random() < 0.38) {
+                // Senior / pensionär som flyttar söderut (Spanien, Portugal, Frankrike)
+                age = Math.round(62 + Math.random() * 12);
+                narrative = `${age}-årig ${sexTitle} från ${muni.name} flyttar till ${dest.name}`;
+            } else if (dest.isReturn) {
+                // Återvandring / cirkulär migration (Polen, Indien, Finland, Irak, Syrien, Kina m.fl.)
+                age = Math.round(24 + Math.random() * 22);
+                narrative = `${age}-årig ${sexTitle} från ${muni.name} återvänder till ${dest.name}`;
+            } else {
+                // Utvandring för arbete, studier eller karriär (Norge, Danmark, Storbritannien, Tyskland, USA m.fl.)
+                age = Math.round(21 + Math.random() * 18);
+                narrative = `${age}-årig ${sexTitle} från ${muni.name} utvandrar till ${dest.name}`;
+            }
+
             return {
                 type: 'emigrate',
-                narrative: `${age}-årig ${sexTitle} utvandrar till ${dest}`,
-                shortText: `Utvandring till ${dest} (-1)`,
+                narrative: narrative,
+                shortText: `Utvandring från ${muni.name} (-1)`,
                 delta: '-1',
                 color: '#38bdf8',
-                dest: dest,
+                dest: dest.name,
+                municipality: muni.name,
                 age: age,
                 sex: sexTitle
             };
