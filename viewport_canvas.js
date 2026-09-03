@@ -829,6 +829,8 @@ class ViewportCanvas {
         }
 
         const spawnX = (Math.random() - 0.5) * this.worldWidth * 0.78;
+        const colObj = new THREE.Color(colorHex);
+        const rgb = [colObj.r, colObj.g, colObj.b];
 
         // Halverad storlek (radie 0.22) med tredimensionell pärllyster och lysande ljusaura!
         const { group, sphere, sprite } = this.createLuminousBead(colorHex, 0.22, 1.30);
@@ -846,7 +848,9 @@ class ViewportCanvas {
             enteredSurface: false,
             lastWakeY: topY,
             bounces: 0,
-            life: 0
+            life: 0,
+            rgb: rgb,
+            age: (type === 'birth') ? 0 : Math.round(20 + Math.random() * 25)
         });
     }
 
@@ -903,15 +907,62 @@ class ViewportCanvas {
 
                 if (b.group.position.y <= b.targetY) {
                     b.group.position.y = b.targetY;
-                    b.vy = -b.vy * 0.35;
+                    b.vy = -b.vy * 0.28;
                     b.bounces++;
                 }
 
-                if (b.bounces >= 3) {
-                    const op = Math.max(0, 1.0 - (b.life - 80) * 0.035);
-                    b.sphere.material.opacity = op;
-                    b.sprite.material.opacity = op * 0.75;
-                    if (b.life > 120) {
+                // När kulan har nått målnivån: krymp mjukt och ta en permanent plats bland pärlorna
+                if (b.bounces >= 2) {
+                    b.shrinkProgress = (b.shrinkProgress || 0) + 0.034;
+                    const p = Math.min(1.0, b.shrinkProgress);
+
+                    // Målskala: Från 1.0 (radie 0.22) ner till 0.386 (motsvarande pärldiameter 0.170 enheter)
+                    const targetScale = 0.386;
+                    const s = 1.0 - p * (1.0 - targetScale);
+                    b.group.scale.set(s, s, s);
+
+                    // Ljusauran (sprite) tonas ut så att bara den solida pärlan återstår
+                    b.sprite.material.opacity = Math.max(0, (1.0 - p * 1.25) * 0.75);
+
+                    // Skapa ett litet mjukt mikroripple i mitten av krympningen så grannarna gör plats
+                    if (!b.roomMade && p > 0.45) {
+                        b.roomMade = true;
+                        this.createRipple(b.group.position.x, b.targetY, 0.045, 0.12, 1.8);
+                    }
+
+                    // När den krympt till exakt rätt pärlstorlek:
+                    // Överlämna sömlöst till en permanent pärla i partikelmolnet!
+                    if (p >= 1.0) {
+                        if (this.activeBeadCount < this.maxBeads) {
+                            const newIdx = this.activeBeadCount;
+                            this.activeBeadCount++;
+                            const i3 = newIdx * 3;
+
+                            this.positions[i3] = b.group.position.x;
+                            this.positions[i3 + 1] = b.targetY;
+                            this.positions[i3 + 2] = 0;
+
+                            this.homePositions[i3] = b.group.position.x;
+                            this.homePositions[i3 + 1] = b.targetY;
+                            this.homePositions[i3 + 2] = 0;
+
+                            this.velocities[i3] = 0;
+                            this.velocities[i3 + 1] = 0;
+                            this.velocities[i3 + 2] = 0;
+
+                            this.colors[i3] = b.rgb[0];
+                            this.colors[i3 + 1] = b.rgb[1];
+                            this.colors[i3 + 2] = b.rgb[2];
+
+                            this.ages[newIdx] = (b.type === 'birth') ? 0 : b.age;
+                            this.sexes[newIdx] = (Math.random() < 0.514) ? 1 : 2;
+
+                            this.beadsGeometry.setDrawRange(0, this.activeBeadCount);
+                            this.beadsGeometry.attributes.position.needsUpdate = true;
+                            this.beadsGeometry.attributes.color.needsUpdate = true;
+                            this.beadsGeometry.attributes.age.needsUpdate = true;
+                        }
+
                         this.scene.remove(b.group);
                         b.sphere.geometry.dispose();
                         b.sphere.material.dispose();
