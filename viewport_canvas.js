@@ -681,8 +681,8 @@ class ViewportCanvas {
             x = (Math.random() - 0.5) * 2.0 * halfW;
             y = botY + (popHeight * 0.45) + (Math.random() - 0.5) * (popHeight * 0.25);
             colorHex = 0x38bdf8; // Himmelsblå som stiger mot rymden
-            vy = 0.095; // Stiger mjukt och stadigt uppåt
-            maxLife = 130;
+            vy = 0.105; // Stiger mjukt och stadigt uppåt
+            maxLife = 600; // Hinner segla hela vägen upp och ut ur viewporten
             // Avtågs-ripple i hemgenerationen när utvandraren lättar
             this.createRipple(x, y, 0.28, 0.18, 4.2);
         }
@@ -712,9 +712,8 @@ class ViewportCanvas {
             d.life++;
             d.group.position.y += d.vy;
 
-            const progress = d.life / d.maxLife;
-
             if (d.type === 'death') {
+                const progress = d.life / d.maxLife;
                 // Gnistan pulserar mjukt och tonar stillsamt bort
                 const pulse = 1.0 + Math.sin(progress * Math.PI) * 0.45;
                 d.sphere.scale.setScalar(pulse);
@@ -742,17 +741,28 @@ class ViewportCanvas {
                     d.breachedSurface = true;
                     this.createRipple(d.group.position.x, d.surfaceY, 0.36, 0.22, 5.8);
                 } else {
-                    // Ovanför ytan seglar den vidare mot skyn och accelererar lätt
-                    d.vy += 0.003;
+                    // Ovanför ytan seglar den vidare mot skyn och accelererar lätt uppåt
+                    d.vy += 0.0025;
                 }
 
-                // Tona ut harmoniskt mot slutet eller när den når toppen
-                const op = Math.max(0, 1.0 - Math.pow(progress, 1.8));
+                // Fortsätt vara fullt synlig hela vägen tills den lämnar viewportens överkant!
+                const topViewportY = this.worldHeight / 2;
+                let op = 1.0;
+                if (d.group.position.y > topViewportY) {
+                    // Först när den passerar skärmens överkant fasas den ut
+                    const exitDist = d.group.position.y - topViewportY;
+                    op = Math.max(0, 1.0 - (exitDist / 1.5));
+                }
                 d.sphere.material.opacity = op;
-                d.sprite.material.opacity = op * 0.75;
+                d.sprite.material.opacity = op * 0.85;
             }
 
-            if (d.life >= d.maxLife || d.group.position.y > (this.worldHeight / 2 + 3.0)) {
+            const topLimit = (this.worldHeight / 2) + 2.0;
+            const shouldRemove = (d.type === 'death')
+                ? (d.life >= d.maxLife)
+                : (d.group.position.y > topLimit || d.life >= d.maxLife);
+
+            if (shouldRemove) {
                 this.scene.remove(d.group);
                 d.sphere.geometry.dispose();
                 d.sphere.material.dispose();
