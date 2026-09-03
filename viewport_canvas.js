@@ -207,11 +207,11 @@ class ViewportCanvas {
                 }
                 gl_PointSize = baseSize;
 
-                // Subtil, harmonisk mikrodrivning på GPU (myllret andas och lever mjukt)
+                // Subtil, mycket lugn mikrodrivning på GPU
                 vec3 pos = position;
-                float t = uTime * 0.85;
-                float driftX = sin(t + position.y * 1.4 + position.x * 0.7) * 0.038;
-                float driftY = cos(t * 0.7 + position.x * 1.3 + position.y * 0.9) * 0.026;
+                float t = uTime * 0.45;
+                float driftX = sin(t + position.y * 1.1 + position.x * 0.5) * 0.018;
+                float driftY = cos(t * 0.38 + position.x * 0.9 + position.y * 0.7) * 0.014;
                 pos.x += driftX;
                 pos.y += driftY;
 
@@ -694,8 +694,9 @@ class ViewportCanvas {
         }
 
         const numRipples = this.ripples.length;
-        const returnSpring = 0.12;
-        const damping = 0.82;
+        // Kritiskt dämpad fysik: mjuk och viskös rörelse med absolut NOLL bounce eller fjäder-rekyl
+        const returnSpring = 0.08;
+        const damping = 0.50;
 
         for (let i = 0; i < this.activeBeadCount; i++) {
             const i3 = i * 3;
@@ -1203,16 +1204,16 @@ class ViewportCanvas {
         if (!this.lastOrganicSwapTime) this.lastOrganicSwapTime = now;
         if (!this.lastOrganicRippleTime) this.lastOrganicRippleTime = now;
 
-        // 1. Platsbyten i samma generation/åldersband var ~1.2 sekund
-        if (now - this.lastOrganicSwapTime > 1.2) {
+        // 1. Lugna platsbyten bland nära grannar var ~2.2 sekund
+        if (now - this.lastOrganicSwapTime > 2.2) {
             this.lastOrganicSwapTime = now;
-            // 4-8 slumpmässiga par byter plats mjukt med fjäderfysiken
-            const numSwaps = Math.min(8, Math.max(3, Math.round(this.activeBeadCount / 15000)));
+            // Endast 2-4 slumpmässiga par för ett stilla, subtilt liv
+            const numSwaps = Math.min(4, Math.max(2, Math.round(this.activeBeadCount / 35000)));
 
             for (let s = 0; s < numSwaps; s++) {
                 const idxA = Math.floor(Math.random() * this.activeBeadCount);
-                // Välj en nära granne i samma ålderskull (inom +/- 40 pärlor)
-                const offset = Math.round((Math.random() - 0.5) * 80);
+                // Välj en nära granne alldeles intill (inom +/- 24 pärlor)
+                const offset = Math.round((Math.random() - 0.5) * 48);
                 const idxB = Math.max(0, Math.min(this.activeBeadCount - 1, idxA + offset));
                 if (idxA === idxB) continue;
 
@@ -1233,17 +1234,17 @@ class ViewportCanvas {
             }
         }
 
-        // 2. Subtila mikrokrusningar i folkmassan var ~4:e sekund
-        if (now - this.lastOrganicRippleTime > 4.2) {
+        // 2. Mycket mjuk och sällan förekommande mikrokrusning var ~5:e sekund
+        if (now - this.lastOrganicRippleTime > 5.2) {
             this.lastOrganicRippleTime = now;
-            const halfW = (this.worldWidth / 2) * 0.78;
+            const halfW = (this.worldWidth / 2) * 0.75;
             const botY = this.botY || (-this.worldHeight / 2 + 1.2);
             const surfY = this.currentSurfaceY || (botY + 8);
             const rx = (Math.random() - 0.5) * 2.0 * halfW;
             const ry = botY + Math.random() * Math.max(2.0, surfY - botY);
 
-            // Extremt mjuk mikrovåg: bara 0.05 i styrka
-            this.createRipple(rx, ry, 0.05, 0.14, 3.4);
+            // Extremt subtil mikrovåg: bara 0.035 i styrka
+            this.createRipple(rx, ry, 0.035, 0.12, 3.0);
         }
     }
 
