@@ -193,6 +193,7 @@ class ViewportCanvas {
             varying float vAge;
             uniform float uHighlightAge;
             uniform float uPointSize;
+            uniform float uTime;
 
             void main() {
                 vColor = color;
@@ -205,7 +206,16 @@ class ViewportCanvas {
                     }
                 }
                 gl_PointSize = baseSize;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+                // Subtil, harmonisk mikrodrivning på GPU (myllret andas och lever mjukt)
+                vec3 pos = position;
+                float t = uTime * 0.85;
+                float driftX = sin(t + position.y * 1.4 + position.x * 0.7) * 0.038;
+                float driftY = cos(t * 0.7 + position.x * 1.3 + position.y * 0.9) * 0.026;
+                pos.x += driftX;
+                pos.y += driftY;
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
             }
         `;
 
@@ -258,7 +268,8 @@ class ViewportCanvas {
             fragmentShader: fragmentShader,
             uniforms: {
                 uHighlightAge: { value: -1.0 },
-                uPointSize: { value: isMobileInit ? 5.8 : 8.8 }
+                uPointSize: { value: isMobileInit ? 5.8 : 8.8 },
+                uTime: { value: 0.0 }
             },
             transparent: true,
             depthWrite: false
@@ -1182,8 +1193,69 @@ class ViewportCanvas {
         }
     }
 
+    /**
+     * LEVANDE MYLLER: SUBTILA ORGANISKA PLATSBYTEN & MIKROKRUSNINGAR
+     * Gör att befolkningen aldrig blir statisk utan känns som en levande organism
+     */
+    updateOrganicDrift(now) {
+        if (this.activeBeadCount < 2) return;
+
+        if (!this.lastOrganicSwapTime) this.lastOrganicSwapTime = now;
+        if (!this.lastOrganicRippleTime) this.lastOrganicRippleTime = now;
+
+        // 1. Platsbyten i samma generation/åldersband var ~1.2 sekund
+        if (now - this.lastOrganicSwapTime > 1.2) {
+            this.lastOrganicSwapTime = now;
+            // 4-8 slumpmässiga par byter plats mjukt med fjäderfysiken
+            const numSwaps = Math.min(8, Math.max(3, Math.round(this.activeBeadCount / 15000)));
+
+            for (let s = 0; s < numSwaps; s++) {
+                const idxA = Math.floor(Math.random() * this.activeBeadCount);
+                // Välj en nära granne i samma ålderskull (inom +/- 40 pärlor)
+                const offset = Math.round((Math.random() - 0.5) * 80);
+                const idxB = Math.max(0, Math.min(this.activeBeadCount - 1, idxA + offset));
+                if (idxA === idxB) continue;
+
+                // Om någon av pärlorna är vald i inspektorn, låt den vara orörd
+                if (idxA === this.selectedBeadIndex || idxB === this.selectedBeadIndex) continue;
+
+                const a3 = idxA * 3;
+                const b3 = idxB * 3;
+
+                const tx = this.homePositions[a3];
+                const ty = this.homePositions[a3 + 1];
+
+                this.homePositions[a3] = this.homePositions[b3];
+                this.homePositions[a3 + 1] = this.homePositions[b3 + 1];
+
+                this.homePositions[b3] = tx;
+                this.homePositions[b3 + 1] = ty;
+            }
+        }
+
+        // 2. Subtila mikrokrusningar i folkmassan var ~4:e sekund
+        if (now - this.lastOrganicRippleTime > 4.2) {
+            this.lastOrganicRippleTime = now;
+            const halfW = (this.worldWidth / 2) * 0.78;
+            const botY = this.botY || (-this.worldHeight / 2 + 1.2);
+            const surfY = this.currentSurfaceY || (botY + 8);
+            const rx = (Math.random() - 0.5) * 2.0 * halfW;
+            const ry = botY + Math.random() * Math.max(2.0, surfY - botY);
+
+            // Extremt mjuk mikrovåg: bara 0.05 i styrka
+            this.createRipple(rx, ry, 0.05, 0.14, 3.4);
+        }
+    }
+
     animate() {
         requestAnimationFrame(this.animate);
+
+        const now = performance.now() * 0.001;
+        if (this.beadsMaterial && this.beadsMaterial.uniforms.uTime) {
+            this.beadsMaterial.uniforms.uTime.value = now;
+        }
+
+        this.updateOrganicDrift(now);
         this.updateFluidPhysics();
         this.updateFallingBeads();
         this.updateDepartingBeads();
