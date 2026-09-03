@@ -63,6 +63,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const eraStatUrban = document.getElementById("eraStatUrban");
     const eraStatInfant = document.getElementById("eraStatInfant");
 
+    // Formation & Vyväljare (Morfande partikelsvärm)
+    const viewButtons = document.querySelectorAll(".view-btn");
+    const formationOverlay = document.getElementById("formationOverlay");
+    const formColLeftTitle = document.getElementById("formColLeftTitle");
+    const formColLeftStat = document.getElementById("formColLeftStat");
+    const formColRightTitle = document.getElementById("formColRightTitle");
+    const formColRightStat = document.getElementById("formColRightStat");
+
     // Callback när användaren klickar på en specifik pärla i myllret!
     const onPersonClick = (nearestBead, clientX, clientY) => {
         const profile = engine.generatePersonProfile(nearestBead.age, nearestBead.sex, engine.currentYear);
@@ -95,6 +103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Skapa Viewport Canvas
     const canvas = new ViewportCanvas("canvasContainer", onPersonClick);
+    canvas.getYearStats = () => engine.getEraStats(engine.currentYear);
 
     // Stäng person-kort
     if (closePersonBtn) {
@@ -103,6 +112,71 @@ document.addEventListener("DOMContentLoaded", async () => {
             canvas.setSelectedBead(-1);
         });
     }
+
+    // Formation & Vyväljare för pärlorna (Morfande partikelsvärm)
+    function updateFormationOverlay(year, popData) {
+        if (!formationOverlay) return;
+        const mode = canvas.currentViewMode;
+        if (mode === 'sea') {
+            formationOverlay.classList.add('hidden');
+            return;
+        }
+
+        formationOverlay.classList.remove('hidden');
+        const total = popData.total;
+
+        if (mode === 'pyramid') {
+            const menPct = ((popData.men / total) * 100).toFixed(1).replace('.', ',');
+            const womenPct = ((popData.women / total) * 100).toFixed(1).replace('.', ',');
+            formColLeftTitle.textContent = "♂ MÄN";
+            formColLeftStat.textContent = `${formatNumber(popData.men)} (${menPct} %)`;
+            formColRightTitle.textContent = "♀ KVINNOR";
+            formColRightStat.textContent = `${formatNumber(popData.women)} (${womenPct} %)`;
+        } else if (mode === 'urban_rural') {
+            const stats = engine.getEraStats(year);
+            const urbanRatio = stats.urbanRaw / 100.0;
+            const urbanPop = Math.round(total * urbanRatio);
+            const ruralPop = total - urbanPop;
+            const urbanPct = Math.round(urbanRatio * 100);
+            const ruralPct = 100 - urbanPct;
+
+            formColLeftTitle.textContent = "🌾 LANDSBYGD";
+            formColLeftStat.textContent = `${formatNumber(ruralPop)} (${ruralPct} %)`;
+            formColRightTitle.textContent = "🏙️ TÄTORT";
+            formColRightStat.textContent = `${formatNumber(urbanPop)} (${urbanPct} %)`;
+        } else if (mode === 'origin') {
+            let foreignRatio = 0.20;
+            if (year < 1945) foreignRatio = 0.01;
+            else if (year < 1970) foreignRatio = 0.01 + ((year - 1945) / 25.0) * 0.057;
+            else if (year < 2000) foreignRatio = 0.067 + ((year - 1970) / 30.0) * 0.046;
+            else if (year < 2026) foreignRatio = 0.113 + ((year - 2000) / 26.0) * 0.087;
+            else foreignRatio = 0.20 + ((year - 2026) / 44.0) * 0.025;
+
+            const foreignPop = Math.round(total * foreignRatio);
+            const nativePop = total - foreignPop;
+            const foreignPct = Math.round(foreignRatio * 100);
+            const nativePct = 100 - foreignPct;
+
+            formColLeftTitle.textContent = "🇸🇪 FÖDDA I SVERIGE";
+            formColLeftStat.textContent = `${formatNumber(nativePop)} (${nativePct} %)`;
+            formColRightTitle.textContent = "🌍 UTRIKES FÖDDA";
+            formColRightStat.textContent = `${formatNumber(foreignPop)} (${foreignPct} %)`;
+        }
+    }
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const view = btn.dataset.view;
+            viewButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            canvas.setViewMode(view);
+            const popData = engine.getDataForYear(engine.currentYear);
+            if (popData) {
+                updateFormationOverlay(engine.currentYear, popData);
+                updateAgeRuler(canvas, popData);
+            }
+        });
+    });
 
     // Ladda SCB-data
     const loaded = await engine.load();
@@ -158,6 +232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         canvas.updateFromPopulation(popData);
         updateAgeRuler(canvas, popData);
+        updateFormationOverlay(year, popData);
 
         if (liveRhythmBar) {
             liveRhythmBar.style.opacity = (year === 2026 && engine.isLive) ? "1.0" : "0.30";
@@ -169,6 +244,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     function updateAgeRuler(canvas, popData) {
         const ageRuler = document.getElementById("ageRuler");
         if (!ageRuler || !canvas || !popData) return;
+
+        if (canvas.currentViewMode === 'pyramid') {
+            ageRuler.style.opacity = '0';
+            ageRuler.style.pointerEvents = 'none';
+            return;
+        }
+        ageRuler.style.opacity = '1';
+        ageRuler.style.pointerEvents = 'auto';
 
         const surfaceY = canvas.currentSurfaceY;
         const botY = canvas.botY;

@@ -45,6 +45,12 @@ class ViewportCanvas {
         // Lämnande pärlor (dödsfall & utvandrare)
         this.departingBeads = [];
 
+        // Visningsläge / Formation: 'sea' (standard) | 'pyramid' | 'urban_rural' | 'origin'
+        this.currentViewMode = 'sea';
+        this.isFirstInit = true;
+        this.previousActiveBeadCount = 0;
+        this.getYearStats = null;
+
         this.init();
     }
 
@@ -315,30 +321,63 @@ class ViewportCanvas {
         return [r, g, b];
     }
 
-    updateFromPopulation(popData) {
-        if (!popData) return;
-        this.lastPopData = popData;
+    /**
+     * VÄXLA FORMATION / VISNINGSLÄGE
+     * Skapar en svepande expansionsvåg som låter pärlorna svärma till sin nya form
+     */
+    setViewMode(mode) {
+        if (this.currentViewMode === mode) return;
+        this.currentViewMode = mode;
+        this.createRipple(0, 0, 0.70, 0.42, 28.0);
+        if (this.lastPopData) {
+            this.updateFromPopulation(this.lastPopData);
+        }
+    }
 
+    /**
+     * TILLDELA MÅLPOSITION FÖR PÄRLA
+     * Mjuka övergångar: befintliga pärlor flyter, nya pärlor glider in från toppen
+     */
+    setBeadTarget(beadIndex, x, y, age, sex) {
+        const i3 = beadIndex * 3;
+
+        this.homePositions[i3] = x;
+        this.homePositions[i3 + 1] = y;
+        this.homePositions[i3 + 2] = 0;
+
+        if (this.isFirstInit) {
+            this.positions[i3] = x;
+            this.positions[i3 + 1] = y;
+            this.positions[i3 + 2] = 0;
+            this.velocities[i3] = 0;
+            this.velocities[i3 + 1] = 0;
+            this.velocities[i3 + 2] = 0;
+        } else if (beadIndex >= this.previousActiveBeadCount) {
+            // Nya pärlor som tillkommer vid befolkningstillväxt
+            this.positions[i3] = x + (Math.random() - 0.5) * 2.0;
+            this.positions[i3 + 1] = this.currentSurfaceY + Math.random() * 3.5;
+            this.positions[i3 + 2] = 0;
+            this.velocities[i3] = 0;
+            this.velocities[i3 + 1] = -0.12;
+            this.velocities[i3 + 2] = 0;
+        }
+
+        const col = this.getBeadColor(age, beadIndex);
+        this.colors[i3] = col[0];
+        this.colors[i3 + 1] = col[1];
+        this.colors[i3 + 2] = col[2];
+
+        this.ages[beadIndex] = age;
+        this.sexes[beadIndex] = sex;
+    }
+
+    /**
+     * FORMATION 1: HAVET / BURKEN (Standard)
+     * Samlad befolkning fyller skärmen från botten till ytan med åldersgradient
+     */
+    layoutSea(popData, halfW, fillHeight) {
         const total = popData.total;
         let beadIndex = 0;
-
-        // 1:1 SKALA & NATURLIG FYLLNADSHÖJD MED TAKHÖJD (HEADROOM):
-        // Varje pärla har konstant storlek och volym (1 pärla = 100 invånare).
-        // Befolkningen fyller skärmen från botten och uppåt som ett hav:
-        // 1860 (3,85 miljoner): Fyller ca 25% av skärmen (lägre höjd i äldre tid)
-        // 1900 (5,14 miljoner): Fyller ca 33% av skärmen
-        // 1969 (8,00 miljoner): Fyller ca 51% av skärmen
-        // 2026 (10,62 miljoner): Fyller ca 68% av skärmen
-        // 2070 (11,80 miljoner): Fyller ca 75% av skärmen (lämnar ren rymd för header & fallande pärlor)
-        const maxCapacity = 12200000;
-        const maxFillRatio = 0.78;
-        const fillFraction = Math.min(maxFillRatio, (total / maxCapacity) * maxFillRatio);
-
-        const halfW = (this.worldWidth / 2) * 0.94;
-        this.botY = (-this.worldHeight / 2) + 1.2;
-        const fillHeight = this.worldHeight * fillFraction;
-        this.currentSurfaceY = this.botY + fillHeight;
-
         let currentY = this.botY;
 
         for (let age = 105; age >= 0; age--) {
@@ -358,27 +397,7 @@ class ViewportCanvas {
                 const disp = (Math.random() - 0.5) * Math.max(0.25, bandHeight * 0.95);
                 const y = Math.max(this.botY, Math.min(this.currentSurfaceY, centerBandY + disp));
 
-                const i3 = beadIndex * 3;
-                this.positions[i3] = x;
-                this.positions[i3 + 1] = y;
-                this.positions[i3 + 2] = 0;
-
-                this.homePositions[i3] = x;
-                this.homePositions[i3 + 1] = y;
-                this.homePositions[i3 + 2] = 0;
-
-                this.velocities[i3] = 0;
-                this.velocities[i3 + 1] = 0;
-                this.velocities[i3 + 2] = 0;
-
-                const col = this.getBeadColor(age, beadIndex);
-                this.colors[i3] = col[0];
-                this.colors[i3 + 1] = col[1];
-                this.colors[i3 + 2] = col[2];
-
-                this.ages[beadIndex] = age;
-                this.sexes[beadIndex] = (Math.random() < (menCount / cohortTotal)) ? 1 : 2;
-
+                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
                 beadIndex++;
             }
 
@@ -386,6 +405,235 @@ class ViewportCanvas {
         }
 
         this.activeBeadCount = beadIndex;
+    }
+
+    /**
+     * FORMATION 2: BEFOLKNINGSPYRAMIDEN (Demografins klassiker)
+     * Män till vänster, kvinnor till höger, ålder 0-100 vertikalt
+     */
+    layoutPyramid(popData, halfW, fillHeight) {
+        let beadIndex = 0;
+        const pyramidH = this.worldHeight * 0.74;
+        const yBottom = this.botY + 0.5;
+
+        // Max storlek per sida (en årskull män eller kvinnor har som mest ca 75 000 = 750 pärlor)
+        const maxCohortSide = 720;
+        const widthScale = (halfW * 0.82) / maxCohortSide;
+
+        for (let age = 105; age >= 0; age--) {
+            const cohort = popData.ages[age] || [0, 0];
+            const menCount = cohort[0];
+            const womenCount = cohort[1];
+            const cohortTotal = menCount + womenCount;
+            if (cohortTotal <= 0) continue;
+
+            const menBeads = Math.round(menCount / 100);
+            const womenBeads = Math.round(womenCount / 100);
+
+            const yBase = yBottom + (Math.min(100, age) / 100.0) * pyramidH;
+
+            // Män: Horisontell spridning åt vänster från mittlinjen (x < 0)
+            for (let i = 0; i < menBeads && beadIndex < this.maxBeads; i++) {
+                const dist = 0.28 + i * widthScale;
+                const jitter = (Math.sin(i * 3.7 + age * 1.3) * 0.08);
+                const x = -dist;
+                const y = yBase + jitter;
+
+                this.setBeadTarget(beadIndex, x, y, age, 1);
+                beadIndex++;
+            }
+
+            // Kvinnor: Horisontell spridning åt höger från mittlinjen (x > 0)
+            for (let i = 0; i < womenBeads && beadIndex < this.maxBeads; i++) {
+                const dist = 0.28 + i * widthScale;
+                const jitter = (Math.sin(i * 4.1 + age * 1.7) * 0.08);
+                const x = +dist;
+                const y = yBase + jitter;
+
+                this.setBeadTarget(beadIndex, x, y, age, 2);
+                beadIndex++;
+            }
+        }
+
+        this.activeBeadCount = beadIndex;
+    }
+
+    /**
+     * FORMATION 3: STAD VS LANDSBYGD (2 pelare - SCB TAB5328)
+     * Vänster: Landsbygd, Höger: Tätort
+     */
+    layoutUrbanRural(popData, halfW, fillHeight) {
+        const total = popData.total;
+        let beadIndex = 0;
+
+        // Andel tätort enligt SCB TAB5328
+        let urbanRatio = 0.88;
+        if (typeof this.getYearStats === 'function') {
+            const stats = this.getYearStats();
+            if (stats && stats.urbanRaw !== undefined) {
+                urbanRatio = stats.urbanRaw / 100.0;
+            }
+        }
+        const ruralRatio = 1.0 - urbanRatio;
+
+        const colHalfW = halfW * 0.38;
+        const leftCenterX = -halfW * 0.50;  // Landsbygd
+        const rightCenterX = +halfW * 0.50; // Tätort
+
+        const maxColHeight = this.worldHeight * 0.72;
+        const ruralHeight = maxColHeight * (ruralRatio * (total / 12200000));
+        const urbanHeight = maxColHeight * (urbanRatio * (total / 12200000));
+
+        let currentYRural = this.botY;
+        let currentYUrban = this.botY;
+
+        for (let age = 105; age >= 0; age--) {
+            const cohort = popData.ages[age] || [0, 0];
+            const menCount = cohort[0];
+            const womenCount = cohort[1];
+            const cohortTotal = menCount + womenCount;
+            if (cohortTotal <= 0) continue;
+
+            const cohortFraction = cohortTotal / total;
+            const countForAge = Math.max(1, Math.round(cohortTotal / 100));
+
+            const ruralCount = Math.round(countForAge * ruralRatio);
+            const urbanCount = countForAge - ruralCount;
+
+            const ruralBandH = cohortFraction * ruralHeight;
+            const urbanBandH = cohortFraction * urbanHeight;
+
+            // Landsbygds-pärlor (vänster pelare)
+            for (let i = 0; i < ruralCount && beadIndex < this.maxBeads; i++) {
+                const x = leftCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
+                const disp = (Math.random() - 0.5) * Math.max(0.18, ruralBandH * 0.95);
+                const y = Math.max(this.botY, currentYRural + disp + ruralBandH * 0.5);
+
+                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                beadIndex++;
+            }
+
+            // Tätorts-pärlor (höger pelare)
+            for (let i = 0; i < urbanCount && beadIndex < this.maxBeads; i++) {
+                const x = rightCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
+                const disp = (Math.random() - 0.5) * Math.max(0.18, urbanBandH * 0.95);
+                const y = Math.max(this.botY, currentYUrban + disp + urbanBandH * 0.5);
+
+                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                beadIndex++;
+            }
+
+            currentYRural += ruralBandH;
+            currentYUrban += urbanBandH;
+        }
+
+        this.activeBeadCount = beadIndex;
+    }
+
+    /**
+     * FORMATION 4: INRIKES VS UTRIKES FÖDDA (2 pelare - SCB TAB4822)
+     * Vänster: Födda i Sverige, Höger: Utrikes födda
+     */
+    layoutOrigin(popData, halfW, fillHeight) {
+        const total = popData.total;
+        let beadIndex = 0;
+
+        const year = popData.year || 2026;
+        let foreignRatio = 0.20;
+        if (year < 1945) foreignRatio = 0.01;
+        else if (year < 1970) foreignRatio = 0.01 + ((year - 1945) / 25.0) * 0.057;
+        else if (year < 2000) foreignRatio = 0.067 + ((year - 1970) / 30.0) * 0.046;
+        else if (year < 2026) foreignRatio = 0.113 + ((year - 2000) / 26.0) * 0.087;
+        else foreignRatio = 0.20 + ((year - 2026) / 44.0) * 0.025;
+
+        const nativeRatio = 1.0 - foreignRatio;
+
+        const colHalfW = halfW * 0.38;
+        const leftCenterX = -halfW * 0.50;  // Inrikes födda
+        const rightCenterX = +halfW * 0.50; // Utrikes födda
+
+        const maxColHeight = this.worldHeight * 0.72;
+        const nativeHeight = maxColHeight * (nativeRatio * (total / 12200000));
+        const foreignHeight = maxColHeight * (foreignRatio * (total / 12200000));
+
+        let currentYNative = this.botY;
+        let currentYForeign = this.botY;
+
+        for (let age = 105; age >= 0; age--) {
+            const cohort = popData.ages[age] || [0, 0];
+            const menCount = cohort[0];
+            const womenCount = cohort[1];
+            const cohortTotal = menCount + womenCount;
+            if (cohortTotal <= 0) continue;
+
+            const cohortFraction = cohortTotal / total;
+            const countForAge = Math.max(1, Math.round(cohortTotal / 100));
+
+            const foreignCount = Math.round(countForAge * foreignRatio);
+            const nativeCount = countForAge - foreignCount;
+
+            const nativeBandH = cohortFraction * nativeHeight;
+            const foreignBandH = cohortFraction * foreignHeight;
+
+            // Inrikes födda (vänster pelare)
+            for (let i = 0; i < nativeCount && beadIndex < this.maxBeads; i++) {
+                const x = leftCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
+                const disp = (Math.random() - 0.5) * Math.max(0.18, nativeBandH * 0.95);
+                const y = Math.max(this.botY, currentYNative + disp + nativeBandH * 0.5);
+
+                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                beadIndex++;
+            }
+
+            // Utrikes födda (höger pelare)
+            for (let i = 0; i < foreignCount && beadIndex < this.maxBeads; i++) {
+                const x = rightCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
+                const disp = (Math.random() - 0.5) * Math.max(0.18, foreignBandH * 0.95);
+                const y = Math.max(this.botY, currentYForeign + disp + foreignBandH * 0.5);
+
+                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                beadIndex++;
+            }
+
+            currentYNative += nativeBandH;
+            currentYForeign += foreignBandH;
+        }
+
+        this.activeBeadCount = beadIndex;
+    }
+
+    /**
+     * UPPDATERA FRÅN BEFOLKNINGSDATA MED VALD FORMATION
+     */
+    updateFromPopulation(popData) {
+        if (!popData) return;
+        this.lastPopData = popData;
+        this.previousActiveBeadCount = this.activeBeadCount;
+
+        const total = popData.total;
+
+        // 1:1 skala & takhöjd
+        const maxCapacity = 12200000;
+        const maxFillRatio = 0.78;
+        const fillFraction = Math.min(maxFillRatio, (total / maxCapacity) * maxFillRatio);
+
+        const halfW = (this.worldWidth / 2) * 0.94;
+        this.botY = (-this.worldHeight / 2) + 1.2;
+        const fillHeight = this.worldHeight * fillFraction;
+        this.currentSurfaceY = this.botY + fillHeight;
+
+        if (this.currentViewMode === 'pyramid') {
+            this.layoutPyramid(popData, halfW, fillHeight);
+        } else if (this.currentViewMode === 'urban_rural') {
+            this.layoutUrbanRural(popData, halfW, fillHeight);
+        } else if (this.currentViewMode === 'origin') {
+            this.layoutOrigin(popData, halfW, fillHeight);
+        } else {
+            this.layoutSea(popData, halfW, fillHeight);
+        }
+
+        this.isFirstInit = false;
+
         this.beadsGeometry.setDrawRange(0, this.activeBeadCount);
         this.beadsGeometry.attributes.position.needsUpdate = true;
         this.beadsGeometry.attributes.color.needsUpdate = true;

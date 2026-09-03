@@ -12,7 +12,7 @@
     <meta property="og:title" content="Sveriges befolkning 1860–2070">
     <meta property="og:description" content="Sveriges befolkning i realtid från 1860 till 2070. Födslar, dödsfall, invandring och utvandring.">
 
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
     <!-- Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -45,6 +45,18 @@
         <div class="pop-label">SVERIGES FOLKMÄNGD <span id="currentYearBadge">2026</span></div>
         <div class="pop-number" id="popNumber">10 626 026</div>
         <div class="pop-sub" id="popSub">Skala: 1 pärla = 100 invånare</div>
+    </div>
+
+    <!-- 📊 FORMATION OVERLAY (Kolumntitlar och siffror vid morfning) -->
+    <div class="formation-overlay hidden" id="formationOverlay">
+        <div class="formation-col formation-col-left" id="formationColLeft">
+            <span class="formation-col-title" id="formColLeftTitle">LANDSBYGD</span>
+            <span class="formation-col-stat" id="formColLeftStat">1,28 miljoner (12 %)</span>
+        </div>
+        <div class="formation-col formation-col-right" id="formationColRight">
+            <span class="formation-col-title" id="formColRightTitle">TÄTORT</span>
+            <span class="formation-col-stat" id="formColRightStat">9,34 miljoner (88 %)</span>
+        </div>
     </div>
 
     <!-- Dynamisk Ålderslinjal som anpassar höjd och markörer efter folkmängden -->
@@ -115,6 +127,17 @@
                 <button id="playPauseBtn" class="pill-btn">▶ Spela</button>
                 <button id="findCohortBtn" class="pill-btn">🔍 Hitta årskull</button>
                 <button id="closeTimelineBtn" class="pill-btn icon-btn" title="Minimera panel till kugghjul (T)">✕</button>
+            </div>
+        </div>
+
+        <!-- Formation & Vyväljare för pärlorna (Morfande partikelsvärm) -->
+        <div class="view-mode-bar" id="viewModeBar">
+            <span class="view-mode-label">FORMATION:</span>
+            <div class="view-mode-buttons">
+                <button class="view-btn active" data-view="sea" title="Samlad befolkning (Havet / Burken)">🌊 Havet</button>
+                <button class="view-btn" data-view="pyramid" title="Klassisk demografisk befolkningspyramid (Män / Kvinnor)">🏛️ Pyramid</button>
+                <button class="view-btn" data-view="urban_rural" title="Befolkning i tätort vs landsbygd (SCB TAB5328)">🏙️ Stad / Land</button>
+                <button class="view-btn" data-view="origin" title="Födda i Sverige vs Utrikes födda (SCB TAB4822)">🌍 Härkomst</button>
             </div>
         </div>
 
@@ -291,8 +314,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="population_engine.js?v=15"></script>
-    <script src="viewport_canvas.js?v=15"></script>
-    <script src="app.js?v=15"></script>
+    <script src="population_engine.js?v=16"></script>
+    <script src="viewport_canvas.js?v=16"></script>
+    <script src="app.js?v=16"></script>
 </body>
 </html>
