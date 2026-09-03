@@ -12,7 +12,7 @@
     <meta property="og:title" content="Sveriges befolkning 1860–2070">
     <meta property="og:description" content="Sveriges befolkning i realtid från 1860 till 2070. Födslar, dödsfall, invandring och utvandring.">
 
-    <link rel="stylesheet" href="style.css?v=11">
+    <link rel="stylesheet" href="style.css?v=12">
     <!-- Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -115,6 +115,30 @@
                 <button id="playPauseBtn" class="pill-btn">▶ Spela</button>
                 <button id="findCohortBtn" class="pill-btn">🔍 Hitta årskull</button>
                 <button id="closeTimelineBtn" class="pill-btn icon-btn" title="Minimera panel till kugghjul (T)">✕</button>
+            </div>
+        </div>
+
+        <!-- Samhällsindikatorer & Tidsanda för det valda årtalet (SCB 1860-2070) -->
+        <div class="era-stats-bar" id="eraStatsBar">
+            <div class="era-stat-item" title="Summerat fruktsamhetstal (barn per kvinna enligt SCB)">
+                <span class="era-stat-icon">👶</span>
+                <span class="era-stat-label">Fruktsamhet</span>
+                <span class="era-stat-val" id="eraStatFertility">1,45</span>
+            </div>
+            <div class="era-stat-item" title="Förväntad medellivslängd vid födseln (SCB)">
+                <span class="era-stat-icon">⏳</span>
+                <span class="era-stat-label">Medellivslängd</span>
+                <span class="era-stat-val" id="eraStatLifeExp">83,5 år</span>
+            </div>
+            <div class="era-stat-item" title="Andel som bor i tätort vs landsbygd (SCB TAB5328)">
+                <span class="era-stat-icon">🏙️</span>
+                <span class="era-stat-label">Boende</span>
+                <span class="era-stat-val" id="eraStatUrban">88 % tätort</span>
+            </div>
+            <div class="era-stat-item" title="Spädbarnsdödlighet per 1 000 levande födda (SCB TAB4376)">
+                <span class="era-stat-icon">🩺</span>
+                <span class="era-stat-label">Barnadödlighet</span>
+                <span class="era-stat-val" id="eraStatInfant">2,1 ‰</span>
             </div>
         </div>
 
@@ -243,6 +267,18 @@
                 <span class="field-label">CIVILSTÅND</span>
                 <span class="field-value" id="personMarital">Gift</span>
             </div>
+            <div class="person-field">
+                <span class="field-label">BARN</span>
+                <span class="field-value" id="personChildren">2 barn</span>
+            </div>
+            <div class="person-field">
+                <span class="field-label">BOENDEMILJÖ</span>
+                <span class="field-value" id="personHousing">Tätort</span>
+            </div>
+            <div class="person-field" style="grid-column: span 2;">
+                <span class="field-label">SYSSELSÄTTNING / YRKE</span>
+                <span class="field-value" id="personOccupation">Systemutvecklare</span>
+            </div>
             <div class="person-field" style="grid-column: span 2;">
                 <span class="field-label">KOMMUN</span>
                 <span class="field-value" id="personMunicipality">Krokom (15 540 invånare)</span>
@@ -255,8 +291,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="population_engine.js?v=11"></script>
-    <script src="viewport_canvas.js?v=11"></script>
-    <script src="app.js?v=11"></script>
+    <script src="population_engine.js?v=12"></script>
+    <script src="viewport_canvas.js?v=12"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

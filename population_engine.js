@@ -126,6 +126,34 @@ class PopulationEngine {
             2070: "SCB Framskrivning: 11,80 miljoner invånare."
         };
 
+        // SCB Historiska samhällsindikatorer 1860–2070 (Fruktsamhet, Medellivslängd, Urbanisering, Spädbarnsdödlighet)
+        // Källor: SCB TAB4365, TAB5328, TAB4376, TAB5634, TAB5960
+        this.eraDataPoints = {
+            1860: { tfr: 4.22, lifeExp: 46.5, urban: 11, infant: 142.0, note: "Agrarsamhälle" },
+            1870: { tfr: 4.10, lifeExp: 46.0, urban: 13, infant: 130.0, note: "Missväxt & nöd" },
+            1880: { tfr: 4.34, lifeExp: 47.6, urban: 15, infant: 111.0, note: "Utvandringsvåg" },
+            1890: { tfr: 4.15, lifeExp: 50.1, urban: 21, infant: 102.0, note: "Industrins gryning" },
+            1900: { tfr: 3.86, lifeExp: 53.1, urban: 28, infant: 91.0, note: "Sekelskifte" },
+            1910: { tfr: 3.56, lifeExp: 56.8, urban: 36, infant: 75.0, note: "Urban inflyttning" },
+            1920: { tfr: 2.93, lifeExp: 61.3, urban: 45, infant: 63.0, note: "Demokratisering" },
+            1930: { tfr: 2.19, lifeExp: 63.8, urban: 51, infant: 55.0, note: "Depression & kris" },
+            1935: { tfr: 1.70, lifeExp: 65.8, urban: 53, infant: 46.0, note: "Kris i befolkningsfrågan" },
+            1940: { tfr: 1.89, lifeExp: 67.4, urban: 56, infant: 39.0, note: "Beredskapstid" },
+            1945: { tfr: 2.41, lifeExp: 69.8, urban: 62, infant: 28.0, note: "Fred & 40-talsboom" },
+            1950: { tfr: 2.28, lifeExp: 71.5, urban: 66, infant: 21.0, note: "Folkhemmet växer" },
+            1960: { tfr: 2.20, lifeExp: 73.0, urban: 73, infant: 16.6, note: "Industrins guldålder" },
+            1965: { tfr: 2.42, lifeExp: 73.8, urban: 77, infant: 13.3, note: "Babyboom & miljonprogram" },
+            1970: { tfr: 1.92, lifeExp: 74.5, urban: 81, infant: 11.0, note: "P-piller & kvinnor i jobb" },
+            1980: { tfr: 1.68, lifeExp: 75.8, urban: 83, infant: 6.9, note: "Välfärdsstat" },
+            1990: { tfr: 2.13, lifeExp: 77.6, urban: 83, infant: 6.0, note: "Snabbare-barn-boom" },
+            2000: { tfr: 1.54, lifeExp: 79.7, urban: 84, infant: 3.4, note: "IT-era & millennieskifte" },
+            2010: { tfr: 1.98, lifeExp: 81.5, urban: 85, infant: 2.5, note: "Hög fruktsamhet" },
+            2020: { tfr: 1.66, lifeExp: 82.4, urban: 88, infant: 2.1, note: "Pandemiår" },
+            2026: { tfr: 1.45, lifeExp: 83.5, urban: 88, infant: 2.1, note: "Historisk bottennotering" },
+            2040: { tfr: 1.60, lifeExp: 85.2, urban: 90, infant: 1.8, note: "SCB Framskrivning" },
+            2070: { tfr: 1.66, lifeExp: 87.7, urban: 91, infant: 1.5, note: "SCB Framskrivning" }
+        };
+
         this.monthlyData = null;
         this.currentLivePopulation = 10626026;
         this.lastDriftSync = Date.now();
@@ -331,58 +359,284 @@ class PopulationEngine {
     }
 
     /**
+     * HÄMTA HISTORISKA SAMHÄLLS员NDIKATORER FÖR ETT ÅRTAL (1860–2070)
+     * Källor: SCB TAB4365, TAB5328, TAB4376, TAB5634, TAB5960
+     */
+    getEraStats(year) {
+        const y = Math.max(1860, Math.min(2070, parseInt(year, 10) || 2026));
+        const keys = Object.keys(this.eraDataPoints).map(Number).sort((a, b) => a - b);
+
+        if (this.eraDataPoints[y]) {
+            const p = this.eraDataPoints[y];
+            return {
+                year: y,
+                tfr: p.tfr.toFixed(2).replace('.', ','),
+                tfrRaw: p.tfr,
+                lifeExp: p.lifeExp.toFixed(1).replace('.', ',') + " år",
+                lifeExpRaw: p.lifeExp,
+                urban: Math.round(p.urban) + " %",
+                rural: Math.round(100 - p.urban) + " %",
+                urbanRaw: p.urban,
+                infant: p.infant.toFixed(1).replace('.', ',') + " ‰",
+                infantRaw: p.infant,
+                note: p.note
+            };
+        }
+
+        let prevKey = keys[0];
+        let nextKey = keys[keys.length - 1];
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (y >= keys[i] && y <= keys[i + 1]) {
+                prevKey = keys[i];
+                nextKey = keys[i + 1];
+                break;
+            }
+        }
+
+        const factor = (y - prevKey) / (nextKey - prevKey);
+        const p0 = this.eraDataPoints[prevKey];
+        const p1 = this.eraDataPoints[nextKey];
+
+        const tfr = p0.tfr + factor * (p1.tfr - p0.tfr);
+        const lifeExp = p0.lifeExp + factor * (p1.lifeExp - p0.lifeExp);
+        const urban = p0.urban + factor * (p1.urban - p0.urban);
+        const infant = p0.infant + factor * (p1.infant - p0.infant);
+
+        return {
+            year: y,
+            tfr: tfr.toFixed(2).replace('.', ','),
+            tfrRaw: tfr,
+            lifeExp: lifeExp.toFixed(1).replace('.', ',') + " år",
+            lifeExpRaw: lifeExp,
+            urban: Math.round(urban) + " %",
+            rural: Math.round(100 - urban) + " %",
+            urbanRaw: urban,
+            infant: infant.toFixed(1).replace('.', ',') + " ‰",
+            infantRaw: infant,
+            note: p0.note
+        };
+    }
+
+    /**
+     * GENERERA HISTORISKT / TIDSTYPAT YRKE
+     * Baserat på SCB:s historiska näringsgrenar och modernt SSYK
+     */
+    getHistoricalOccupation(age, sexTitle, year) {
+        if (age < 7) return "Småbarn";
+        if (age <= 15) {
+            if (year < 1910) {
+                const bKids = ["Folkskoleelev", "Vallhjon", "Hjälper till på gården", "Skolbarn", "Torparbarn"];
+                return bKids[Math.floor(Math.random() * bKids.length)];
+            }
+            if (year < 1960) {
+                const midKids = ["Folkskoleelev", "Realskoleelev", "Lärling", "Skolungdom"];
+                return midKids[Math.floor(Math.random() * midKids.length)];
+            }
+            return "Grundskoleelev";
+        }
+        if (age <= 19) {
+            if (year < 1910) {
+                return sexTitle === "man" ? 
+                    ["Dräng", "Bondson", "Skogsarbetare", "Smedslärling", "Fabriksarbetare"][Math.floor(Math.random() * 5)] :
+                    ["Piga", "Bonddotter", "Sömmerska", "Mejeribiträde", "Barnflicka"][Math.floor(Math.random() * 5)];
+            }
+            if (year < 1965) {
+                return sexTitle === "man" ?
+                    ["Verkstadsarbetare", "Lärling", "Butiksbiträde", "Chaufförsbiträde"][Math.floor(Math.random() * 4)] :
+                    ["Affärsbiträde", "Kontorsbiträde", "Barnflicka", "Sömmerska"][Math.floor(Math.random() * 4)];
+            }
+            return ["Gymnasieelev", "Restaurangbiträde", "Butikssäljare", "Lagerarbetare"][Math.floor(Math.random() * 4)];
+        }
+
+        // Vuxna 20–64
+        if (age < 65) {
+            if (year < 1915) {
+                // Agrarsamhället (70%+ jordbruk/hantverk)
+                if (sexTitle === "man") {
+                    const jobs = [
+                        "Bonde / Hemmansägare", "Torpare", "Dräng", "Statare", "Smed",
+                        "Skogshuggare", "Snickare", "Fiskare", "Sjöman", "Gruvarbetare",
+                        "Skräddare", "Skomakare", "Mjölnare", "Folkskollärare", "Rallare"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                } else {
+                    const jobs = [
+                        "Piga", "Bondmora / Hustru", "Sömmerska", "Mejerinna", "Tvätterska",
+                        "Småskollärarinna", "Barnmorska", "Fabriksarbeterska", "Kokerska", "Strykerska"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                }
+            } else if (year < 1975) {
+                // Industrisamhället (verkstad, industri, folkhem)
+                if (sexTitle === "man") {
+                    const jobs = [
+                        "Verkstadsarbetare", "Svarvare", "Valsverksarbetare", "Lastbilschaufför",
+                        "Byggnadssnickare", "Gruvarbetare", "Ingenjör", "Järnvägstjänsteman",
+                        "Typograf", "Montör", "Elektriker", "Postiljon", "Poliskonstapel"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                } else {
+                    const jobs = [
+                        "Hemmafru", "Hemmafru", "Textilarbeterska", "Telefonist",
+                        "Kontorist", "Butiksbiträde", "Sjuksköterska", "Småskollärarinna", "Postkassörska"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                }
+            } else if (year <= 2026) {
+                // Tjänstesamhället / Modernt SSYK
+                if (sexTitle === "man") {
+                    const jobs = [
+                        "Systemutvecklare", "Snickare / Hantverkare", "Projektledare", "Lagerarbetare",
+                        "Elektriker", "Civilingenjör", "Lastbilschaufför", "Grundskollärare",
+                        "Ekonom", "Fastighetsskötare", "Läkare", "Kock", "Polisinspektör"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                } else {
+                    const jobs = [
+                        "Undersköterska", "Grundskollärare", "Sjuksköterska", "Förskollärare",
+                        "Administratör", "HR-specialist", "Systemutvecklare", "Ekonom",
+                        "Butikssäljare", "Läkare", "Fysioterapeut", "Restaurangbiträde"
+                    ];
+                    return jobs[Math.floor(Math.random() * jobs.length)];
+                }
+            } else {
+                // Framtiden 2027–2070
+                const futureJobs = [
+                    "AI-arkitekt", "Klimatanpassningstekniker", "Vårdkoordinator", "Robotiktekniker",
+                    "Förnybar energiingenjör", "Bioinformatiker", "Hållbarhetsstrateg",
+                    "Cirkulärekonom", "Cybersäkerhetsspecialist", "Specialistsjuksköterska", "Lärare"
+                ];
+                return futureJobs[Math.floor(Math.random() * futureJobs.length)];
+            }
+        }
+
+        // Seniorer 65+
+        if (year < 1913) {
+            return sexTitle === "man" ? "Undantagsman (f.d. bonde/torpare)" : "Undantagshustru / Änka";
+        }
+        if (year < 1970) {
+            return "Folkpensionär";
+        }
+        return "Ålderspensionär";
+    }
+
+    /**
+     * GENERERA HISTORISKT BARNANTAL
+     * Sannolikhetsfördelat kring epokens faktiska fruktsamhetstal (TFR)
+     */
+    getHistoricalChildren(age, year, marital) {
+        if (age < 18) return "Inga egna barn";
+
+        const stats = this.getEraStats(year);
+        const tfr = stats.tfrRaw;
+
+        const maturity = Math.min(1.0, Math.max(0.1, (age - 17) / 18));
+        const baseCount = Math.round(tfr * maturity);
+
+        if (marital === "Ogift" && year < 1960) {
+            if (Math.random() < 0.85) return "Inga barn";
+            return "1 barn";
+        }
+
+        const roll = Math.random();
+        let count = baseCount;
+        if (tfr > 3.5) {
+            // 1800-talet: Stora barnaskaror (0-9 barn)
+            if (roll < 0.12) count = 0;
+            else if (roll < 0.25) count = Math.max(1, baseCount - 2);
+            else if (roll < 0.60) count = baseCount;
+            else if (roll < 0.85) count = baseCount + 2;
+            else count = baseCount + 4;
+        } else if (tfr < 1.8) {
+            // Krisår & modern tid: 0, 1 eller 2 barn
+            if (roll < 0.35) count = 0;
+            else if (roll < 0.70) count = 1;
+            else if (roll < 0.94) count = 2;
+            else count = 3;
+        } else {
+            // Rekordåren (ca 2.4 barn)
+            if (roll < 0.20) count = 0;
+            else if (roll < 0.45) count = 1;
+            else if (roll < 0.80) count = 2;
+            else if (roll < 0.95) count = 3;
+            else count = 4;
+        }
+
+        if (count <= 0) return "Inga barn";
+        if (count === 1) return "1 barn";
+        return `${count} barn`;
+    }
+
+    /**
+     * GENERERA BOENDEMILJÖ BASERAT PÅ SCB TAB5328 (STAD VS LAND)
+     */
+    getHistoricalHousing(year) {
+        const stats = this.getEraStats(year);
+        const isUrban = (Math.random() * 100) < stats.urbanRaw;
+
+        if (isUrban) {
+            if (year < 1920) return "Stadskärna (trä-/stenhus)";
+            if (year < 1970) return "Stad / bruksort (lägenhet)";
+            return "Tätort (lägenhet / villa)";
+        } else {
+            if (year < 1920) return "Landsbygd (torp / gård)";
+            if (year < 1970) return "Landsbygd (by / lantbruk)";
+            return "Landsbygd / småort";
+        }
+    }
+
+    /**
      * GENERERA EN DETALJERAD MÄNSKLIG PROFIL VID KLICK
-     * Baserat på SCB:s verkliga sannolikheter (TAB638, TAB4822, TAB6642)
+     * Baserat på SCB:s verkliga sannolikheter och historiska epoker
      */
     generatePersonProfile(age, sex = 'män', year = 2026) {
         const birthYear = year - age;
 
         // Välj kommun slumpmässigt viktat efter befolkning
-        let totalWeight = 0;
-        for (let m of this.municipalities) totalWeight += m.weight;
-        let r = Math.random() * totalWeight;
-        let chosenMuni = this.municipalities[0];
-        for (let m of this.municipalities) {
-            r -= m.weight;
-            if (r <= 0) {
-                chosenMuni = m;
-                break;
-            }
-        }
+        const chosenMuni = this.getRandomMunicipality();
 
-        // Civilstånd baserat på ålder (SCB TAB638 logik)
+        // Civilstånd anpassat efter ålder och historisk skilsmässolag
         let marital = "Ogift";
         if (age < 20) {
             marital = "Ogift";
         } else if (age < 35) {
-            marital = Math.random() < 0.25 ? "Gift" : "Ogift";
+            marital = Math.random() < (year < 1960 ? 0.45 : 0.25) ? "Gift" : "Ogift";
         } else if (age < 65) {
             const roll = Math.random();
-            if (roll < 0.55) marital = "Gift";
-            else if (roll < 0.75) marital = "Skild";
+            const divorceRate = year < 1920 ? 0.01 : (year < 1970 ? 0.08 : 0.25);
+            if (roll < (year < 1960 ? 0.75 : 0.55)) marital = "Gift";
+            else if (roll < (year < 1960 ? 0.75 + divorceRate : 0.55 + divorceRate)) marital = "Skild";
             else marital = "Ogift";
         } else {
             const roll = Math.random();
-            if (roll < 0.48) marital = "Gift";
-            else if (roll < 0.78) marital = "Änka/Änkling";
-            else marital = "Skild";
+            if (roll < 0.45) marital = "Gift";
+            else if (roll < 0.82) marital = "Änka/Änkling";
+            else marital = year < 1970 ? "Ogift" : "Skild";
         }
 
-        // Födelseland baserat på SCB utrikes/inrikes statistik (TAB4822)
-        // I dagens Sverige är ~20% utrikes födda.
+        const sexTitle = (sex === 'män' || sex === 1) ? "man" : "kvinna";
+
+        // Barnantal
+        const children = this.getHistoricalChildren(age, year, marital);
+
+        // Yrke / Sysselsättning
+        const occupation = this.getHistoricalOccupation(age, sexTitle, year);
+
+        // Boendemiljö
+        const housing = this.getHistoricalHousing(year);
+
+        // Födelseland baserat på SCB:s utlandsfödda över tid
         let isForeignBorn = false;
         let birthCountry = "Sverige";
         let countryStat = null;
 
-        if (year >= 1990 && Math.random() < 0.20) {
+        const foreignProp = year < 1945 ? 0.01 : (year < 1980 ? 0.07 : (year < 2010 ? 0.14 : 0.20));
+        if (Math.random() < foreignProp) {
             isForeignBorn = true;
-            // Välj bland utrikes länder
             const cChoice = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
             birthCountry = cChoice.name;
             countryStat = `En av ca ${cChoice.countInSweden.toLocaleString('sv-SE')} personer födda i ${cChoice.name} i Sverige`;
         }
-
-        const sexTitle = (sex === 'män' || sex === 1) ? "man" : "kvinna";
 
         return {
             age: age,
@@ -392,6 +646,9 @@ class PopulationEngine {
             county: chosenMuni.county,
             municipalityPop: chosenMuni.pop.toLocaleString('sv-SE'),
             marital: marital,
+            children: children,
+            occupation: occupation,
+            housing: housing,
             isForeignBorn: isForeignBorn,
             birthCountry: birthCountry,
             countryStat: countryStat,

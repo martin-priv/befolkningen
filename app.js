@@ -52,8 +52,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const personLocation = document.getElementById("personLocation");
     const personBirthYear = document.getElementById("personBirthYear");
     const personMarital = document.getElementById("personMarital");
+    const personChildren = document.getElementById("personChildren");
+    const personHousing = document.getElementById("personHousing");
+    const personOccupation = document.getElementById("personOccupation");
     const personMunicipality = document.getElementById("personMunicipality");
     const personCountry = document.getElementById("personCountry");
+
+    const eraStatFertility = document.getElementById("eraStatFertility");
+    const eraStatLifeExp = document.getElementById("eraStatLifeExp");
+    const eraStatUrban = document.getElementById("eraStatUrban");
+    const eraStatInfant = document.getElementById("eraStatInfant");
 
     // Callback när användaren klickar på en specifik pärla i myllret!
     const onPersonClick = (nearestBead, clientX, clientY) => {
@@ -63,6 +71,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         personLocation.textContent = `📍 ${profile.displayLocation}`;
         personBirthYear.textContent = profile.birthYear;
         personMarital.textContent = profile.marital;
+        if (personChildren) personChildren.textContent = profile.children;
+        if (personHousing) personHousing.textContent = profile.housing;
+        if (personOccupation) personOccupation.textContent = profile.occupation;
         personMunicipality.textContent = `${profile.municipality} (${profile.municipalityPop} inv.)`;
 
         if (profile.isForeignBorn) {
@@ -137,6 +148,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         selectedYearDisplay.textContent = year;
         yearSlider.value = year;
         eraNote.textContent = `(${engine.getEraNote(year)})`;
+
+        // Uppdatera samhällsindikatorer & tidsanda (SCB 1860-2070)
+        const eraStats = engine.getEraStats(year);
+        if (eraStatFertility) eraStatFertility.textContent = eraStats.tfr;
+        if (eraStatLifeExp) eraStatLifeExp.textContent = eraStats.lifeExp;
+        if (eraStatUrban) eraStatUrban.textContent = `${eraStats.urban} tätort`;
+        if (eraStatInfant) eraStatInfant.textContent = eraStats.infant;
 
         canvas.updateFromPopulation(popData);
         updateAgeRuler(canvas, popData);

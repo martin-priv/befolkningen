@@ -722,6 +722,43 @@ body, html {
     background: #5dfde7;
 }
 
+/* Samhällsindikatorer & Tidsanda HUD (SCB 1860-2070) */
+.era-stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 6px 14px;
+    margin-bottom: 12px;
+    font-family: 'SF Mono', Monaco, monospace;
+}
+
+.era-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.era-stat-icon {
+    font-size: 12px;
+}
+
+.era-stat-label {
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.era-stat-val {
+    font-size: 11px;
+    font-weight: 600;
+    color: #00f5d4;
+    letter-spacing: 0.2px;
+}
+
 /* Slider */
 .slider-wrapper {
     position: relative;
@@ -1144,6 +1181,26 @@ body.mouse-idle .timeline-panel {
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+    /* Samhällsindikatorer i kompakt 2x2 rutnät på mobil */
+    .era-stats-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 6px;
+        padding: 5px 8px;
+        margin-bottom: 6px;
+    }
+    .era-stat-item {
+        gap: 4px;
+    }
+    .era-stat-icon {
+        font-size: 11px;
+    }
+    .era-stat-label {
+        font-size: 8px;
+    }
+    .era-stat-val {
+        font-size: 9.5px;
     }
     .slider-wrapper {
         margin-top: 4px;
