@@ -207,11 +207,11 @@ class ViewportCanvas {
                 }
                 gl_PointSize = baseSize;
 
-                // Subtil, mycket lugn mikrodrivning på GPU
+                // Levande organisk mikroandning på GPU (myllret andas och rör sig mjukt)
                 vec3 pos = position;
-                float t = uTime * 0.45;
-                float driftX = sin(t + position.y * 1.1 + position.x * 0.5) * 0.018;
-                float driftY = cos(t * 0.38 + position.x * 0.9 + position.y * 0.7) * 0.014;
+                float t = uTime * 0.75;
+                float driftX = sin(t + position.y * 1.3 + position.x * 0.6) * 0.046;
+                float driftY = cos(t * 0.6 + position.x * 1.1 + position.y * 0.8) * 0.034;
                 pos.x += driftX;
                 pos.y += driftY;
 
@@ -1253,6 +1253,19 @@ class ViewportCanvas {
                 const midY = (ya + yb) * 0.5;
                 this.createRipple(midX, midY, 0.035, 0.10, 1.4);
             }
+        }
+
+        // 2. Mjuk och sällan förekommande mikrokrusning i folkmassan var ~4:e sekund
+        if (!this.lastOrganicRippleTime) this.lastOrganicRippleTime = now;
+        if (now - this.lastOrganicRippleTime > 3.8) {
+            this.lastOrganicRippleTime = now;
+            const halfW = (this.worldWidth / 2) * 0.75;
+            const botY = this.botY || (-this.worldHeight / 2 + 1.2);
+            const surfY = this.currentSurfaceY || (botY + 8);
+            const rx = (Math.random() - 0.5) * 2.0 * halfW;
+            const ry = botY + Math.random() * Math.max(2.0, surfY - botY);
+
+            this.createRipple(rx, ry, 0.045, 0.12, 3.2);
         }
     }
 
