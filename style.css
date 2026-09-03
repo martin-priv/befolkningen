@@ -878,6 +878,129 @@ body.mouse-idle .timeline-panel {
     transition: opacity 1.2s ease;
 }
 
+/* Person Card Inspector (Möt en människa) - Desktop */
+.person-card {
+    position: fixed;
+    top: 50%;
+    right: 28px;
+    transform: translateY(-50%);
+    width: 220px;
+    background: rgba(14, 20, 27, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(0, 245, 212, 0.28);
+    border-radius: 10px;
+    padding: 10px 14px;
+    z-index: 100;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 245, 212, 0.12);
+    animation: fadeInSlide 0.2s ease-out;
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(-46%); }
+    to { opacity: 1; transform: translateY(-50%); }
+}
+
+.person-card.hidden {
+    display: none;
+}
+
+.person-card .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #64748b;
+    border-radius: 50%;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.person-card .close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.person-badge {
+    display: inline-block;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    color: #00f5d4;
+    background: rgba(0, 245, 212, 0.10);
+    border: 1px solid rgba(0, 245, 212, 0.22);
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    max-width: 175px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.person-title {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.person-location {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 8px;
+}
+
+.person-field {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.field-label {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.field-value {
+    font-size: 11px;
+    color: #e2e8f0;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes slideUpToast {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Responsivitet & Mobil-anpassning (iPhone / Android / tablets upp till 860px) */
 @media (max-width: 860px) {
     /* Header & Befolkningsräknare */
@@ -1077,17 +1200,61 @@ body.mouse-idle .timeline-panel {
         font-size: 15px;
     }
 
-    /* Person Card Inspector i botten */
+    /* Person Card Inspector (Möt en människa) på mobil — Kompakt, centrerad toast i botten */
     .person-card {
+        position: fixed;
         top: auto;
-        bottom: 16px;
-        right: 12px;
-        left: 12px;
+        bottom: 20px;
+        left: 16px;
+        right: 16px;
         width: auto;
+        max-width: 320px;
+        margin: 0 auto;
+        height: auto;
         transform: none;
         border-radius: 12px;
-        z-index: 40;
-        padding: 12px 14px;
+        z-index: 50;
+        padding: 10px 14px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 245, 212, 0.15);
+        animation: slideUpToast 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .person-card .close-btn {
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+
+    .person-badge {
+        font-size: 8.5px;
+        padding: 1px 6px;
+        margin-bottom: 3px;
+        max-width: 220px;
+    }
+
+    .person-title {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .person-location {
+        font-size: 10.5px;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+
+    .person-grid {
+        gap: 3px 8px;
+    }
+
+    .field-label {
+        font-size: 7.5px;
+    }
+
+    .field-value {
+        font-size: 10.5px;
     }
 
     /* Årskull-modal */
@@ -1096,119 +1263,4 @@ body.mouse-idle .timeline-panel {
         max-width: 100%;
         padding: 16px;
     }
-}
-
-/* Person Card Inspector (Möt en människa) */
-.person-card {
-    position: absolute;
-    top: 50%;
-    right: 28px;
-    transform: translateY(-50%);
-    width: 220px;
-    background: rgba(14, 20, 27, 0.92);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(0, 245, 212, 0.28);
-    border-radius: 10px;
-    padding: 10px 14px;
-    z-index: 100;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 245, 212, 0.12);
-    animation: fadeInSlide 0.2s ease-out;
-}
-
-@keyframes fadeInSlide {
-    from { opacity: 0; transform: translateY(-46%); }
-    to { opacity: 1; transform: translateY(-50%); }
-}
-
-.person-card.hidden {
-    display: none;
-}
-
-.person-card .close-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: #64748b;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.person-card .close-btn:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.person-badge {
-    display: inline-block;
-    font-family: 'SF Mono', Monaco, monospace;
-    font-size: 9px;
-    letter-spacing: 0.5px;
-    color: #00f5d4;
-    background: rgba(0, 245, 212, 0.10);
-    border: 1px solid rgba(0, 245, 212, 0.22);
-    padding: 2px 6px;
-    border-radius: 12px;
-    margin-bottom: 4px;
-    max-width: 175px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.person-title {
-    font-family: 'SF Mono', Monaco, monospace;
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: -0.3px;
-    margin-bottom: 2px;
-    line-height: 1.2;
-}
-
-.person-location {
-    font-size: 11px;
-    color: #94a3b8;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding-bottom: 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.person-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 8px;
-}
-
-.person-field {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
-.field-label {
-    font-family: 'SF Mono', Monaco, monospace;
-    font-size: 8px;
-    letter-spacing: 1px;
-    color: #64748b;
-    font-weight: 600;
-}
-
-.field-value {
-    font-size: 11px;
-    color: #e2e8f0;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
