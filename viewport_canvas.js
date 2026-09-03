@@ -52,9 +52,14 @@ class ViewportCanvas {
         this.scene = new THREE.Scene();
 
         const aspect = this.width / this.height;
-        const viewSize = 34.0;
-        this.worldHeight = viewSize;
-        this.worldWidth = viewSize * aspect;
+        if (aspect >= 1.0) {
+            this.worldHeight = 34.0;
+            this.worldWidth = 34.0 * aspect;
+        } else {
+            // Porträttläge (mobil): garantera minst 28.0 bredd så pärlorna inte klumpas ihop
+            this.worldWidth = 28.0;
+            this.worldHeight = this.worldWidth / aspect;
+        }
 
         this.camera = new THREE.OrthographicCamera(
             -this.worldWidth / 2, this.worldWidth / 2,
@@ -180,15 +185,16 @@ class ViewportCanvas {
             varying vec3 vColor;
             varying float vAge;
             uniform float uHighlightAge;
+            uniform float uPointSize;
 
             void main() {
                 vColor = color;
                 vAge = age;
 
-                float baseSize = 8.8;
+                float baseSize = uPointSize;
                 if (uHighlightAge >= 0.0) {
                     if (abs(age - uHighlightAge) <= 0.8) {
-                        baseSize = 15.0;
+                        baseSize = uPointSize * 1.7;
                     }
                 }
                 gl_PointSize = baseSize;
@@ -239,11 +245,13 @@ class ViewportCanvas {
             }
         `;
 
+        const isMobileInit = this.width < 640 || (this.width / this.height) < 0.8;
         this.beadsMaterial = new THREE.ShaderMaterial({
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
             uniforms: {
-                uHighlightAge: { value: -1.0 }
+                uHighlightAge: { value: -1.0 },
+                uPointSize: { value: isMobileInit ? 5.8 : 8.8 }
             },
             transparent: true,
             depthWrite: false
@@ -308,6 +316,7 @@ class ViewportCanvas {
 
     updateFromPopulation(popData) {
         if (!popData) return;
+        this.lastPopData = popData;
 
         const total = popData.total;
         let beadIndex = 0;
@@ -862,9 +871,15 @@ class ViewportCanvas {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
         const aspect = this.width / this.height;
-        const viewSize = 34.0;
-        this.worldHeight = viewSize;
-        this.worldWidth = viewSize * aspect;
+
+        if (aspect >= 1.0) {
+            this.worldHeight = 34.0;
+            this.worldWidth = 34.0 * aspect;
+        } else {
+            // Porträttläge (mobil): garantera minst 28.0 bredd
+            this.worldWidth = 28.0;
+            this.worldHeight = this.worldWidth / aspect;
+        }
 
         this.camera.left = -this.worldWidth / 2;
         this.camera.right = this.worldWidth / 2;
@@ -873,6 +888,17 @@ class ViewportCanvas {
         this.camera.updateProjectionMatrix();
 
         this.renderer.setSize(this.width, this.height);
+
+        // Anpassa pärlstorlek efter mobilskärm vs desktop
+        const isMobile = this.width < 640 || aspect < 0.8;
+        if (this.beadsMaterial && this.beadsMaterial.uniforms.uPointSize) {
+            this.beadsMaterial.uniforms.uPointSize.value = isMobile ? 5.8 : 8.8;
+        }
+
+        // Re-layouta pärlorna så de fyller den aktuella skärmens dimensioner harmoniskt
+        if (this.lastPopData) {
+            this.updateFromPopulation(this.lastPopData);
+        }
     }
 
     animate() {
