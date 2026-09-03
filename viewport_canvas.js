@@ -344,7 +344,7 @@ class ViewportCanvas {
     }
 
     /**
-     * Skapa en mjuk ringvåg (ripple) från musrörelse eller klick
+     * Skapa en mjuk ringvåg (ripple) från musrörelse, klick eller demografiska händelser
      */
     createRipple(x, y, strength = 0.45, speed = 0.26, maxRadius = 9.0) {
         this.ripples.push({
@@ -357,24 +357,24 @@ class ViewportCanvas {
             waveWidth: 1.8
         });
 
-        if (this.ripples.length > 7) {
+        if (this.ripples.length > 45) {
             this.ripples.shift();
         }
     }
 
     /**
-     * Taktil Ripple-Fysik: Inga hål! Bara mjuka vågor som fortplantar sig genom folkhavet
+     * Taktil Ripple-Fysik: Inga hål! Mjuka vågor som fortplantar sig genom folkhavet
      */
     updateFluidPhysics() {
         if (this.activeBeadCount === 0) return;
 
-        // Uppdatera alla aktiva ringvågor
+        // Uppdatera alla aktiva ringvågor (stödjer även implosions-vågor med negativ strength)
         for (let rIdx = this.ripples.length - 1; rIdx >= 0; rIdx--) {
             const rip = this.ripples[rIdx];
             rip.radius += rip.speed;
             rip.strength *= 0.94; // Mjuk dämpning
 
-            if (rip.radius > rip.maxRadius || rip.strength < 0.008) {
+            if (rip.radius > rip.maxRadius || Math.abs(rip.strength) < 0.006) {
                 this.ripples.splice(rIdx, 1);
             }
         }
@@ -400,7 +400,7 @@ class ViewportCanvas {
 
                 const waveDist = Math.abs(dist - rip.radius);
                 if (waveDist < rip.waveWidth && dist > 0.001) {
-                    // Sinusvåg: mjuk knuff ut och sedan in
+                    // Sinusvåg: mjuk knuff ut/in beroende på tecken
                     const phase = (dist - rip.radius) / rip.waveWidth;
                     const waveForce = Math.sin(phase * Math.PI) * rip.strength;
                     
@@ -429,23 +429,40 @@ class ViewportCanvas {
         this.beadsGeometry.attributes.position.needsUpdate = true;
     }
 
+    /**
+     * FÖDELSE OCH INVANDRING:
+     * - Födelse: Trillar ner från toppen, slår ner i ytan (spädbarnen) och sprider en cirkulär ringvåg!
+     * - Invandring: Trillar ner, bryter ytan med en skvätt och dyker djupt ner genom generationerna
+     *   till sin vuxna ålder, precis som ett vertikalt drag med musen, och lämnar kölvatten (wake ripples)!
+     */
     spawnDroppingBead(type = 'birth') {
         const topY = (this.worldHeight / 2) + 2.0;
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
         const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
-        const targetY = (type === 'birth') 
-            ? surfaceY 
-            : Math.max(botY + 0.5, surfaceY - (surfaceY - botY) * 0.42);
+        const popHeight = Math.max(1.0, surfaceY - botY);
 
-        const spawnX = (Math.random() - 0.5) * this.worldWidth * 0.8;
+        let targetY;
+        let colorHex;
+        if (type === 'birth') {
+            // Födelse landar precis på ytan där de yngsta ligger
+            targetY = surfaceY;
+            const birthColors = [0xff2a7a, 0xfee440, 0x00f5d4, 0xff7b00, 0xa855f7];
+            colorHex = birthColors[Math.floor(Math.random() * birthColors.length)];
+        } else {
+            // Invandring: Typisk ålder ca 20-45 år -> 20%-48% ned från ytan mot botten
+            const depthFraction = 0.20 + Math.random() * 0.28;
+            targetY = Math.max(botY + 0.6, surfaceY - popHeight * depthFraction);
+            colorHex = 0x00f5a0; // Ljusstark smaragd/mint
+        }
 
-        const beadGeo = new THREE.SphereGeometry(0.42, 16, 16);
-        const colorHex = (type === 'birth') ? 0xff2a7a : 0x00f5a0;
+        const spawnX = (Math.random() - 0.5) * this.worldWidth * 0.78;
+
+        const beadGeo = new THREE.SphereGeometry(0.44, 16, 16);
         const beadMat = new THREE.MeshStandardMaterial({
             color: colorHex,
             roughness: 0.15,
             emissive: colorHex,
-            emissiveIntensity: 0.8
+            emissiveIntensity: 0.95
         });
 
         const mesh = new THREE.Mesh(beadGeo, beadMat);
@@ -455,8 +472,11 @@ class ViewportCanvas {
         this.fallingBeads.push({
             mesh: mesh,
             type: type,
-            vy: -0.22,
+            vy: -0.26,
             targetY: targetY,
+            surfaceY: surfaceY,
+            enteredSurface: false,
+            lastWakeY: topY,
             bounces: 0,
             life: 0
         });
@@ -466,23 +486,63 @@ class ViewportCanvas {
         for (let i = this.fallingBeads.length - 1; i >= 0; i--) {
             const b = this.fallingBeads[i];
             b.life++;
-            b.vy -= 0.012;
-            b.mesh.position.y += b.vy;
 
-            if (b.mesh.position.y <= b.targetY) {
-                b.mesh.position.y = b.targetY;
-                b.vy = -b.vy * 0.40;
-                b.bounces++;
+            if (!b.enteredSurface) {
+                // I luften: faller med acceleration mot ytan
+                b.vy -= 0.014;
+                b.mesh.position.y += b.vy;
 
-                if (b.bounces === 1) {
-                    // Skapa en ringvåg vid nedslaget!
-                    this.createRipple(b.mesh.position.x, b.mesh.position.y, 0.35, 0.20, 6.0);
+                if (b.mesh.position.y <= b.surfaceY) {
+                    b.enteredSurface = true;
+                    b.lastWakeY = b.surfaceY;
+
+                    if (b.type === 'birth') {
+                        // FÖDELSE: Landar på ytan med ett tydligt nedslag och sprider en stor ringvåg!
+                        b.mesh.position.y = b.surfaceY;
+                        b.vy = -b.vy * 0.35;
+                        b.bounces = 1;
+                        this.createRipple(b.mesh.position.x, b.surfaceY, 0.54, 0.24, 7.5);
+                    } else {
+                        // INVANDRING: Bryter ytan med en skvätt och dyker vidare nedåt genom generationerna!
+                        this.createRipple(b.mesh.position.x, b.surfaceY, 0.38, 0.22, 5.5);
+                        b.vy = Math.max(-0.20, b.vy * 0.65);
+                    }
+                }
+            } else if (b.type === 'immigrate' && b.mesh.position.y > b.targetY) {
+                // INVANDRING PLÖJER NEDÅT GENOM FOLKHAVET:
+                // Glider mjukt nedåt med viskös dämpning
+                b.vy = Math.max(-0.22, b.vy * 0.95 - 0.008);
+                b.mesh.position.y += b.vy;
+
+                // KÖLVATTEN (Wake trail): Som ett vertikalt musdrag som knuffar kulorna åt sidan!
+                const dropDist = b.lastWakeY - b.mesh.position.y;
+                if (dropDist >= 0.95) {
+                    this.createRipple(b.mesh.position.x, b.mesh.position.y, 0.26, 0.20, 4.0);
+                    b.lastWakeY = b.mesh.position.y;
+                }
+
+                if (b.mesh.position.y <= b.targetY) {
+                    b.mesh.position.y = b.targetY;
+                    b.vy = -b.vy * 0.30;
+                    b.bounces = 1;
+                    // Sättnings-ripple när invandraren slår rot i sin generation!
+                    this.createRipple(b.mesh.position.x, b.targetY, 0.44, 0.22, 6.2);
+                }
+            } else {
+                // Studs och integrering vid målnivån (både födelse på ytan och invandring i vuxen ålder)
+                b.vy -= 0.012;
+                b.mesh.position.y += b.vy;
+
+                if (b.mesh.position.y <= b.targetY) {
+                    b.mesh.position.y = b.targetY;
+                    b.vy = -b.vy * 0.35;
+                    b.bounces++;
                 }
 
                 if (b.bounces >= 3) {
-                    b.mesh.material.opacity = Math.max(0, 1.0 - (b.life - 90) * 0.03);
                     b.mesh.material.transparent = true;
-                    if (b.life > 130) {
+                    b.mesh.material.opacity = Math.max(0, 1.0 - (b.life - 80) * 0.035);
+                    if (b.life > 120) {
                         this.scene.remove(b.mesh);
                         b.mesh.geometry.dispose();
                         b.mesh.material.dispose();
@@ -493,10 +553,16 @@ class ViewportCanvas {
         }
     }
 
+    /**
+     * DÖDSFALL OCH UTVANDRING:
+     * - Dödsfall: I de äldsta kullarna i botten skapas en stilla implosionsvåg (suck) där kulan slocknar!
+     * - Utvandring: Startar i vuxen ålder, seglar mjukt uppåt genom generationerna,
+     *   skapar uppåtriktade kölvattensvågor, bryter igenom ytan och försvinner ut i rymden!
+     */
     spawnDepartingBead(type = 'death') {
         const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
-        const popHeight = surfaceY - botY;
+        const popHeight = Math.max(1.0, surfaceY - botY);
 
         let x, y, colorHex, vy, maxLife;
         const halfW = (this.worldWidth / 2) * 0.85;
@@ -504,27 +570,29 @@ class ViewportCanvas {
         if (type === 'death') {
             // Dödsfall sker bland de äldre i botten
             x = (Math.random() - 0.5) * 2.0 * halfW;
-            y = botY + Math.random() * (popHeight * 0.22);
-            colorHex = 0xd4d4d8; // Mjuk silvrig ljusgnista som stilla slocknar
-            vy = 0.006;
-            maxLife = 75; // ~1.2 sek
-            this.createRipple(x, y, 0.16, 0.12, 3.5);
+            y = botY + Math.random() * (popHeight * 0.18);
+            colorHex = 0xf8fafc; // Ljus silvergnista
+            vy = 0.004;
+            maxLife = 85;
+            // Implosion / mjuk suck: negativ strength drar omgivningen mjukt inåt för att fylla tomrummet!
+            this.createRipple(x, y, -0.32, 0.18, 4.6);
         } else {
-            // Utvandring sker bland vuxna i mitten som lyfter och reser bort
+            // Utvandring sker bland unga vuxna (ca 20-35 år)
             x = (Math.random() - 0.5) * 2.0 * halfW;
-            y = botY + (popHeight * 0.35) + Math.random() * (popHeight * 0.35);
+            y = botY + (popHeight * 0.45) + (Math.random() - 0.5) * (popHeight * 0.25);
             colorHex = 0x38bdf8; // Himmelsblå som stiger mot rymden
-            vy = 0.07;
-            maxLife = 95; // ~1.6 sek
-            this.createRipple(x, y, 0.20, 0.14, 4.0);
+            vy = 0.095; // Stiger mjukt och stadigt uppåt
+            maxLife = 130;
+            // Avtågs-ripple i hemgenerationen när utvandraren lättar
+            this.createRipple(x, y, 0.28, 0.18, 4.2);
         }
 
-        const beadGeo = new THREE.SphereGeometry(0.40, 16, 16);
+        const beadGeo = new THREE.SphereGeometry(0.42, 16, 16);
         const beadMat = new THREE.MeshStandardMaterial({
             color: colorHex,
             roughness: 0.1,
             emissive: colorHex,
-            emissiveIntensity: 1.1,
+            emissiveIntensity: 1.15,
             transparent: true,
             opacity: 1.0
         });
@@ -537,6 +605,9 @@ class ViewportCanvas {
             mesh: mesh,
             type: type,
             vy: vy,
+            surfaceY: surfaceY,
+            breachedSurface: false,
+            lastWakeY: y,
             life: 0,
             maxLife: maxLife
         });
@@ -549,16 +620,39 @@ class ViewportCanvas {
             d.mesh.position.y += d.vy;
 
             const progress = d.life / d.maxLife;
+
             if (d.type === 'death') {
                 // Gnistan pulserar mjukt och tonar stillsamt bort
-                d.mesh.scale.setScalar(1.0 + Math.sin(progress * Math.PI) * 0.35);
+                d.mesh.scale.setScalar(1.0 + Math.sin(progress * Math.PI) * 0.45);
                 d.mesh.material.opacity = Math.max(0, 1.0 - Math.pow(progress, 1.4));
+
+                // Vid halva livslängden släpps en andra mjuk utjämningsvåg
+                if (d.life === Math.floor(d.maxLife * 0.45)) {
+                    this.createRipple(d.mesh.position.x, d.mesh.position.y, 0.18, 0.14, 3.6);
+                }
             } else {
-                // Utvandraren stiger och löses upp mot skyn
-                d.mesh.material.opacity = Math.max(0, 1.0 - progress);
+                // UTVANDRING SEGLAR UPPÅT:
+                if (d.mesh.position.y < d.surfaceY) {
+                    // Under ytan: lämna uppåtgående kölvatten (wake ripples) genom generationerna
+                    const riseDist = d.mesh.position.y - d.lastWakeY;
+                    if (riseDist >= 0.95) {
+                        this.createRipple(d.mesh.position.x, d.mesh.position.y, 0.22, 0.18, 3.8);
+                        d.lastWakeY = d.mesh.position.y;
+                    }
+                } else if (!d.breachedSurface) {
+                    // Bryter igenom ytan ut mot världen!
+                    d.breachedSurface = true;
+                    this.createRipple(d.mesh.position.x, d.surfaceY, 0.36, 0.22, 5.8);
+                } else {
+                    // Ovanför ytan seglar den vidare mot skyn och accelererar lätt
+                    d.vy += 0.003;
+                }
+
+                // Tona ut harmoniskt mot slutet eller när den når toppen
+                d.mesh.material.opacity = Math.max(0, 1.0 - Math.pow(progress, 1.8));
             }
 
-            if (d.life >= d.maxLife) {
+            if (d.life >= d.maxLife || d.mesh.position.y > (this.worldHeight / 2 + 3.0)) {
                 this.scene.remove(d.mesh);
                 d.mesh.geometry.dispose();
                 d.mesh.material.dispose();

@@ -277,6 +277,45 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Manuella klick på rytm-fälten samt tangentbordsgenvägar (B, I, D, E) för direkt demo
+    function triggerDemoEvent(type) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        const currentVal = parseInt(popNumber.textContent.replace(/\s/g, ""), 10) || 10620000;
+
+        if (type === 'birth') {
+            canvas.spawnDroppingBead('birth');
+            popNumber.textContent = formatNumber(currentVal + 1);
+            showRhythmToast('birth', `${timeStr} — Nyfödd i Sverige (+1)!`);
+        } else if (type === 'immigrate') {
+            canvas.spawnDroppingBead('immigrate');
+            popNumber.textContent = formatNumber(currentVal + 1);
+            showRhythmToast('immigrate', `${timeStr} — Invandring till Sverige (+1)!`);
+        } else if (type === 'death') {
+            canvas.spawnDepartingBead('death');
+            popNumber.textContent = formatNumber(currentVal - 1);
+            showRhythmToast('death', `${timeStr} — Ett liv slocknade i Sverige (-1)`);
+        } else if (type === 'emigrate') {
+            canvas.spawnDepartingBead('emigrate');
+            popNumber.textContent = formatNumber(currentVal - 1);
+            showRhythmToast('emigrate', `${timeStr} — Utvandring från Sverige (-1)`);
+        }
+    }
+
+    if (rhythmBirth) rhythmBirth.addEventListener("click", () => triggerDemoEvent('birth'));
+    if (rhythmDeath) rhythmDeath.addEventListener("click", () => triggerDemoEvent('death'));
+    if (rhythmImmigrant) rhythmImmigrant.addEventListener("click", () => triggerDemoEvent('immigrate'));
+    if (rhythmEmigrant) rhythmEmigrant.addEventListener("click", () => triggerDemoEvent('emigrate'));
+
+    window.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        const k = e.key.toLowerCase();
+        if (k === 'b') triggerDemoEvent('birth');
+        else if (k === 'i') triggerDemoEvent('immigrate');
+        else if (k === 'd') triggerDemoEvent('death');
+        else if (k === 'e') triggerDemoEvent('emigrate');
+    });
+
     // Live Klocka, Nedräknare & Realtidsrytm
     function updateClock() {
         const now = new Date();
