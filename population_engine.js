@@ -607,13 +607,12 @@ class PopulationEngine {
         const isUrban = (Math.random() * 100) < stats.urbanRaw;
 
         if (isUrban) {
-            if (year < 1920) return "Stadskärna (trä-/stenhus)";
-            if (year < 1970) return "Stad / bruksort (lägenhet)";
-            return "Tätort (lägenhet / villa)";
+            if (year < 1920) return "Stad";
+            if (year < 1970) return "Stad / bruksort";
+            return "Tätort";
         } else {
-            if (year < 1920) return "Landsbygd (torp / gård)";
-            if (year < 1970) return "Landsbygd (by / lantbruk)";
-            return "Landsbygd / småort";
+            if (year < 1920) return "Landsbygd (torp)";
+            return "Landsbygd";
         }
     }
 
