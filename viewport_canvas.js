@@ -430,6 +430,64 @@ class ViewportCanvas {
     }
 
     /**
+     * Skapa en mjuk radial glödtextur för ljusaura / halo runt händelse-pärlor
+     */
+    createGlowTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+        grad.addColorStop(0.18, 'rgba(255, 255, 255, 0.85)');
+        grad.addColorStop(0.48, 'rgba(255, 255, 255, 0.35)');
+        grad.addColorStop(0.76, 'rgba(255, 255, 255, 0.08)');
+        grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    /**
+     * Skapa en tredimensionell, glansig pärla med halverad storlek och mjuk ljusaura (halo)
+     */
+    createLuminousBead(colorHex, radius = 0.22, haloScale = 1.30) {
+        const group = new THREE.Group();
+
+        // 1. Själva 3D-pärlan (halverad storlek, krispig 3D-lyster med högdagertopp)
+        const beadGeo = new THREE.SphereGeometry(radius, 24, 24);
+        const beadMat = new THREE.MeshStandardMaterial({
+            color: colorHex,
+            roughness: 0.12,
+            metalness: 0.20,
+            emissive: colorHex,
+            emissiveIntensity: 0.42,
+            transparent: true,
+            opacity: 1.0
+        });
+        const sphere = new THREE.Mesh(beadGeo, beadMat);
+        group.add(sphere);
+
+        // 2. Mjuk, lysande ljus-aura (Glow Halo) runt kulan så den verkligen lyser
+        if (!this.glowTexture) {
+            this.glowTexture = this.createGlowTexture();
+        }
+        const spriteMat = new THREE.SpriteMaterial({
+            map: this.glowTexture,
+            color: colorHex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            opacity: 0.75,
+            depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(haloScale, haloScale, 1.0);
+        group.add(sprite);
+
+        return { group, sphere, sprite };
+    }
+
+    /**
      * FÖDELSE OCH INVANDRING:
      * - Födelse: Trillar ner från toppen, slår ner i ytan (spädbarnen) och sprider en cirkulär ringvåg!
      * - Invandring: Trillar ner, bryter ytan med en skvätt och dyker djupt ner genom generationerna
@@ -457,20 +515,15 @@ class ViewportCanvas {
 
         const spawnX = (Math.random() - 0.5) * this.worldWidth * 0.78;
 
-        const beadGeo = new THREE.SphereGeometry(0.44, 16, 16);
-        const beadMat = new THREE.MeshStandardMaterial({
-            color: colorHex,
-            roughness: 0.15,
-            emissive: colorHex,
-            emissiveIntensity: 0.95
-        });
-
-        const mesh = new THREE.Mesh(beadGeo, beadMat);
-        mesh.position.set(spawnX, topY, 0.5);
-        this.scene.add(mesh);
+        // Halverad storlek (radie 0.22) med tredimensionell pärllyster och lysande ljusaura!
+        const { group, sphere, sprite } = this.createLuminousBead(colorHex, 0.22, 1.30);
+        group.position.set(spawnX, topY, 0.5);
+        this.scene.add(group);
 
         this.fallingBeads.push({
-            mesh: mesh,
+            group: group,
+            sphere: sphere,
+            sprite: sprite,
             type: type,
             vy: -0.26,
             targetY: targetY,
@@ -490,62 +543,64 @@ class ViewportCanvas {
             if (!b.enteredSurface) {
                 // I luften: faller med acceleration mot ytan
                 b.vy -= 0.014;
-                b.mesh.position.y += b.vy;
+                b.group.position.y += b.vy;
 
-                if (b.mesh.position.y <= b.surfaceY) {
+                if (b.group.position.y <= b.surfaceY) {
                     b.enteredSurface = true;
                     b.lastWakeY = b.surfaceY;
 
                     if (b.type === 'birth') {
                         // FÖDELSE: Landar på ytan med ett tydligt nedslag och sprider en stor ringvåg!
-                        b.mesh.position.y = b.surfaceY;
+                        b.group.position.y = b.surfaceY;
                         b.vy = -b.vy * 0.35;
                         b.bounces = 1;
-                        this.createRipple(b.mesh.position.x, b.surfaceY, 0.54, 0.24, 7.5);
+                        this.createRipple(b.group.position.x, b.surfaceY, 0.54, 0.24, 7.5);
                     } else {
                         // INVANDRING: Bryter ytan med en skvätt och dyker vidare nedåt genom generationerna!
-                        this.createRipple(b.mesh.position.x, b.surfaceY, 0.38, 0.22, 5.5);
+                        this.createRipple(b.group.position.x, b.surfaceY, 0.38, 0.22, 5.5);
                         b.vy = Math.max(-0.20, b.vy * 0.65);
                     }
                 }
-            } else if (b.type === 'immigrate' && b.mesh.position.y > b.targetY) {
+            } else if (b.type === 'immigrate' && b.group.position.y > b.targetY) {
                 // INVANDRING PLÖJER NEDÅT GENOM FOLKHAVET:
                 // Glider mjukt nedåt med viskös dämpning
                 b.vy = Math.max(-0.22, b.vy * 0.95 - 0.008);
-                b.mesh.position.y += b.vy;
+                b.group.position.y += b.vy;
 
                 // KÖLVATTEN (Wake trail): Som ett vertikalt musdrag som knuffar kulorna åt sidan!
-                const dropDist = b.lastWakeY - b.mesh.position.y;
+                const dropDist = b.lastWakeY - b.group.position.y;
                 if (dropDist >= 0.95) {
-                    this.createRipple(b.mesh.position.x, b.mesh.position.y, 0.26, 0.20, 4.0);
-                    b.lastWakeY = b.mesh.position.y;
+                    this.createRipple(b.group.position.x, b.group.position.y, 0.26, 0.20, 4.0);
+                    b.lastWakeY = b.group.position.y;
                 }
 
-                if (b.mesh.position.y <= b.targetY) {
-                    b.mesh.position.y = b.targetY;
+                if (b.group.position.y <= b.targetY) {
+                    b.group.position.y = b.targetY;
                     b.vy = -b.vy * 0.30;
                     b.bounces = 1;
                     // Sättnings-ripple när invandraren slår rot i sin generation!
-                    this.createRipple(b.mesh.position.x, b.targetY, 0.44, 0.22, 6.2);
+                    this.createRipple(b.group.position.x, b.targetY, 0.44, 0.22, 6.2);
                 }
             } else {
                 // Studs och integrering vid målnivån (både födelse på ytan och invandring i vuxen ålder)
                 b.vy -= 0.012;
-                b.mesh.position.y += b.vy;
+                b.group.position.y += b.vy;
 
-                if (b.mesh.position.y <= b.targetY) {
-                    b.mesh.position.y = b.targetY;
+                if (b.group.position.y <= b.targetY) {
+                    b.group.position.y = b.targetY;
                     b.vy = -b.vy * 0.35;
                     b.bounces++;
                 }
 
                 if (b.bounces >= 3) {
-                    b.mesh.material.transparent = true;
-                    b.mesh.material.opacity = Math.max(0, 1.0 - (b.life - 80) * 0.035);
+                    const op = Math.max(0, 1.0 - (b.life - 80) * 0.035);
+                    b.sphere.material.opacity = op;
+                    b.sprite.material.opacity = op * 0.75;
                     if (b.life > 120) {
-                        this.scene.remove(b.mesh);
-                        b.mesh.geometry.dispose();
-                        b.mesh.material.dispose();
+                        this.scene.remove(b.group);
+                        b.sphere.geometry.dispose();
+                        b.sphere.material.dispose();
+                        b.sprite.material.dispose();
                         this.fallingBeads.splice(i, 1);
                     }
                 }
@@ -571,7 +626,7 @@ class ViewportCanvas {
             // Dödsfall sker bland de äldre i botten
             x = (Math.random() - 0.5) * 2.0 * halfW;
             y = botY + Math.random() * (popHeight * 0.18);
-            colorHex = 0xf8fafc; // Ljus silvergnista
+            colorHex = 0xfffbeb; // Ljus varm vit/champagne-gnista
             vy = 0.004;
             maxLife = 85;
             // Implosion / mjuk suck: negativ strength drar omgivningen mjukt inåt för att fylla tomrummet!
@@ -587,22 +642,15 @@ class ViewportCanvas {
             this.createRipple(x, y, 0.28, 0.18, 4.2);
         }
 
-        const beadGeo = new THREE.SphereGeometry(0.42, 16, 16);
-        const beadMat = new THREE.MeshStandardMaterial({
-            color: colorHex,
-            roughness: 0.1,
-            emissive: colorHex,
-            emissiveIntensity: 1.15,
-            transparent: true,
-            opacity: 1.0
-        });
-
-        const mesh = new THREE.Mesh(beadGeo, beadMat);
-        mesh.position.set(x, y, 0.5);
-        this.scene.add(mesh);
+        // Halverad storlek (radie 0.21) med mjuk ljusaura
+        const { group, sphere, sprite } = this.createLuminousBead(colorHex, 0.21, 1.35);
+        group.position.set(x, y, 0.5);
+        this.scene.add(group);
 
         this.departingBeads.push({
-            mesh: mesh,
+            group: group,
+            sphere: sphere,
+            sprite: sprite,
             type: type,
             vy: vy,
             surfaceY: surfaceY,
@@ -617,45 +665,53 @@ class ViewportCanvas {
         for (let i = this.departingBeads.length - 1; i >= 0; i--) {
             const d = this.departingBeads[i];
             d.life++;
-            d.mesh.position.y += d.vy;
+            d.group.position.y += d.vy;
 
             const progress = d.life / d.maxLife;
 
             if (d.type === 'death') {
                 // Gnistan pulserar mjukt och tonar stillsamt bort
-                d.mesh.scale.setScalar(1.0 + Math.sin(progress * Math.PI) * 0.45);
-                d.mesh.material.opacity = Math.max(0, 1.0 - Math.pow(progress, 1.4));
+                const pulse = 1.0 + Math.sin(progress * Math.PI) * 0.45;
+                d.sphere.scale.setScalar(pulse);
+                d.sprite.scale.setScalar(1.35 * pulse * 1.2);
+                
+                const op = Math.max(0, 1.0 - Math.pow(progress, 1.4));
+                d.sphere.material.opacity = op;
+                d.sprite.material.opacity = op * 0.85;
 
                 // Vid halva livslängden släpps en andra mjuk utjämningsvåg
                 if (d.life === Math.floor(d.maxLife * 0.45)) {
-                    this.createRipple(d.mesh.position.x, d.mesh.position.y, 0.18, 0.14, 3.6);
+                    this.createRipple(d.group.position.x, d.group.position.y, 0.18, 0.14, 3.6);
                 }
             } else {
                 // UTVANDRING SEGLAR UPPÅT:
-                if (d.mesh.position.y < d.surfaceY) {
+                if (d.group.position.y < d.surfaceY) {
                     // Under ytan: lämna uppåtgående kölvatten (wake ripples) genom generationerna
-                    const riseDist = d.mesh.position.y - d.lastWakeY;
+                    const riseDist = d.group.position.y - d.lastWakeY;
                     if (riseDist >= 0.95) {
-                        this.createRipple(d.mesh.position.x, d.mesh.position.y, 0.22, 0.18, 3.8);
-                        d.lastWakeY = d.mesh.position.y;
+                        this.createRipple(d.group.position.x, d.group.position.y, 0.22, 0.18, 3.8);
+                        d.lastWakeY = d.group.position.y;
                     }
                 } else if (!d.breachedSurface) {
                     // Bryter igenom ytan ut mot världen!
                     d.breachedSurface = true;
-                    this.createRipple(d.mesh.position.x, d.surfaceY, 0.36, 0.22, 5.8);
+                    this.createRipple(d.group.position.x, d.surfaceY, 0.36, 0.22, 5.8);
                 } else {
                     // Ovanför ytan seglar den vidare mot skyn och accelererar lätt
                     d.vy += 0.003;
                 }
 
                 // Tona ut harmoniskt mot slutet eller när den når toppen
-                d.mesh.material.opacity = Math.max(0, 1.0 - Math.pow(progress, 1.8));
+                const op = Math.max(0, 1.0 - Math.pow(progress, 1.8));
+                d.sphere.material.opacity = op;
+                d.sprite.material.opacity = op * 0.75;
             }
 
-            if (d.life >= d.maxLife || d.mesh.position.y > (this.worldHeight / 2 + 3.0)) {
-                this.scene.remove(d.mesh);
-                d.mesh.geometry.dispose();
-                d.mesh.material.dispose();
+            if (d.life >= d.maxLife || d.group.position.y > (this.worldHeight / 2 + 3.0)) {
+                this.scene.remove(d.group);
+                d.sphere.geometry.dispose();
+                d.sphere.material.dispose();
+                d.sprite.material.dispose();
                 this.departingBeads.splice(i, 1);
             }
         }

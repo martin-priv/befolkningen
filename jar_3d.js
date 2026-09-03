@@ -420,7 +420,7 @@ class Jar3D {
         const topY = this.jarBaseY + this.jarHeight + 4.5;
         const surfaceY = this.currentSurfaceY;
 
-        const beadGeo = new THREE.SphereGeometry(0.36, 16, 16);
+        const beadGeo = new THREE.SphereGeometry(0.20, 20, 20);
 
         let colorHex, emissiveHex;
         if (type === 'birth') {
@@ -435,10 +435,10 @@ class Jar3D {
 
         const beadMat = new THREE.MeshStandardMaterial({
             color: colorHex,
-            roughness: 0.15,
-            metalness: 0.1,
+            roughness: 0.12,
+            metalness: 0.20,
             emissive: emissiveHex,
-            emissiveIntensity: 0.8
+            emissiveIntensity: 0.45
         });
 
         const mesh = new THREE.Mesh(beadGeo, beadMat);
