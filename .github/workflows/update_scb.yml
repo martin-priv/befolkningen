@@ -1,0 +1,39 @@
+name: Update SCB Monthly Population Data
+
+on:
+  schedule:
+    # Körs varje måndag kl 06:00 UTC för att fånga nya SCB-månadsutfall
+    - cron: '0 6 * * 1'
+  workflow_dispatch: # Gör det möjligt att köra manuellt med ett klick i GitHub Actions
+
+permissions:
+  contents: write
+
+jobs:
+  update-scb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run SCB monthly poller
+        run: |
+          python3 update_scb_monthly.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/scb_latest_monthly.json
+          if git diff --staged --quiet; then
+            echo "✅ Inga nya SCB-månadsdata. Allt är redan dagsaktuellt."
+          else
+            echo "🚀 Nytt SCB-månadsutfall upptäckt! Sparar och pushar till main..."
+            git commit -m "Automated SCB monthly population update [skip ci]"
+            git push
+          fi
