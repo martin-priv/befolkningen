@@ -79,6 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (closePersonBtn) {
         closePersonBtn.addEventListener("click", () => {
             personCard.classList.add("hidden");
+            canvas.setSelectedBead(-1);
         });
     }
 

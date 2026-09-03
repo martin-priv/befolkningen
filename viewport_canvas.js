@@ -89,18 +89,63 @@ class ViewportCanvas {
     }
 
     initSelectionRing() {
-        // En pulserande neon-aura som markerar den person man klickat på!
-        const ringGeo = new THREE.RingGeometry(0.38, 0.65, 32);
-        const ringMat = new THREE.MeshBasicMaterial({
+        // Elegant Precision Reticle: Krispig, ultratunn ljusring med hårkors-hakar och mjuk ljusaura
+        this.selectionReticle = new THREE.Group();
+        this.selectionReticle.position.z = 1.2;
+        this.selectionReticle.visible = false;
+
+        // 1. Mjuk pulserande ljusaura (Glow Halo)
+        if (!this.glowTexture) {
+            this.glowTexture = this.createGlowTexture();
+        }
+        const haloMat = new THREE.SpriteMaterial({
+            map: this.glowTexture,
             color: 0x00f5d4,
-            side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            opacity: 0.55,
             depthWrite: false
         });
-        this.selectionRing = new THREE.Mesh(ringGeo, ringMat);
-        this.selectionRing.position.z = 1.0;
-        this.scene.add(this.selectionRing);
+        this.reticleAura = new THREE.Sprite(haloMat);
+        this.reticleAura.scale.set(1.15, 1.15, 1.0);
+        this.selectionReticle.add(this.reticleAura);
+
+        // 2. Krispig, ultratunn inre precisionsring som ramar in exakt den valda pärlan
+        const ringGeo = new THREE.RingGeometry(0.24, 0.265, 48);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.95,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        this.reticleRing = new THREE.Mesh(ringGeo, ringMat);
+        this.selectionReticle.add(this.reticleRing);
+
+        // 3. Subtila krispiga hårkors-hakar (Crosshair ticks) vid 12, 3, 6 och 9
+        const tickMat = new THREE.LineBasicMaterial({
+            color: 0x00f5d4,
+            transparent: true,
+            opacity: 0.90,
+            blending: THREE.AdditiveBlending
+        });
+        const tickPoints = [
+            // Topp
+            new THREE.Vector3(0, 0.28, 0), new THREE.Vector3(0, 0.35, 0),
+            // Botten
+            new THREE.Vector3(0, -0.28, 0), new THREE.Vector3(0, -0.35, 0),
+            // Vänster
+            new THREE.Vector3(-0.28, 0, 0), new THREE.Vector3(-0.35, 0, 0),
+            // Höger
+            new THREE.Vector3(0.28, 0, 0), new THREE.Vector3(0.35, 0, 0)
+        ];
+        const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPoints);
+        this.reticleTicks = new THREE.LineSegments(tickGeo, tickMat);
+        this.selectionReticle.add(this.reticleTicks);
+
+        this.selectionRing = this.selectionReticle;
+        this.scene.add(this.selectionReticle);
     }
 
     setSelectedBead(index) {
@@ -108,10 +153,10 @@ class ViewportCanvas {
         if (index >= 0 && index < this.activeBeadCount) {
             const x = this.positions[index * 3];
             const y = this.positions[index * 3 + 1];
-            this.selectionRing.position.set(x, y, 1.0);
-            this.selectionRing.material.opacity = 0.95;
+            this.selectionReticle.position.set(x, y, 1.2);
+            this.selectionReticle.visible = true;
         } else {
-            this.selectionRing.material.opacity = 0;
+            this.selectionReticle.visible = false;
         }
     }
 
@@ -826,10 +871,18 @@ class ViewportCanvas {
         this.updateFallingBeads();
         this.updateDepartingBeads();
 
-        // Pulsera markörringen runt den klickade personen mjukt
-        if (this.selectionRing && this.selectionRing.material.opacity > 0) {
-            const pulse = 1.0 + 0.15 * Math.sin(Date.now() * 0.008);
-            this.selectionRing.scale.set(pulse, pulse, 1.0);
+        // Mjuk andning och positionsföljning för precisions-siktet runt den valda personen
+        if (this.selectionReticle && this.selectionReticle.visible && this.selectedBeadIndex !== null) {
+            if (this.selectedBeadIndex >= 0 && this.selectedBeadIndex < this.activeBeadCount) {
+                const i3 = this.selectedBeadIndex * 3;
+                this.selectionReticle.position.x = this.positions[i3];
+                this.selectionReticle.position.y = this.positions[i3 + 1];
+            }
+            const t = Date.now() * 0.005;
+            const pulse = 1.0 + 0.035 * Math.sin(t);
+            this.reticleRing.scale.set(pulse, pulse, 1.0);
+            this.reticleTicks.scale.set(pulse, pulse, 1.0);
+            this.reticleAura.material.opacity = 0.40 + 0.18 * Math.sin(t);
         }
 
         this.renderer.render(this.scene, this.camera);
