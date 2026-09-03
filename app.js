@@ -24,6 +24,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const timelinePanel = document.getElementById("timelinePanel");
     const toggleTimelineBtn = document.getElementById("toggleTimelineBtn");
     const closeTimelineBtn = document.getElementById("closeTimelineBtn");
+    const infoPanel = document.getElementById("infoPanel");
+    const toggleInfoBtn = document.getElementById("toggleInfoBtn");
+    const closeInfoBtn = document.getElementById("closeInfoBtn");
     const liveModeBtn = document.getElementById("liveModeBtn");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const findCohortBtn = document.getElementById("findCohortBtn");
@@ -437,6 +440,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             timelinePanel.classList.remove("collapsed");
             if (toggleTimelineBtn) toggleTimelineBtn.classList.add("active");
+            setInfoCollapsed(true);
         }
     }
 
@@ -450,6 +454,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (closeTimelineBtn && timelinePanel) {
         closeTimelineBtn.addEventListener("click", () => {
             setTimelineCollapsed(true);
+        });
+    }
+
+    // Växla infopanelen (Källor, data & metodik)
+    function setInfoCollapsed(collapsed) {
+        if (!infoPanel) return;
+        if (collapsed) {
+            infoPanel.classList.add("collapsed");
+            if (toggleInfoBtn) toggleInfoBtn.classList.remove("active");
+        } else {
+            infoPanel.classList.remove("collapsed");
+            if (toggleInfoBtn) toggleInfoBtn.classList.add("active");
+            setTimelineCollapsed(true);
+        }
+    }
+
+    if (toggleInfoBtn && infoPanel) {
+        toggleInfoBtn.addEventListener("click", () => {
+            const isCollapsed = infoPanel.classList.contains("collapsed");
+            setInfoCollapsed(!isCollapsed);
+        });
+    }
+
+    if (closeInfoBtn && infoPanel) {
+        closeInfoBtn.addEventListener("click", () => {
+            setInfoCollapsed(true);
         });
     }
 
@@ -475,6 +505,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (e.key === "Escape") {
             cohortModal.classList.add("hidden");
             personCard.classList.add("hidden");
+            setInfoCollapsed(true);
             canvas.setHighlightAge(-1);
         }
     });
