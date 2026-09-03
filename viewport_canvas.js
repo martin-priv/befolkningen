@@ -77,6 +77,7 @@ class ViewportCanvas {
 
         this.setupLighting();
         this.initBeadSystem();
+        this.updatePointSize();
         this.initSelectionRing();
         this.setupEventListeners();
 
@@ -835,6 +836,41 @@ class ViewportCanvas {
         });
 
         window.addEventListener('resize', () => this.onResize());
+
+        // Lyssna på när fönstret flyttas mellan skärmar med olika upplösning/pixeltäthet (t.ex. Retina <-> 1080p)
+        const bindPixelRatioListener = () => {
+            const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+            mq.addEventListener('change', () => {
+                this.onResize();
+                bindPixelRatioListener();
+            }, { once: true });
+        };
+        bindPixelRatioListener();
+    }
+
+    updatePointSize() {
+        if (!this.beadsMaterial || !this.beadsMaterial.uniforms.uPointSize) return;
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (this.renderer) {
+            this.renderer.setPixelRatio(dpr);
+        }
+
+        // Faktisk renderbuffer-höjd i fysiska hårdvarupixlar
+        const bufferHeight = this.height * dpr;
+
+        // FYSISK PÄRLDIAMETER I 3D-VÄRLDEN (0.235 enheter):
+        // Eftersom kamerans vertikala spann är this.worldHeight (t.ex. 34.0)
+        // innebär detta att varje pärla ALLTID motsvarar EXAKT samma fysiska proportion
+        // av burken och skärmen, oavsett om skärmen är en 1080p-skärm (1x),
+        // en MacBook Retina-skärm (2x) eller en 4K/5K Studio Display!
+        const beadWorldDiameter = 0.235;
+        const pixelsPerWorldUnit = bufferHeight / this.worldHeight;
+        const calculatedPointSize = beadWorldDiameter * pixelsPerWorldUnit;
+
+        // Säkra gränser för WebGL point size
+        const finalSize = Math.max(3.5, Math.min(28.0, calculatedPointSize));
+        this.beadsMaterial.uniforms.uPointSize.value = finalSize;
     }
 
     findNearestBead(wx, wy) {
@@ -887,13 +923,12 @@ class ViewportCanvas {
         this.camera.bottom = -this.worldHeight / 2;
         this.camera.updateProjectionMatrix();
 
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.renderer.setPixelRatio(dpr);
         this.renderer.setSize(this.width, this.height);
 
-        // Anpassa pärlstorlek efter mobilskärm vs desktop
-        const isMobile = this.width < 640 || aspect < 0.8;
-        if (this.beadsMaterial && this.beadsMaterial.uniforms.uPointSize) {
-            this.beadsMaterial.uniforms.uPointSize.value = isMobile ? 5.8 : 8.8;
-        }
+        // Beräkna om pärlstorlek så den är 100% konstant i förhållande till burken och upplösningen
+        this.updatePointSize();
 
         // Re-layouta pärlorna så de fyller den aktuella skärmens dimensioner harmoniskt
         if (this.lastPopData) {
