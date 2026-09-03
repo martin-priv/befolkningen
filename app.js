@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const ageRuler = document.getElementById("ageRuler");
         if (!ageRuler || !canvas || !popData) return;
 
-        if (canvas.currentViewMode === 'pyramid') {
+        if (canvas.currentViewMode !== 'sea') {
             ageRuler.style.opacity = '0';
             ageRuler.style.pointerEvents = 'none';
             return;

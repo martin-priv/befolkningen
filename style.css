@@ -381,7 +381,7 @@ body, html {
     width: 140px;
     pointer-events: none;
     z-index: 10;
-    transition: top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
 }
 
 .ruler-track {
