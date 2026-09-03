@@ -1196,55 +1196,63 @@ class ViewportCanvas {
 
     /**
      * LEVANDE MYLLER: SUBTILA ORGANISKA PLATSBYTEN & MIKROKRUSNINGAR
-     * Gör att befolkningen aldrig blir statisk utan känns som en levande organism
+     * Två fysiskt intilliggande pärlor byter lugnt och sansat plats med varandra
+     * och skapar ett mycket litet mikroripple då omgivande pärlor mjukt flyttar på sig.
      */
     updateOrganicDrift(now) {
-        if (this.activeBeadCount < 2) return;
+        if (this.activeBeadCount < 10) return;
 
         if (!this.lastOrganicSwapTime) this.lastOrganicSwapTime = now;
-        if (!this.lastOrganicRippleTime) this.lastOrganicRippleTime = now;
 
-        // 1. Lugna platsbyten bland nära grannar var ~2.2 sekund
-        if (now - this.lastOrganicSwapTime > 2.2) {
+        // Ett enstaka intilliggande par byter lugnt och sansat plats var ~1.8 sekund
+        if (now - this.lastOrganicSwapTime > 1.8) {
             this.lastOrganicSwapTime = now;
-            // Endast 2-4 slumpmässiga par för ett stilla, subtilt liv
-            const numSwaps = Math.min(4, Math.max(2, Math.round(this.activeBeadCount / 35000)));
 
-            for (let s = 0; s < numSwaps; s++) {
-                const idxA = Math.floor(Math.random() * this.activeBeadCount);
-                // Välj en nära granne alldeles intill (inom +/- 24 pärlor)
-                const offset = Math.round((Math.random() - 0.5) * 48);
-                const idxB = Math.max(0, Math.min(this.activeBeadCount - 1, idxA + offset));
-                if (idxA === idxB) continue;
+            const idxA = Math.floor(Math.random() * this.activeBeadCount);
+            if (idxA === this.selectedBeadIndex) return;
 
-                // Om någon av pärlorna är vald i inspektorn, låt den vara orörd
-                if (idxA === this.selectedBeadIndex || idxB === this.selectedBeadIndex) continue;
+            const a3 = idxA * 3;
+            const xa = this.homePositions[a3];
+            const ya = this.homePositions[a3 + 1];
 
-                const a3 = idxA * 3;
-                const b3 = idxB * 3;
+            // Hitta en granne som är fysiskt alldeles intill (avstånd ca 0.08 till 0.35 enheter, dvs 1-2 pärldiametrar)
+            let bestB = -1;
+            let bestDistSq = Infinity;
+            const maxRadiusSq = 0.35 * 0.35;
 
-                const tx = this.homePositions[a3];
-                const ty = this.homePositions[a3 + 1];
+            // Sök bland närliggande pärlor i samma ålderskull
+            const searchMin = Math.max(0, idxA - 120);
+            const searchMax = Math.min(this.activeBeadCount - 1, idxA + 120);
 
-                this.homePositions[a3] = this.homePositions[b3];
-                this.homePositions[a3 + 1] = this.homePositions[b3 + 1];
+            for (let b = searchMin; b <= searchMax; b++) {
+                if (b === idxA || b === this.selectedBeadIndex) continue;
+                const b3 = b * 3;
+                const dx = this.homePositions[b3] - xa;
+                const dy = this.homePositions[b3 + 1] - ya;
+                const distSq = dx * dx + dy * dy;
 
-                this.homePositions[b3] = tx;
-                this.homePositions[b3 + 1] = ty;
+                if (distSq > 0.005 && distSq < maxRadiusSq && distSq < bestDistSq) {
+                    bestDistSq = distSq;
+                    bestB = b;
+                }
             }
-        }
 
-        // 2. Mycket mjuk och sällan förekommande mikrokrusning var ~5:e sekund
-        if (now - this.lastOrganicRippleTime > 5.2) {
-            this.lastOrganicRippleTime = now;
-            const halfW = (this.worldWidth / 2) * 0.75;
-            const botY = this.botY || (-this.worldHeight / 2 + 1.2);
-            const surfY = this.currentSurfaceY || (botY + 8);
-            const rx = (Math.random() - 0.5) * 2.0 * halfW;
-            const ry = botY + Math.random() * Math.max(2.0, surfY - botY);
+            if (bestB >= 0) {
+                const b3 = bestB * 3;
+                const xb = this.homePositions[b3];
+                const yb = this.homePositions[b3 + 1];
 
-            // Extremt subtil mikrovåg: bara 0.035 i styrka
-            this.createRipple(rx, ry, 0.035, 0.12, 3.0);
+                // Byt hempositioner: de rullar lugnt och sansat förbi varandra (~0.2 enheters förflyttning)
+                this.homePositions[a3] = xb;
+                this.homePositions[a3 + 1] = yb;
+                this.homePositions[b3] = xa;
+                this.homePositions[b3 + 1] = ya;
+
+                // Litet lokalt mikroripple i mitten så intilliggande pärlor mjukt flyttar på sig
+                const midX = (xa + xb) * 0.5;
+                const midY = (ya + yb) * 0.5;
+                this.createRipple(midX, midY, 0.035, 0.10, 1.4);
+            }
         }
     }
 
