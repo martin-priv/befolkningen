@@ -859,17 +859,15 @@ class ViewportCanvas {
         // Faktisk renderbuffer-höjd i fysiska hårdvarupixlar
         const bufferHeight = this.height * dpr;
 
-        // FYSISK PÄRLDIAMETER I 3D-VÄRLDEN (0.235 enheter):
-        // Eftersom kamerans vertikala spann är this.worldHeight (t.ex. 34.0)
-        // innebär detta att varje pärla ALLTID motsvarar EXAKT samma fysiska proportion
-        // av burken och skärmen, oavsett om skärmen är en 1080p-skärm (1x),
-        // en MacBook Retina-skärm (2x) eller en 4K/5K Studio Display!
-        const beadWorldDiameter = 0.235;
+        // FYSISK PÄRLDIAMETER I 3D-VÄRLDEN (0.170 enheter):
+        // Balanserad storlek: tillräckligt fin för att 106 200 pärlor ska synas som krispiga,
+        // distinkta juveler utan att klumpas ihop, med exakt samma skala på alla skärmar.
+        const beadWorldDiameter = 0.170;
         const pixelsPerWorldUnit = bufferHeight / this.worldHeight;
         const calculatedPointSize = beadWorldDiameter * pixelsPerWorldUnit;
 
         // Säkra gränser för WebGL point size
-        const finalSize = Math.max(3.5, Math.min(28.0, calculatedPointSize));
+        const finalSize = Math.max(3.0, Math.min(24.0, calculatedPointSize));
         this.beadsMaterial.uniforms.uPointSize.value = finalSize;
     }
 
