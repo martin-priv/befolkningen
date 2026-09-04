@@ -12,7 +12,7 @@
     <meta property="og:title" content="Sveriges befolkning 1860–2070">
     <meta property="og:description" content="Sveriges befolkning i realtid från 1860 till 2070. Födslar, dödsfall, invandring och utvandring.">
 
-    <link rel="stylesheet" href="style.css?v=25">
+    <link rel="stylesheet" href="style.css?v=26">
     <!-- Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -211,12 +211,14 @@
         <div class="info-grid">
             <div class="info-card">
                 <div class="info-card-header">
-                    <span class="info-icon">📡</span>
-                    <h4>Faktiskt SCB-månadsutfall</h4>
+                    <div class="info-card-title-wrap">
+                        <span class="info-icon">📡</span>
+                        <h4>Faktiskt SCB-månadsutfall</h4>
+                    </div>
+                    <span class="info-badge">SCB TAB6471 (PxWebApi v2)</span>
                 </div>
-                <div class="info-badge">SCB TAB6471 (PxWebApi v2)</div>
                 <p>
-                    Baslinjen är SCB:s officiella månadsstatistik. Senast fastställda månad är <strong>juni 2026</strong> med <strong>10 610 483</strong> invånare.
+                    Baslinjen kalibreras mot SCB:s officiella månadsstatistik med automatisk månadssynk. Senast fastställda månad är <strong>juni 2026</strong> med <strong>10 610 483</strong> invånare.
                 </p>
                 <div class="info-note">
                     Fr.o.m. 2025 tillämpar SCB <em>Cell Key Method (CKM)</em> som kontrollerat röjandeskydd för att skydda individers integritet i detaljerade delgrupper.
@@ -225,10 +227,12 @@
 
             <div class="info-card">
                 <div class="info-card-header">
-                    <span class="info-icon">⏱️</span>
-                    <h4>Realtidskalkyl i sekunden</h4>
+                    <div class="info-card-title-wrap">
+                        <span class="info-icon">⏱️</span>
+                        <h4>Realtidskalkyl i sekunden</h4>
+                    </div>
+                    <span class="info-badge">TAB5240 Framskrivning</span>
                 </div>
-                <div class="info-badge">TAB5240 Framskrivning</div>
                 <p>
                     Från basmånaden framskrivs befolkningen per sekund mot årsslutsmålet (31 dec 2026: <strong>10 626 026</strong> invånare).
                 </p>
@@ -239,29 +243,49 @@
 
             <div class="info-card">
                 <div class="info-card-header">
-                    <span class="info-icon">🌊</span>
-                    <h4>De fyra demografiska flödena</h4>
+                    <div class="info-card-title-wrap">
+                        <span class="info-icon">🌊</span>
+                        <h4>De fyra demografiska flödena</h4>
+                    </div>
+                    <span class="info-badge">Poisson & Månadssäsong</span>
                 </div>
-                <div class="info-badge">Poisson-process & Registerdata</div>
-                <ul class="info-rates-list">
-                    <li><span class="dot-mini dot-birth"></span> <strong>Födslar:</strong> 95 143/år (~var 5,5 min). 51,4% pojkar.</li>
-                    <li><span class="dot-mini dot-death"></span> <strong>Dödsfall:</strong> 97 147/år (~var 5,4 min). Medellivslängd ~83 år.</li>
-                    <li><span class="dot-mini dot-immigrate"></span> <strong>Invandring:</strong> 86 759/år (~var 6,1 min). Medelålder ~28 år.</li>
-                    <li><span class="dot-mini dot-emigrate"></span> <strong>Utvandring:</strong> 61 039/år (~var 8,6 min). Topp 25 länder (TAB6656).</li>
-                </ul>
+                <div class="info-rates-list">
+                    <div class="info-rate-row">
+                        <div class="info-rate-label"><span class="dot-mini dot-birth"></span> Födslar</div>
+                        <div class="info-rate-val">95 143/år</div>
+                        <div class="info-rate-meta">~var 5,5 min · 51,4% pojkar · Vårtopp</div>
+                    </div>
+                    <div class="info-rate-row">
+                        <div class="info-rate-label"><span class="dot-mini dot-death"></span> Dödsfall</div>
+                        <div class="info-rate-val">97 147/år</div>
+                        <div class="info-rate-meta">~var 5,4 min · Medellivslängd ~83 år · Vintertopp</div>
+                    </div>
+                    <div class="info-rate-row">
+                        <div class="info-rate-label"><span class="dot-mini dot-immigrate"></span> Invandring</div>
+                        <div class="info-rate-val">86 759/år</div>
+                        <div class="info-rate-meta">~var 6,1 min · Medelålder ~28 år (TAB4365)</div>
+                    </div>
+                    <div class="info-rate-row">
+                        <div class="info-rate-label"><span class="dot-mini dot-emigrate"></span> Utvandring</div>
+                        <div class="info-rate-val">61 039/år</div>
+                        <div class="info-rate-meta">~var 8,6 min · Topp 25 länder & återvandring</div>
+                    </div>
+                </div>
             </div>
 
             <div class="info-card">
                 <div class="info-card-header">
-                    <span class="info-icon">🔮</span>
-                    <h4>3D-Havet: 1 pärla = 100 personer</h4>
+                    <div class="info-card-title-wrap">
+                        <span class="info-icon">🔮</span>
+                        <h4>3D-Havet: 1 pärla = 100 personer</h4>
+                    </div>
+                    <span class="info-badge">1860 – 2070 Tidsserie</span>
                 </div>
-                <div class="info-badge">1860 – 2070 Tidsserie</div>
                 <p>
-                    Varje pärla representerar 100 levande människor. Ytan är nyfödda (0 år) och botten är de äldsta (100+ år).
+                    Varje pärla representerar 100 levande människor. Ytan är nyfödda (0 år) och botten är de äldsta (100+ år). Totalt ~106 200 pärlor fyller burken.
                 </p>
                 <p>
-                    Vid livshändelser skapas hydrodynamiska ringvågor i generationerna. Klicka på valfri pärla för att möta en individ!
+                    Vid livshändelser skapas hydrodynamiska ringvågor i generationerna. Klicka eller <strong>håll ned musen och dra sökaren</strong> genom havet för att scanna individer!
                 </p>
             </div>
         </div>
@@ -326,8 +350,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="population_engine.js?v=25"></script>
-    <script src="viewport_canvas.js?v=25"></script>
-    <script src="app.js?v=25"></script>
+    <script src="population_engine.js?v=26"></script>
+    <script src="viewport_canvas.js?v=26"></script>
+    <script src="app.js?v=26"></script>
 </body>
 </html>
