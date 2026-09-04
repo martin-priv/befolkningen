@@ -12,7 +12,7 @@
     <meta property="og:title" content="Sveriges befolkning 1860–2070">
     <meta property="og:description" content="Sveriges befolkning i realtid från 1860 till 2070. Födslar, dödsfall, invandring och utvandring.">
 
-    <link rel="stylesheet" href="style.css?v=26">
+    <link rel="stylesheet" href="style.css?v=27">
     <!-- Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -234,11 +234,18 @@
                     <span class="info-badge">TAB5240 Framskrivning</span>
                 </div>
                 <p>
-                    Från basmånaden framskrivs befolkningen per sekund mot årsslutsmålet (31 dec 2026: <strong>10 626 026</strong> invånare).
+                    Från basmånaden framskrivs befolkningen per sekund mot årsslutsmålet (31 dec 2026: <strong>10 626 026</strong> invånare). Nettoökningen är <strong>+15 543 personer</strong> under andra halvåret.
                 </p>
-                <p>
-                    Nettoökningen är <strong>+15 543 personer</strong> under andra halvåret, vilket motsvarar <strong>+84,5 invånare/dygn</strong> (~1 person var 17:e minut).
-                </p>
+                <div class="info-stat-pill-row">
+                    <div class="info-stat-pill">
+                        <span class="stat-pill-label">TILLVÄXTTAKT</span>
+                        <span class="stat-pill-val">+84,5 <small>personer/dygn</small></span>
+                    </div>
+                    <div class="info-stat-pill">
+                        <span class="stat-pill-label">TEMPO</span>
+                        <span class="stat-pill-val">~1 <small>var 17:e minut</small></span>
+                    </div>
+                </div>
             </div>
 
             <div class="info-card">
@@ -247,28 +254,56 @@
                         <span class="info-icon">🌊</span>
                         <h4>De fyra demografiska flödena</h4>
                     </div>
-                    <span class="info-badge">Poisson & Månadssäsong</span>
+                    <span class="info-badge">Poisson & Säsongsvariation</span>
                 </div>
                 <div class="info-rates-list">
                     <div class="info-rate-row">
-                        <div class="info-rate-label"><span class="dot-mini dot-birth"></span> Födslar</div>
-                        <div class="info-rate-val">95 143/år</div>
-                        <div class="info-rate-meta">~var 5,5 min · 51,4% pojkar · Vårtopp</div>
+                        <div class="info-rate-main">
+                            <div class="info-rate-label"><span class="dot-mini dot-birth"></span> Födslar</div>
+                            <div class="info-rate-val">95 143 <span class="rate-unit">/ år</span></div>
+                        </div>
+                        <div class="info-rate-sub">
+                            <span>~var 5,5 min</span>
+                            <span class="rate-sep">·</span>
+                            <span>51,4% pojkar</span>
+                            <span class="rate-sep">·</span>
+                            <span>Vårtopp</span>
+                        </div>
                     </div>
                     <div class="info-rate-row">
-                        <div class="info-rate-label"><span class="dot-mini dot-death"></span> Dödsfall</div>
-                        <div class="info-rate-val">97 147/år</div>
-                        <div class="info-rate-meta">~var 5,4 min · Medellivslängd ~83 år · Vintertopp</div>
+                        <div class="info-rate-main">
+                            <div class="info-rate-label"><span class="dot-mini dot-death"></span> Dödsfall</div>
+                            <div class="info-rate-val">97 147 <span class="rate-unit">/ år</span></div>
+                        </div>
+                        <div class="info-rate-sub">
+                            <span>~var 5,4 min</span>
+                            <span class="rate-sep">·</span>
+                            <span>Medellivslängd ~83 år</span>
+                            <span class="rate-sep">·</span>
+                            <span>Vintertopp</span>
+                        </div>
                     </div>
                     <div class="info-rate-row">
-                        <div class="info-rate-label"><span class="dot-mini dot-immigrate"></span> Invandring</div>
-                        <div class="info-rate-val">86 759/år</div>
-                        <div class="info-rate-meta">~var 6,1 min · Medelålder ~28 år (TAB4365)</div>
+                        <div class="info-rate-main">
+                            <div class="info-rate-label"><span class="dot-mini dot-immigrate"></span> Invandring</div>
+                            <div class="info-rate-val">86 759 <span class="rate-unit">/ år</span></div>
+                        </div>
+                        <div class="info-rate-sub">
+                            <span>~var 6,1 min</span>
+                            <span class="rate-sep">·</span>
+                            <span>Medelålder ~28 år (SCB TAB4365)</span>
+                        </div>
                     </div>
                     <div class="info-rate-row">
-                        <div class="info-rate-label"><span class="dot-mini dot-emigrate"></span> Utvandring</div>
-                        <div class="info-rate-val">61 039/år</div>
-                        <div class="info-rate-meta">~var 8,6 min · Topp 25 länder & återvandring</div>
+                        <div class="info-rate-main">
+                            <div class="info-rate-label"><span class="dot-mini dot-emigrate"></span> Utvandring</div>
+                            <div class="info-rate-val">61 039 <span class="rate-unit">/ år</span></div>
+                        </div>
+                        <div class="info-rate-sub">
+                            <span>~var 8,6 min</span>
+                            <span class="rate-sep">·</span>
+                            <span>Topp 25 länder & återvandring</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,11 +317,11 @@
                     <span class="info-badge">1860 – 2070 Tidsserie</span>
                 </div>
                 <p>
-                    Varje pärla representerar 100 levande människor. Ytan är nyfödda (0 år) och botten är de äldsta (100+ år). Totalt ~106 200 pärlor fyller burken.
+                    Varje pärla representerar 100 levande människor. Ytan är nyfödda (0 år) och botten är de äldsta (100+ år). Totalt fyller ~106 200 pärlor burken.
                 </p>
-                <p>
-                    Vid livshändelser skapas hydrodynamiska ringvågor i generationerna. Klicka eller <strong>håll ned musen och dra sökaren</strong> genom havet för att scanna individer!
-                </p>
+                <div class="info-tip">
+                    💡 <strong>Interaktivitet:</strong> Klicka på valfri pärla för att möta en individ, eller <strong>håll ned musen och dra sökaren</strong> genom havet för att scanna befolkningen i realtid.
+                </div>
             </div>
         </div>
     </div>
@@ -350,8 +385,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="population_engine.js?v=26"></script>
-    <script src="viewport_canvas.js?v=26"></script>
-    <script src="app.js?v=26"></script>
+    <script src="population_engine.js?v=27"></script>
+    <script src="viewport_canvas.js?v=27"></script>
+    <script src="app.js?v=27"></script>
 </body>
 </html>

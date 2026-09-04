@@ -647,6 +647,58 @@ body, html {
     margin-top: auto;
 }
 
+.info-stat-pill-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.info-stat-pill {
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-pill-label {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #00f5d4;
+}
+
+.stat-pill-val {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.stat-pill-val small {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 10.5px;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+.info-tip {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #cbd5e1;
+    background: rgba(0, 245, 212, 0.06);
+    border: 1px solid rgba(0, 245, 212, 0.20);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: auto;
+}
+
 .info-rates-list {
     display: flex;
     flex-direction: column;
@@ -654,38 +706,61 @@ body, html {
 }
 
 .info-rate-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    background: rgba(0, 0, 0, 0.24);
+    background: rgba(0, 0, 0, 0.28);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-rate-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 .info-rate-label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    font-size: 13px;
     font-weight: 600;
-    color: #f1f5f9;
-    min-width: 80px;
+    color: #f8fafc;
 }
 
 .info-rate-val {
     font-family: 'SF Mono', Monaco, monospace;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     color: #e2e8f0;
+    letter-spacing: -0.2px;
     white-space: nowrap;
 }
 
-.info-rate-meta {
+.rate-unit {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+.info-rate-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 11px;
     color: #94a3b8;
-    text-align: right;
-    white-space: nowrap;
+    padding-left: 14px;
+    flex-wrap: wrap;
+    line-height: 1.4;
+}
+
+.rate-sep {
+    color: rgba(255, 255, 255, 0.2);
+    user-select: none;
 }
 
 .dot-mini {
@@ -1517,19 +1592,45 @@ body.mouse-idle .timeline-panel {
         gap: 12px;
     }
     .info-main-title {
-        font-size: 15px;
+        font-size: 16px;
+    }
+    .info-card {
+        padding: 14px;
+        gap: 10px;
+    }
+    .info-card-header {
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .info-card-title-wrap h4 {
+        font-size: 13.5px;
     }
     .info-rate-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 3px 8px;
-        padding: 8px 10px;
+        padding: 7px 10px;
+        gap: 3px;
     }
-    .info-rate-meta {
-        grid-column: 1 / -1;
-        text-align: left;
+    .info-rate-label {
+        font-size: 12.5px;
+        gap: 6px;
+    }
+    .info-rate-val {
+        font-size: 12.5px;
+    }
+    .info-rate-sub {
         font-size: 10.5px;
-        color: #94a3b8;
+        gap: 5px;
+        padding-left: 12px;
+        line-height: 1.35;
+    }
+    .info-stat-pill {
+        padding: 7px 10px;
+    }
+    .stat-pill-val {
+        font-size: 12.5px;
+    }
+    .info-tip {
+        font-size: 11px;
+        padding: 7px 10px;
     }
 
     /* Person Card Inspector (Möt en människa) på mobil — Kompakt, centrerad toast i botten */
