@@ -215,6 +215,13 @@ class PopulationEngine {
             const sorted = Object.entries(timeDim).sort((a, b) => a[1] - b[1]);
             const [latestCode, idx] = sorted[sorted.length - 1];
             const latestPop = values[idx];
+
+            const isNewer = !this.monthlyData || !this.monthlyData.latestMonth || this.monthlyData.latestMonth.code !== latestCode;
+            if (!isNewer) {
+                // Redan dagsaktuellt med samma månad
+                return;
+            }
+
             const [yStr, mStr] = latestCode.split('M');
             const year = parseInt(yStr, 10);
             const month = parseInt(mStr, 10);
@@ -225,7 +232,7 @@ class PopulationEngine {
             this.monthlyData = {
                 tableId: "TAB6471",
                 tableName: "Folkmängden per månad efter region, ålder och kön",
-                source: "Statistiska centralbyrån (SCB) PxWebApi v2 (Direktkopplad)",
+                source: "Statistiska centralbyrån (SCB) PxWebApi v2 (Direktsynkad)",
                 latestMonth: {
                     code: latestCode,
                     year: year,
@@ -239,7 +246,11 @@ class PopulationEngine {
                     population: (this.data?.projections?.[year]?.total || 10626026)
                 }
             };
-            console.log('⚡ Direktkontakt med SCB PxWebApi v2 (TAB6471) uppdaterad live!');
+            this.currentLivePopulation = this.getLiveCalculatedPopulation().calculatedPop;
+            console.log(`⚡ SCB har publicerat ny data (${latestCode}: ${latestPop.toLocaleString('sv-SE')} invånare)! Realtidsmotorn synkad live direkt i webbläsaren.`);
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('scb-live-sync', { detail: this.monthlyData }));
+            }
         } catch (e) {
             // Tyst fallback till lokalt scb_latest_monthly.json
         }

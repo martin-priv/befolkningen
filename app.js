@@ -661,5 +661,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateAgeRuler(canvas, engine.getDataForYear(engine.currentYear));
     });
 
+    // Lyssna på direktsynkning från SCB om nyare månad upptäckts i bakgrunden
+    window.addEventListener("scb-live-sync", (e) => {
+        if (engine.currentYear === 2026) {
+            updateTimelineYear(2026);
+            popNumber.textContent = formatNumber(engine.currentLivePopulation);
+        }
+    });
+
     resetIdleTimer();
 });
