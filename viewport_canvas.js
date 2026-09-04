@@ -36,9 +36,10 @@ class ViewportCanvas {
         this.lastRippleX = -9999;
         this.lastRippleY = -9999;
 
-        // Vald person (markörring)
+        // Vald person (markörring) & dragbar probe
         this.selectionRing = null;
         this.selectedBeadIndex = -1;
+        this.isDraggingProbe = false;
 
         // Fallande pärlor (födslar & invandrare)
         this.fallingBeads = [];
@@ -1161,49 +1162,73 @@ class ViewportCanvas {
             return { x: wx, y: wy };
         };
 
-        window.addEventListener('mousemove', (e) => {
-            const w = screenToWorld(e.clientX, e.clientY);
-            const dx = w.x - this.lastRippleX;
-            const dy = w.y - this.lastRippleY;
-            const dist = Math.hypot(dx, dy);
+        const handlePointerDown = (e) => {
+            // Endast primärt klick (vänsterklick på mus eller touch-tryck)
+            if (e.button !== undefined && e.button !== 0) return;
+            this.isDraggingProbe = true;
+            this.container.classList.add('dragging');
 
-            // Mjuk ringvåg i musens spår (wake ripple) utan att göra något tomt hål!
-            if (dist > 1.4) {
-                this.createRipple(w.x, w.y, 0.18, 0.20, 3.8);
-                this.lastRippleX = w.x;
-                this.lastRippleY = w.y;
+            if (e.pointerId !== undefined) {
+                try { this.container.setPointerCapture(e.pointerId); } catch (_) {}
             }
-        });
 
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                const t = e.touches[0];
-                const w = screenToWorld(t.clientX, t.clientY);
-                const dx = w.x - this.lastRippleX;
-                const dy = w.y - this.lastRippleY;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist > 1.4) {
-                    this.createRipple(w.x, w.y, 0.22, 0.22, 4.0);
-                    this.lastRippleX = w.x;
-                    this.lastRippleY = w.y;
-                }
-            }
-        }, { passive: true });
-
-        // KLICK PÅ EN PÄRLA: Direkt respons & markering precis där man klickar!
-        this.container.addEventListener('click', (e) => {
             const w = screenToWorld(e.clientX, e.clientY);
             const nearest = this.findNearestBead(w.x, w.y);
-            
-            // Starta en tydlig, expanderande ringvåg från klickpunkten
-            this.createRipple(w.x, w.y, 0.55, 0.28, 12.0);
+            this.createRipple(w.x, w.y, 0.50, 0.26, 11.0);
 
             if (nearest && this.onPersonClick) {
                 this.setSelectedBead(nearest.index);
                 this.onPersonClick(nearest, e.clientX, e.clientY);
             }
+        };
+
+        const handlePointerMove = (clientX, clientY) => {
+            const w = screenToWorld(clientX, clientY);
+            const dx = w.x - this.lastRippleX;
+            const dy = w.y - this.lastRippleY;
+            const dist = Math.hypot(dx, dy);
+
+            // Om användaren håller nedtryckt: dra proben i realtid och scanna av befolkningen
+            if (this.isDraggingProbe) {
+                const nearest = this.findNearestBead(w.x, w.y);
+                if (nearest && nearest.index !== this.selectedBeadIndex) {
+                    this.setSelectedBead(nearest.index);
+                    if (this.onPersonClick) {
+                        this.onPersonClick(nearest, clientX, clientY);
+                    }
+                    if (dist > 0.8) {
+                        this.createRipple(w.x, w.y, 0.22, 0.16, 5.0);
+                        this.lastRippleX = w.x;
+                        this.lastRippleY = w.y;
+                    }
+                }
+            } else {
+                // Mjuk ringvåg i musens spår när man hovrar (wake ripple)
+                if (dist > 1.4) {
+                    this.createRipple(w.x, w.y, 0.18, 0.20, 3.8);
+                    this.lastRippleX = w.x;
+                    this.lastRippleY = w.y;
+                }
+            }
+        };
+
+        const handlePointerUp = (e) => {
+            if (this.isDraggingProbe) {
+                this.isDraggingProbe = false;
+                this.container.classList.remove('dragging');
+                if (e && e.pointerId !== undefined) {
+                    try { this.container.releasePointerCapture(e.pointerId); } catch (_) {}
+                }
+            }
+        };
+
+        // Pointer Events ger 100% responsivt stöd för mus, trackpad och touch-skärmar
+        this.container.addEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('pointermove', (e) => {
+            handlePointerMove(e.clientX, e.clientY);
         });
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerUp);
 
         window.addEventListener('resize', () => this.onResize());
 
@@ -1400,13 +1425,21 @@ class ViewportCanvas {
                 this.selectionReticle.position.y = this.positions[i3 + 1];
             }
             const t = Date.now() * 0.005;
-            const pulse = 1.0 + 0.035 * Math.sin(t);
+            const pulse = this.isDraggingProbe ? 1.08 : (1.0 + 0.035 * Math.sin(t));
             if (this.reticleRing) this.reticleRing.scale.set(pulse, pulse, 1.0);
             if (this.reticleShadow) this.reticleShadow.scale.set(pulse, pulse, 1.0);
             if (this.reticleCore) this.reticleCore.scale.set(pulse, pulse, 1.0);
             if (this.reticleTicks) this.reticleTicks.scale.set(pulse, pulse, 1.0);
-            if (this.reticleAura) this.reticleAura.material.opacity = 0.50 + 0.20 * Math.sin(t);
-            if (this.reticleBackdrop) this.reticleBackdrop.scale.set(1.0 + 0.02 * Math.sin(t), 1.0 + 0.02 * Math.sin(t), 1.0);
+            if (this.reticleAura) {
+                const auraOpacity = this.isDraggingProbe ? 0.85 : (0.50 + 0.20 * Math.sin(t));
+                this.reticleAura.material.opacity = auraOpacity;
+                const auraScale = this.isDraggingProbe ? 1.60 : 1.40;
+                this.reticleAura.scale.set(auraScale, auraScale, 1.0);
+            }
+            if (this.reticleBackdrop) {
+                const bgScale = this.isDraggingProbe ? 1.15 : (1.0 + 0.02 * Math.sin(t));
+                this.reticleBackdrop.scale.set(bgScale, bgScale, 1.0);
+            }
         }
 
         this.renderer.render(this.scene, this.camera);
