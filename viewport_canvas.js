@@ -101,59 +101,118 @@ class ViewportCanvas {
     }
 
     initSelectionRing() {
-        // Elegant Precision Reticle: Krispig, ultratunn ljusring med hårkors-hakar och mjuk ljusaura
+        // High-Contrast Precision Reticle: Skarp, färgstark sökare med mörk kontrastskugga som syns mot ALLA pärlor
         this.selectionReticle = new THREE.Group();
         this.selectionReticle.position.z = 1.2;
         this.selectionReticle.visible = false;
 
-        // 1. Mjuk pulserande ljusaura (Glow Halo)
+        // 1. Mjuk mörk fokus-vignette bakom pärlan (dämpar visuellt brus från intilliggande pärlor och lyfter fram vald individ)
+        const darkDiscGeo = new THREE.CircleGeometry(0.50, 32);
+        const darkDiscMat = new THREE.MeshBasicMaterial({
+            color: 0x050811,
+            transparent: true,
+            opacity: 0.55,
+            depthWrite: false
+        });
+        this.reticleBackdrop = new THREE.Mesh(darkDiscGeo, darkDiscMat);
+        this.reticleBackdrop.position.z = -0.05;
+        this.selectionReticle.add(this.reticleBackdrop);
+
+        // 2. Varm gyllene ljusaura (Glow Halo)
         if (!this.glowTexture) {
             this.glowTexture = this.createGlowTexture();
         }
         const haloMat = new THREE.SpriteMaterial({
             map: this.glowTexture,
-            color: 0x00f5d4,
+            color: 0xffaa00, // Varm bärnstensglöd
             transparent: true,
             blending: THREE.AdditiveBlending,
-            opacity: 0.55,
+            opacity: 0.70,
             depthWrite: false
         });
         this.reticleAura = new THREE.Sprite(haloMat);
-        this.reticleAura.scale.set(1.15, 1.15, 1.0);
+        this.reticleAura.scale.set(1.40, 1.40, 1.0);
+        this.reticleAura.position.z = -0.02;
         this.selectionReticle.add(this.reticleAura);
 
-        // 2. Krispig, ultratunn inre precisionsring som ramar in exakt den valda pärlan
-        const ringGeo = new THREE.RingGeometry(0.24, 0.265, 48);
+        // 3. Mörk kontrastring under huvudringen (Drop shadow outline för 100% kontrast mot ljusa pärlor)
+        const shadowRingGeo = new THREE.RingGeometry(0.205, 0.325, 48);
+        const shadowRingMat = new THREE.MeshBasicMaterial({
+            color: 0x03060a,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.88,
+            depthWrite: false
+        });
+        this.reticleShadow = new THREE.Mesh(shadowRingGeo, shadowRingMat);
+        this.reticleShadow.position.z = 0.0;
+        this.selectionReticle.add(this.reticleShadow);
+
+        // 4. Skarp, färgstark precisionsring (Stark Elektrisk Solgul / Guld)
+        const ringGeo = new THREE.RingGeometry(0.235, 0.295, 48);
         const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffd000, // Stark intensiv guldgul
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 1.0,
+            depthWrite: false
+        });
+        this.reticleRing = new THREE.Mesh(ringGeo, ringMat);
+        this.reticleRing.position.z = 0.02;
+        this.selectionReticle.add(this.reticleRing);
+
+        // 5. Krispig inre vit highlight-kärna
+        const innerGeo = new THREE.RingGeometry(0.255, 0.275, 48);
+        const innerMat = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.95,
-            depthWrite: false,
-            blending: THREE.AdditiveBlending
+            depthWrite: false
         });
-        this.reticleRing = new THREE.Mesh(ringGeo, ringMat);
-        this.selectionReticle.add(this.reticleRing);
+        this.reticleCore = new THREE.Mesh(innerGeo, innerMat);
+        this.reticleCore.position.z = 0.03;
+        this.selectionReticle.add(this.reticleCore);
 
-        // 3. Subtila krispiga hårkors-hakar (Crosshair ticks) vid 12, 3, 6 och 9
-        const tickMat = new THREE.LineBasicMaterial({
-            color: 0x00f5d4,
-            transparent: true,
-            opacity: 0.90,
-            blending: THREE.AdditiveBlending
-        });
-        const tickPoints = [
-            // Topp
-            new THREE.Vector3(0, 0.28, 0), new THREE.Vector3(0, 0.35, 0),
-            // Botten
-            new THREE.Vector3(0, -0.28, 0), new THREE.Vector3(0, -0.35, 0),
-            // Vänster
-            new THREE.Vector3(-0.28, 0, 0), new THREE.Vector3(-0.35, 0, 0),
-            // Höger
-            new THREE.Vector3(0.28, 0, 0), new THREE.Vector3(0.35, 0, 0)
+        // 6. Fasta, tydliga hårkors-hakar (Crosshair ticks) med mörk skuggkontur
+        this.reticleTicks = new THREE.Group();
+        this.reticleTicks.position.z = 0.04;
+
+        const tickConfigs = [
+            { x: 0, y: 0.38, rot: 0 },          // Topp
+            { x: 0, y: -0.38, rot: 0 },         // Botten
+            { x: -0.38, y: 0, rot: Math.PI / 2 },// Vänster
+            { x: 0.38, y: 0, rot: Math.PI / 2 }  // Höger
         ];
-        const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPoints);
-        this.reticleTicks = new THREE.LineSegments(tickGeo, tickMat);
+
+        const tickShadowGeo = new THREE.PlaneGeometry(0.075, 0.17);
+        const tickShadowMat = new THREE.MeshBasicMaterial({ color: 0x03060a, transparent: true, opacity: 0.88, depthWrite: false });
+
+        const tickBrightGeo = new THREE.PlaneGeometry(0.04, 0.14);
+        const tickBrightMat = new THREE.MeshBasicMaterial({ color: 0xffd000, transparent: true, opacity: 1.0, depthWrite: false });
+
+        const tickCoreGeo = new THREE.PlaneGeometry(0.018, 0.11);
+        const tickCoreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthWrite: false });
+
+        for (const cfg of tickConfigs) {
+            const tGroup = new THREE.Group();
+            tGroup.position.set(cfg.x, cfg.y, 0);
+            tGroup.rotation.z = cfg.rot;
+
+            const sMesh = new THREE.Mesh(tickShadowGeo, tickShadowMat);
+            sMesh.position.z = -0.01;
+            tGroup.add(sMesh);
+
+            const bMesh = new THREE.Mesh(tickBrightGeo, tickBrightMat);
+            bMesh.position.z = 0.0;
+            tGroup.add(bMesh);
+
+            const cMesh = new THREE.Mesh(tickCoreGeo, tickCoreMat);
+            cMesh.position.z = 0.01;
+            tGroup.add(cMesh);
+
+            this.reticleTicks.add(tGroup);
+        }
         this.selectionReticle.add(this.reticleTicks);
 
         this.selectionRing = this.selectionReticle;
@@ -1342,9 +1401,12 @@ class ViewportCanvas {
             }
             const t = Date.now() * 0.005;
             const pulse = 1.0 + 0.035 * Math.sin(t);
-            this.reticleRing.scale.set(pulse, pulse, 1.0);
-            this.reticleTicks.scale.set(pulse, pulse, 1.0);
-            this.reticleAura.material.opacity = 0.40 + 0.18 * Math.sin(t);
+            if (this.reticleRing) this.reticleRing.scale.set(pulse, pulse, 1.0);
+            if (this.reticleShadow) this.reticleShadow.scale.set(pulse, pulse, 1.0);
+            if (this.reticleCore) this.reticleCore.scale.set(pulse, pulse, 1.0);
+            if (this.reticleTicks) this.reticleTicks.scale.set(pulse, pulse, 1.0);
+            if (this.reticleAura) this.reticleAura.material.opacity = 0.50 + 0.20 * Math.sin(t);
+            if (this.reticleBackdrop) this.reticleBackdrop.scale.set(1.0 + 0.02 * Math.sin(t), 1.0 + 0.02 * Math.sin(t), 1.0);
         }
 
         this.renderer.render(this.scene, this.camera);
