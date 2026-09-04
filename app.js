@@ -627,6 +627,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
     fullscreenBtn.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", () => {
+        const isFs = !!document.fullscreenElement;
+        fullscreenBtn.textContent = isFs ? "✕" : "⛶";
+        fullscreenBtn.title = isFs ? "Lämna fullskärm (Esc eller F)" : "Fullskärm (F)";
+    });
     window.addEventListener("keydown", (e) => {
         if (e.key === "f" || e.key === "F") {
             if (e.target.tagName !== "INPUT") {
