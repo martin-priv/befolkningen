@@ -230,6 +230,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (eraStatUrban) eraStatUrban.textContent = `${eraStats.urban} tätort`;
         if (eraStatInfant) eraStatInfant.textContent = eraStats.infant;
 
+        // Uppdatera årets faktiska befolkningsrörelser (SCB TAB4365)
+        const eraBirthsDeaths = document.getElementById("eraBirthsDeaths");
+        const eraMigrationFlow = document.getElementById("eraMigrationFlow");
+        if (eraBirthsDeaths && eraMigrationFlow) {
+            if (popData.births !== undefined && popData.deaths !== undefined) {
+                const natGrowth = popData.births - popData.deaths;
+                const sign = natGrowth >= 0 ? "+" : "";
+                const tagClass = natGrowth >= 0 ? "plus" : "minus";
+                eraBirthsDeaths.innerHTML = `👶 ${popData.births.toLocaleString('sv-SE')} &nbsp;•&nbsp; 🕊️ ${popData.deaths.toLocaleString('sv-SE')} &nbsp;<span class="delta-tag ${tagClass}">(${sign}${natGrowth.toLocaleString('sv-SE')})</span>`;
+            } else {
+                eraBirthsDeaths.textContent = "Data ej tillgänglig";
+            }
+
+            if (popData.immigrants !== undefined && popData.emigrants !== undefined) {
+                const net = popData.immigrants - popData.emigrants;
+                const sign = net >= 0 ? "+" : "";
+                const tagClass = net >= 0 ? "plus" : "minus";
+                eraMigrationFlow.innerHTML = `🛬 ${popData.immigrants.toLocaleString('sv-SE')} &nbsp;•&nbsp; 🛫 ${popData.emigrants.toLocaleString('sv-SE')} &nbsp;<span class="delta-tag ${tagClass}">(Netto ${sign}${net.toLocaleString('sv-SE')})</span>`;
+            } else {
+                eraMigrationFlow.textContent = "Data ej tillgänglig";
+            }
+        }
+
         canvas.updateFromPopulation(popData);
         updateAgeRuler(canvas, popData);
         updateFormationOverlay(year, popData);
@@ -526,6 +549,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (deathCountVal) deathCountVal.textContent = fmt(cd.nextDeathSec);
                 if (immigrateCountVal) immigrateCountVal.textContent = fmt(cd.nextImmigrantSec);
                 if (emigrateCountVal) emigrateCountVal.textContent = fmt(cd.nextEmigrantSec);
+
+                if (rhythmBirth && cd.birthSeasonFactor) {
+                    const pct = Math.round((cd.birthSeasonFactor - 1) * 100);
+                    const sign = pct >= 0 ? `+${pct}%` : `${pct}%`;
+                    rhythmBirth.title = `Organisk takt: ~1 födsel var 5,5 min (Månadssäsong enligt SCB: ${sign})`;
+                }
+                if (rhythmDeath && cd.deathSeasonFactor) {
+                    const pct = Math.round((cd.deathSeasonFactor - 1) * 100);
+                    const sign = pct >= 0 ? `+${pct}%` : `${pct}%`;
+                    rhythmDeath.title = `Organisk takt: ~1 dödsfall var 5,4 min (Månadssäsong enligt SCB: ${sign})`;
+                }
             }
         }
     }

@@ -864,6 +864,59 @@ body, html {
     letter-spacing: 0.2px;
 }
 
+/* Årets befolkningsrörelser och migration (SCB TAB4365) */
+.era-migration-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.40);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 5px 14px;
+    margin-bottom: 12px;
+    font-family: 'SF Mono', Monaco, monospace;
+    gap: 12px;
+}
+
+.era-mig-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.era-mig-label {
+    font-size: 8.5px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+}
+
+.era-mig-val {
+    font-size: 11px;
+    font-weight: 600;
+    color: #cbd5e1;
+    letter-spacing: 0.2px;
+}
+
+.delta-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.delta-tag.plus {
+    color: #00f5d4;
+    background: rgba(0, 245, 212, 0.12);
+}
+
+.delta-tag.minus {
+    color: #f43f5e;
+    background: rgba(244, 63, 94, 0.12);
+}
+
 /* Slider */
 .slider-wrapper {
     position: relative;
@@ -1339,6 +1392,19 @@ body.mouse-idle .timeline-panel {
     }
     .era-stat-val {
         font-size: 9.5px;
+    }
+    .era-migration-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+        padding: 4px 8px;
+        margin-bottom: 6px;
+    }
+    .era-mig-label {
+        font-size: 7.5px;
+    }
+    .era-mig-val {
+        font-size: 9px;
     }
     .slider-wrapper {
         margin-top: 4px;

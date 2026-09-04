@@ -108,19 +108,23 @@ class PopulationEngine {
 
         this.eraNotes = {
             1860: "Fattig-Sverige: 3,85 miljoner invånare. Jordbrukssamhälle.",
-            1868: "Missväxtåren: Stor nöd och början på Amerikautvandringen.",
-            1885: "Utvandringstoppen: Över 40 000 svenskar utvandrar per år.",
-            1900: "Sverige passerar 5 miljoner invånare.",
-            1918: "Spanska sjukan och första världskriget präglar dödstalen.",
-            1945: "Andra världskrigets slut: 40-talsboomen inleds.",
-            1969: "Sverige når 8 miljoner: Arbetskraftsinvandring och Miljonprogrammet.",
+            1868: "Missväxtåren: Stor hungersnöd och början på Amerikautvandringen.",
+            1882: "Utvandringstoppen: 50 180 svenskar utvandrar till USA på ett år (netto -46 600).",
+            1885: "Massemigration: Över 40 000 svenskar utvandrar årligen till Nordamerika.",
+            1900: "Sekelskiftet: Sverige passerar 5 miljoner invånare.",
+            1918: "Spanska sjukan & första världskriget: Dödstalen rusar till 104 600.",
+            1945: "Krigsslutet: 40-talsboomen och mottagande av krigsflyktingar.",
+            1969: "Arbetskraftsinvandringens rekordår: 64 500 invandrare, främst finländare till svensk industri.",
             1985: "Barnafödandet ökar: 'Snabbare barn'-regeln i föräldraförsäkringen.",
+            1993: "Balkankrisen: Över 70 000 flyktingar från forna Jugoslavien söker skydd.",
             2004: "Sverige passerar 9 miljoner invånare.",
-            2015: "Flyktingvågen: Rekordhög invandring till Sverige.",
+            2015: "Flyktingkrisen: 134 200 invandrare, kulmen på Syrienkrisen.",
+            2016: "Högsta invandringen i svensk historia: 163 005 invandrare (netto +117 100).",
             2017: "Sverige passerar historiska 10 miljoner invånare!",
-            2024: "Historiskt utfall: 10 587 710 personer.",
-            2025: "SCB: 10 602 310 personer.",
-            2026: "Idag: Aktuell SCB-framskrivning och månadsstatistik.",
+            2023: "Ökad återvandring och utvandring: 73 400 personer lämnar landet.",
+            2024: "Utvandringsrekord på 100 år: 86 450 utvandrare (Skatteverkets registervård & återvandring).",
+            2025: "SCB: 89 400 invandrare och 77 500 utvandrare.",
+            2026: "Idag: Aktuell SCB-framskrivning och realtidsdata.",
             2030: "SCB Framskrivning: 10,72 miljoner invånare.",
             2050: "SCB Framskrivning: Sveriges befolkning beräknas till 11,29 miljoner.",
             2070: "SCB Framskrivning: 11,80 miljoner invånare."
@@ -301,13 +305,20 @@ class PopulationEngine {
 
         if (this.data.history[yStr]) {
             const h = this.data.history[yStr];
+            const ev = h.events || this.data.annualEvents?.[yStr] || null;
             return {
                 year: year,
                 isProjection: !!h.isProjection,
                 total: h.total,
                 men: h.men,
                 women: h.women,
-                ages: h.ages
+                ages: h.ages,
+                events: ev,
+                births: ev ? ev.births : undefined,
+                deaths: ev ? ev.deaths : undefined,
+                immigrants: ev ? ev.immigrants : undefined,
+                emigrants: ev ? ev.emigrants : undefined,
+                netMigration: ev ? ev.netMigration : undefined
             };
         } else if (this.data.projections[year]) {
             const p = this.data.projections[year];
@@ -330,7 +341,8 @@ class PopulationEngine {
                 births: p.births,
                 deaths: p.deaths,
                 immigrants: p.immigrants,
-                emigrants: p.emigrants
+                emigrants: p.emigrants,
+                netMigration: (p.immigrants !== undefined && p.emigrants !== undefined) ? (p.immigrants - p.emigrants) : p.netMigration
             };
         }
         return null;
@@ -740,7 +752,181 @@ class PopulationEngine {
         }
     }
 
+    /**
+     * SCB Säsongsindex för födslar per månad (0 = Jan, 11 = Dec)
+     * Vår- och sommarboomen (mars-juli) har högre födelsetakt än höst/vinter (nov-dec).
+     */
+    getBirthSeasonFactor(month = (new Date()).getMonth()) {
+        const factors = [
+            0.98, // Jan
+            1.01, // Feb (korrigerat för 28 dagar)
+            1.06, // Mar (Hög)
+            1.07, // Apr (Hög)
+            1.06, // Maj (Hög)
+            1.05, // Jun (Hög)
+            1.04, // Jul (Hög)
+            0.99, // Aug
+            0.98, // Sep
+            0.94, // Okt
+            0.89, // Nov (Lägst)
+            0.88  // Dec (Lägst)
+        ];
+        return factors[month] || 1.0;
+    }
+
+    /**
+     * SCB Säsongsindex för dödsfall per månad (0 = Jan, 11 = Dec)
+     * Vintertopp (januari-mars) och sommarbotten (juni-augusti).
+     */
+    getDeathSeasonFactor(month = (new Date()).getMonth()) {
+        const factors = [
+            1.08, // Jan (Vintertopp)
+            1.07, // Feb
+            1.06, // Mar
+            1.01, // Apr
+            0.96, // Maj
+            0.92, // Jun (Sommarbotten)
+            0.91, // Jul
+            0.91, // Aug
+            0.93, // Sep
+            0.97, // Okt
+            1.02, // Nov
+            1.08  // Dec (Vintertopp)
+        ];
+        return factors[month] || 1.0;
+    }
+
+    /**
+     * Epokanpassade migrationsströmmar (SCB TAB4365, TAB4822, TAB1617)
+     * Ger historiskt och samtida autentiska ursprungsländer och utvandringsmål.
+     */
+    getEpochMigrationContext(year = (this.currentYear || 2026)) {
+        if (year < 1915) {
+            // Emigrationsepoken (1860-1914): Massemigration till USA
+            return {
+                immigrantCountries: [
+                    { name: "USA (hemvändare)", weight: 60 },
+                    { name: "Norge", weight: 20 },
+                    { name: "Danmark", weight: 15 },
+                    { name: "Finland", weight: 5 }
+                ],
+                emigrantDestinations: [
+                    { name: "USA (Minnesota / Illinois)", weight: 75, isUSA: true },
+                    { name: "USA (New York / New England)", weight: 15, isUSA: true },
+                    { name: "Kanada", weight: 5, isUSA: true },
+                    { name: "Danmark", weight: 3, isReturn: false },
+                    { name: "Norge", weight: 2, isReturn: false }
+                ]
+            };
+        } else if (year < 1945) {
+            // Mellankrigstiden
+            return {
+                immigrantCountries: [
+                    { name: "USA (återvändare)", weight: 40 },
+                    { name: "Finland", weight: 30 },
+                    { name: "Tyskland", weight: 15 },
+                    { name: "Norge", weight: 15 }
+                ],
+                emigrantDestinations: [
+                    { name: "USA", weight: 45 },
+                    { name: "Storbritannien", weight: 20 },
+                    { name: "Tyskland", weight: 15 },
+                    { name: "Danmark", weight: 10 },
+                    { name: "Norge", weight: 10 }
+                ]
+            };
+        } else if (year < 1975) {
+            // Rekordåren (1945-1974): Stor arbetskraftsinvandring till svensk industri
+            return {
+                immigrantCountries: [
+                    { name: "Finland", weight: 55 },
+                    { name: "Jugoslavien", weight: 20 },
+                    { name: "Grekland", weight: 10 },
+                    { name: "Italien", weight: 8 },
+                    { name: "Västtyskland", weight: 7 }
+                ],
+                emigrantDestinations: [
+                    { name: "Norge", weight: 35 },
+                    { name: "USA", weight: 25 },
+                    { name: "Finland (återflyttare)", weight: 20, isReturn: true },
+                    { name: "Västtyskland", weight: 20 }
+                ]
+            };
+        } else if (year < 2000) {
+            // 1975-1999: Flykting- och anhörigmigration (Chile, Iran, Irak, Balkan)
+            return {
+                immigrantCountries: [
+                    { name: "Bosnien och Hercegovina", weight: 28 },
+                    { name: "Iran", weight: 20 },
+                    { name: "Irak", weight: 18 },
+                    { name: "Chile", weight: 12 },
+                    { name: "Polen", weight: 12 },
+                    { name: "Somalia", weight: 10 }
+                ],
+                emigrantDestinations: [
+                    { name: "Norge", weight: 25 },
+                    { name: "USA", weight: 20 },
+                    { name: "Storbritannien", weight: 20 },
+                    { name: "Spanien", weight: 15, isRetiree: true },
+                    { name: "Tyskland", weight: 10 },
+                    { name: "Polen", weight: 10, isReturn: true }
+                ]
+            };
+        } else if (year < 2020) {
+            // 2000-2019: Syrienkrisen, EU-utvidgningen och flyktingvågen 2015/2016
+            return {
+                immigrantCountries: [
+                    { name: "Syrien", weight: 40 },
+                    { name: "Irak", weight: 18 },
+                    { name: "Afghanistan", weight: 15 },
+                    { name: "Somalia", weight: 10 },
+                    { name: "Eritrea", weight: 9 },
+                    { name: "Polen", weight: 12 },
+                    { name: "Indien", weight: 8 }
+                ],
+                emigrantDestinations: [
+                    { name: "Norge", weight: 25 },
+                    { name: "Storbritannien", weight: 18 },
+                    { name: "USA", weight: 14 },
+                    { name: "Danmark", weight: 12 },
+                    { name: "Spanien", weight: 12, isRetiree: true },
+                    { name: "Polen", weight: 10, isReturn: true },
+                    { name: "Tyskland", weight: 9 }
+                ]
+            };
+        } else {
+            // 2020-2026: Återvandring, Ukraina och registerrensning
+            return {
+                immigrantCountries: [
+                    { name: "Ukraina", weight: 28 },
+                    { name: "Indien (arbetstillstånd/IT)", weight: 18 },
+                    { name: "Polen", weight: 14 },
+                    { name: "Tyskland", weight: 12 },
+                    { name: "Syrien (anhöriga)", weight: 10 },
+                    { name: "Kina", weight: 8 },
+                    { name: "Turkiet", weight: 6 },
+                    { name: "Finland", weight: 4 }
+                ],
+                emigrantDestinations: [
+                    { name: "Syrien", weight: 16, isReturn: true },
+                    { name: "Irak", weight: 14, isReturn: true },
+                    { name: "Somalia", weight: 12, isReturn: true },
+                    { name: "Polen", weight: 12, isReturn: true },
+                    { name: "Indien", weight: 10, isReturn: true },
+                    { name: "Norge", weight: 10, isReturn: false },
+                    { name: "Tyskland", weight: 8, isReturn: false },
+                    { name: "Danmark", weight: 8, isReturn: false },
+                    { name: "Spanien", weight: 6, isRetiree: true },
+                    { name: "Storbritannien", weight: 4, isReturn: false }
+                ]
+            };
+        }
+    }
+
     createEventDetail(type) {
+        const year = this.currentYear || 2026;
+        const epochCtx = this.getEpochMigrationContext(year);
+
         if (type === 'birth') {
             const muni = this.getRandomMunicipality();
             const isBoy = Math.random() < 0.514;
@@ -770,7 +956,15 @@ class PopulationEngine {
                 sex: sexTitle
             };
         } else if (type === 'immigrate') {
-            const country = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
+            let totalWeight = 0;
+            for (let c of epochCtx.immigrantCountries) totalWeight += c.weight;
+            let r = Math.random() * totalWeight;
+            let country = epochCtx.immigrantCountries[0];
+            for (let c of epochCtx.immigrantCountries) {
+                r -= c.weight;
+                if (r <= 0) { country = c; break; }
+            }
+
             const isMan = Math.random() < 0.51;
             const age = Math.min(65, Math.max(1, Math.round(27 + (Math.random() - 0.4) * 16)));
             const sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
@@ -787,9 +981,16 @@ class PopulationEngine {
             };
         } else if (type === 'emigrate') {
             const muni = this.getRandomMunicipality();
-            const dest = this.getRandomEmigrationDestination();
-            const isMan = Math.random() < 0.52;
+            let totalWeight = 0;
+            for (let d of epochCtx.emigrantDestinations) totalWeight += d.weight;
+            let r = Math.random() * totalWeight;
+            let dest = epochCtx.emigrantDestinations[0];
+            for (let d of epochCtx.emigrantDestinations) {
+                r -= d.weight;
+                if (r <= 0) { dest = d; break; }
+            }
 
+            const isMan = Math.random() < 0.52;
             let age, narrative, sexTitle;
             if (dest.isRetiree && Math.random() < 0.38) {
                 // Senior / pensionär som flyttar söderut (Spanien, Portugal, Frankrike)
@@ -797,12 +998,17 @@ class PopulationEngine {
                 sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} flyttar till ${dest.name}`;
             } else if (dest.isReturn) {
-                // Återvandring / cirkulär migration (Polen, Indien, Finland, Irak, Syrien, Kina m.fl.)
+                // Återvandring / cirkulär migration (Polen, Indien, Finland, Irak, Syrien m.fl.)
                 age = Math.round(24 + Math.random() * 22);
                 sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} återvänder till ${dest.name}`;
+            } else if (dest.isUSA && year < 1925) {
+                // Historisk amerikautvandring
+                age = Math.round(19 + Math.random() * 18);
+                sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
+                narrative = `${age}-årig ${sexTitle} från ${muni.name} emigrerar till ${dest.name}`;
             } else {
-                // Utvandring för arbete, studier eller karriär (Norge, Danmark, Storbritannien, Tyskland, USA m.fl.)
+                // Utvandring för arbete, studier eller karriär
                 age = Math.round(21 + Math.random() * 18);
                 sexTitle = this.getPersonSexTitle(isMan ? "man" : "kvinna", age);
                 narrative = `${age}-årig ${sexTitle} från ${muni.name} utvandrar till ${dest.name}`;
@@ -825,8 +1031,6 @@ class PopulationEngine {
 
     samplePoissonInterval(meanSec) {
         // Äkta Poisson-process (Exponentiell fördelning för oberoende naturliga händelser)
-        // Väntevärdet är 100% identiskt med SCB:s årstakt (summan blir exakt densamma).
-        // Men intervallen varierar organiskt: ibland 30-40s (tvillingar / rusning), ibland 8-12 minuter!
         const u = Math.random();
         const raw = -meanSec * 1.03 * Math.log(1.0 - Math.min(0.999, u));
         return Math.max(15, Math.min(1200, raw));
@@ -841,10 +1045,15 @@ class PopulationEngine {
         this.currentLivePopulation = liveCalc.calculatedPop;
         this.lastDriftSync = Date.now();
 
-        // Skapa första organiska måltiderna
-        this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
+        // Månadsbunden säsongsvariation för födslar och dödsfall
+        const curMonth = (new Date()).getMonth();
+        const birthSeason = this.getBirthSeasonFactor(curMonth);
+        const deathSeason = this.getDeathSeasonFactor(curMonth);
+
+        // Skapa första organiska måltiderna med säsongskorrigering
+        this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec / birthSeason);
         this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);
-        this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
+        this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec / deathSeason);
         this.currentEmigrantInterval = this.samplePoissonInterval(rates.emigrateIntervalSec);
 
         // Slumpa en organisk startposition så att inte allt händer samtidigt vid omladdning
@@ -862,11 +1071,14 @@ class PopulationEngine {
             this.initWallClockCounters();
         }
 
+        const curMonth = (new Date()).getMonth();
         return {
             nextBirthSec: Math.max(0, Math.round((this.currentBirthInterval - this.liveBirthTimer) / mult)),
             nextImmigrantSec: Math.max(0, Math.round((this.currentImmigrantInterval - this.liveImmigrantTimer) / mult)),
             nextDeathSec: Math.max(0, Math.round((this.currentDeathInterval - this.liveDeathTimer) / mult)),
-            nextEmigrantSec: Math.max(0, Math.round((this.currentEmigrantInterval - this.liveEmigrantTimer) / mult))
+            nextEmigrantSec: Math.max(0, Math.round((this.currentEmigrantInterval - this.liveEmigrantTimer) / mult)),
+            birthSeasonFactor: this.getBirthSeasonFactor(curMonth),
+            deathSeasonFactor: this.getDeathSeasonFactor(curMonth)
         };
     }
 
@@ -886,24 +1098,27 @@ class PopulationEngine {
         this.liveEmigrantTimer += effectiveDt;
 
         const events = [];
+        const curMonth = (new Date()).getMonth();
+        const birthSeason = this.getBirthSeasonFactor(curMonth);
+        const deathSeason = this.getDeathSeasonFactor(curMonth);
 
-        // Födsel (Organiskt Poisson-intervall kring medelvärdet 331s)
+        // Födsel (Organiskt Poisson-intervall med månatlig säsongsfaktor)
         if (this.liveBirthTimer >= this.currentBirthInterval) {
             this.liveBirthTimer = 0;
-            this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec);
+            this.currentBirthInterval = this.samplePoissonInterval(rates.birthIntervalSec / birthSeason);
             this.currentLivePopulation += 1;
             events.push(this.createEventDetail('birth'));
         }
 
-        // Dödsfall (Organiskt Poisson-intervall kring medelvärdet 324s)
+        // Dödsfall (Organiskt Poisson-intervall med månatlig säsongsfaktor)
         if (this.liveDeathTimer >= this.currentDeathInterval) {
             this.liveDeathTimer = 0;
-            this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec);
+            this.currentDeathInterval = this.samplePoissonInterval(rates.deathIntervalSec / deathSeason);
             this.currentLivePopulation -= 1;
             events.push(this.createEventDetail('death'));
         }
 
-        // Invandring (Organiskt Poisson-intervall kring medelvärdet 363s)
+        // Invandring
         if (this.liveImmigrantTimer >= this.currentImmigrantInterval) {
             this.liveImmigrantTimer = 0;
             this.currentImmigrantInterval = this.samplePoissonInterval(rates.immigrateIntervalSec);

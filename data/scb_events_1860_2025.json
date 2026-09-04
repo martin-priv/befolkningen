@@ -1,0 +1,1496 @@
+{
+  "1860": {
+    "births": 133162,
+    "deaths": 67502,
+    "immigrants": 0,
+    "emigrants": 348,
+    "netMigration": -348,
+    "naturalGrowth": 65660,
+    "totalGrowth": 65312
+  },
+  "1861": {
+    "births": 126634,
+    "deaths": 71829,
+    "immigrants": 0,
+    "emigrants": 2286,
+    "netMigration": -2286,
+    "naturalGrowth": 54805,
+    "totalGrowth": 52519
+  },
+  "1862": {
+    "births": 131584,
+    "deaths": 84350,
+    "immigrants": 0,
+    "emigrants": 2535,
+    "netMigration": -2535,
+    "naturalGrowth": 47234,
+    "totalGrowth": 44699
+  },
+  "1863": {
+    "births": 134279,
+    "deaths": 77227,
+    "immigrants": 0,
+    "emigrants": 3127,
+    "netMigration": -3127,
+    "naturalGrowth": 57052,
+    "totalGrowth": 53925
+  },
+  "1864": {
+    "births": 136004,
+    "deaths": 81937,
+    "immigrants": 0,
+    "emigrants": 5177,
+    "netMigration": -5177,
+    "naturalGrowth": 54067,
+    "totalGrowth": 48890
+  },
+  "1865": {
+    "births": 134281,
+    "deaths": 79216,
+    "immigrants": 0,
+    "emigrants": 6691,
+    "netMigration": -6691,
+    "naturalGrowth": 55065,
+    "totalGrowth": 48374
+  },
+  "1866": {
+    "births": 136989,
+    "deaths": 82666,
+    "immigrants": 0,
+    "emigrants": 7206,
+    "netMigration": -7206,
+    "naturalGrowth": 54323,
+    "totalGrowth": 47117
+  },
+  "1867": {
+    "births": 128832,
+    "deaths": 82072,
+    "immigrants": 0,
+    "emigrants": 9334,
+    "netMigration": -9334,
+    "naturalGrowth": 46760,
+    "totalGrowth": 37426
+  },
+  "1868": {
+    "births": 114955,
+    "deaths": 87807,
+    "immigrants": 0,
+    "emigrants": 27024,
+    "netMigration": -27024,
+    "naturalGrowth": 27148,
+    "totalGrowth": 124
+  },
+  "1869": {
+    "births": 117677,
+    "deaths": 92775,
+    "immigrants": 0,
+    "emigrants": 39064,
+    "netMigration": -39064,
+    "naturalGrowth": 24902,
+    "totalGrowth": -14162
+  },
+  "1870": {
+    "births": 119838,
+    "deaths": 82449,
+    "immigrants": 0,
+    "emigrants": 20003,
+    "netMigration": -20003,
+    "naturalGrowth": 37389,
+    "totalGrowth": 17386
+  },
+  "1871": {
+    "births": 127333,
+    "deaths": 72046,
+    "immigrants": 0,
+    "emigrants": 17450,
+    "netMigration": -17450,
+    "naturalGrowth": 55287,
+    "totalGrowth": 37837
+  },
+  "1872": {
+    "births": 126983,
+    "deaths": 68802,
+    "immigrants": 0,
+    "emigrants": 15915,
+    "netMigration": -15915,
+    "naturalGrowth": 58181,
+    "totalGrowth": 42266
+  },
+  "1873": {
+    "births": 131643,
+    "deaths": 73525,
+    "immigrants": 0,
+    "emigrants": 13580,
+    "netMigration": -13580,
+    "naturalGrowth": 58118,
+    "totalGrowth": 44538
+  },
+  "1874": {
+    "births": 133249,
+    "deaths": 87760,
+    "immigrants": 0,
+    "emigrants": 7791,
+    "netMigration": -7791,
+    "naturalGrowth": 45489,
+    "totalGrowth": 37698
+  },
+  "1875": {
+    "births": 135958,
+    "deaths": 88439,
+    "immigrants": 2805,
+    "emigrants": 9727,
+    "netMigration": -6922,
+    "naturalGrowth": 47519,
+    "totalGrowth": 40597
+  },
+  "1876": {
+    "births": 135890,
+    "deaths": 86334,
+    "immigrants": 3212,
+    "emigrants": 9418,
+    "netMigration": -6206,
+    "naturalGrowth": 49556,
+    "totalGrowth": 43350
+  },
+  "1877": {
+    "births": 138476,
+    "deaths": 83175,
+    "immigrants": 3288,
+    "emigrants": 7610,
+    "netMigration": -4322,
+    "naturalGrowth": 55301,
+    "totalGrowth": 50979
+  },
+  "1878": {
+    "births": 134464,
+    "deaths": 81418,
+    "immigrants": 2841,
+    "emigrants": 9032,
+    "netMigration": -6191,
+    "naturalGrowth": 53046,
+    "totalGrowth": 46855
+  },
+  "1879": {
+    "births": 139043,
+    "deaths": 77152,
+    "immigrants": 2592,
+    "emigrants": 17637,
+    "netMigration": -15045,
+    "naturalGrowth": 61891,
+    "totalGrowth": 46846
+  },
+  "1880": {
+    "births": 134262,
+    "deaths": 82753,
+    "immigrants": 3009,
+    "emigrants": 42109,
+    "netMigration": -39100,
+    "naturalGrowth": 51509,
+    "totalGrowth": 12409
+  },
+  "1881": {
+    "births": 132804,
+    "deaths": 80800,
+    "immigrants": 2957,
+    "emigrants": 45992,
+    "netMigration": -43035,
+    "naturalGrowth": 52004,
+    "totalGrowth": 8969
+  },
+  "1882": {
+    "births": 134300,
+    "deaths": 79406,
+    "immigrants": 3567,
+    "emigrants": 50178,
+    "netMigration": -46611,
+    "naturalGrowth": 54894,
+    "totalGrowth": 8283
+  },
+  "1883": {
+    "births": 132875,
+    "deaths": 79487,
+    "immigrants": 4153,
+    "emigrants": 31605,
+    "netMigration": -27452,
+    "naturalGrowth": 53388,
+    "totalGrowth": 25936
+  },
+  "1884": {
+    "births": 138745,
+    "deaths": 81077,
+    "immigrants": 4911,
+    "emigrants": 23560,
+    "netMigration": -18649,
+    "naturalGrowth": 57668,
+    "totalGrowth": 39019
+  },
+  "1885": {
+    "births": 137308,
+    "deaths": 82781,
+    "immigrants": 5792,
+    "emigrants": 23493,
+    "netMigration": -17701,
+    "naturalGrowth": 54527,
+    "totalGrowth": 36826
+  },
+  "1886": {
+    "births": 139882,
+    "deaths": 78045,
+    "immigrants": 5224,
+    "emigrants": 32889,
+    "netMigration": -27665,
+    "naturalGrowth": 61837,
+    "totalGrowth": 34172
+  },
+  "1887": {
+    "births": 140169,
+    "deaths": 76227,
+    "immigrants": 4642,
+    "emigrants": 50786,
+    "netMigration": -46144,
+    "naturalGrowth": 63942,
+    "totalGrowth": 17798
+  },
+  "1888": {
+    "births": 136451,
+    "deaths": 75831,
+    "immigrants": 4821,
+    "emigrants": 50323,
+    "netMigration": -45502,
+    "naturalGrowth": 60620,
+    "totalGrowth": 15118
+  },
+  "1889": {
+    "births": 132069,
+    "deaths": 76124,
+    "immigrants": 5504,
+    "emigrants": 33363,
+    "netMigration": -27859,
+    "naturalGrowth": 55945,
+    "totalGrowth": 28086
+  },
+  "1890": {
+    "births": 133597,
+    "deaths": 81824,
+    "immigrants": 6030,
+    "emigrants": 34212,
+    "netMigration": -28182,
+    "naturalGrowth": 51773,
+    "totalGrowth": 23591
+  },
+  "1891": {
+    "births": 135516,
+    "deaths": 80603,
+    "immigrants": 6114,
+    "emigrants": 42776,
+    "netMigration": -36662,
+    "naturalGrowth": 54913,
+    "totalGrowth": 18251
+  },
+  "1892": {
+    "births": 129622,
+    "deaths": 85894,
+    "immigrants": 6511,
+    "emigrants": 45504,
+    "netMigration": -38993,
+    "naturalGrowth": 43728,
+    "totalGrowth": 4735
+  },
+  "1893": {
+    "births": 131729,
+    "deaths": 81027,
+    "immigrants": 7377,
+    "emigrants": 40869,
+    "netMigration": -33492,
+    "naturalGrowth": 50702,
+    "totalGrowth": 17210
+  },
+  "1894": {
+    "births": 131409,
+    "deaths": 79444,
+    "immigrants": 10425,
+    "emigrants": 13358,
+    "netMigration": -2933,
+    "naturalGrowth": 51965,
+    "totalGrowth": 49032
+  },
+  "1895": {
+    "births": 134599,
+    "deaths": 74368,
+    "immigrants": 8528,
+    "emigrants": 18955,
+    "netMigration": -10427,
+    "naturalGrowth": 60231,
+    "totalGrowth": 49804
+  },
+  "1896": {
+    "births": 134308,
+    "deaths": 77259,
+    "immigrants": 7807,
+    "emigrants": 19551,
+    "netMigration": -11744,
+    "naturalGrowth": 57049,
+    "totalGrowth": 45305
+  },
+  "1897": {
+    "births": 132999,
+    "deaths": 76558,
+    "immigrants": 7861,
+    "emigrants": 14559,
+    "netMigration": -6698,
+    "naturalGrowth": 56441,
+    "totalGrowth": 49743
+  },
+  "1898": {
+    "births": 136523,
+    "deaths": 75949,
+    "immigrants": 7974,
+    "emigrants": 13663,
+    "netMigration": -5689,
+    "naturalGrowth": 60574,
+    "totalGrowth": 54885
+  },
+  "1899": {
+    "births": 133882,
+    "deaths": 89678,
+    "immigrants": 8196,
+    "emigrants": 16876,
+    "netMigration": -8680,
+    "naturalGrowth": 44204,
+    "totalGrowth": 35524
+  },
+  "1900": {
+    "births": 138139,
+    "deaths": 86146,
+    "immigrants": 8017,
+    "emigrants": 20661,
+    "netMigration": -12644,
+    "naturalGrowth": 51993,
+    "totalGrowth": 39349
+  },
+  "1901": {
+    "births": 139370,
+    "deaths": 82772,
+    "immigrants": 7621,
+    "emigrants": 24616,
+    "netMigration": -16995,
+    "naturalGrowth": 56598,
+    "totalGrowth": 39603
+  },
+  "1902": {
+    "births": 137364,
+    "deaths": 79722,
+    "immigrants": 6784,
+    "emigrants": 37107,
+    "netMigration": -30323,
+    "naturalGrowth": 57642,
+    "totalGrowth": 27319
+  },
+  "1903": {
+    "births": 133896,
+    "deaths": 78610,
+    "immigrants": 7623,
+    "emigrants": 39525,
+    "netMigration": -31902,
+    "naturalGrowth": 55286,
+    "totalGrowth": 23384
+  },
+  "1904": {
+    "births": 134952,
+    "deaths": 80152,
+    "immigrants": 9262,
+    "emigrants": 22384,
+    "netMigration": -13122,
+    "naturalGrowth": 54800,
+    "totalGrowth": 41678
+  },
+  "1905": {
+    "births": 135409,
+    "deaths": 82443,
+    "immigrants": 8609,
+    "emigrants": 24046,
+    "netMigration": -15437,
+    "naturalGrowth": 52966,
+    "totalGrowth": 37529
+  },
+  "1906": {
+    "births": 136620,
+    "deaths": 76366,
+    "immigrants": 9581,
+    "emigrants": 24704,
+    "netMigration": -15123,
+    "naturalGrowth": 60254,
+    "totalGrowth": 45131
+  },
+  "1907": {
+    "births": 136793,
+    "deaths": 78149,
+    "immigrants": 8913,
+    "emigrants": 22978,
+    "netMigration": -14065,
+    "naturalGrowth": 58644,
+    "totalGrowth": 44579
+  },
+  "1908": {
+    "births": 138874,
+    "deaths": 80568,
+    "immigrants": 9818,
+    "emigrants": 12499,
+    "netMigration": -2681,
+    "naturalGrowth": 58306,
+    "totalGrowth": 55625
+  },
+  "1909": {
+    "births": 139505,
+    "deaths": 74538,
+    "immigrants": 8071,
+    "emigrants": 21992,
+    "netMigration": -13921,
+    "naturalGrowth": 64967,
+    "totalGrowth": 51046
+  },
+  "1910": {
+    "births": 135625,
+    "deaths": 77212,
+    "immigrants": 8142,
+    "emigrants": 27816,
+    "netMigration": -19674,
+    "naturalGrowth": 58413,
+    "totalGrowth": 38739
+  },
+  "1911": {
+    "births": 132977,
+    "deaths": 76462,
+    "immigrants": 7752,
+    "emigrants": 19997,
+    "netMigration": -12245,
+    "naturalGrowth": 56515,
+    "totalGrowth": 44270
+  },
+  "1912": {
+    "births": 132868,
+    "deaths": 79241,
+    "immigrants": 8296,
+    "emigrants": 18117,
+    "netMigration": -9821,
+    "naturalGrowth": 53627,
+    "totalGrowth": 43806
+  },
+  "1913": {
+    "births": 130200,
+    "deaths": 76724,
+    "immigrants": 8407,
+    "emigrants": 20346,
+    "netMigration": -11939,
+    "naturalGrowth": 53476,
+    "totalGrowth": 41537
+  },
+  "1914": {
+    "births": 129458,
+    "deaths": 78311,
+    "immigrants": 8636,
+    "emigrants": 12960,
+    "netMigration": -4324,
+    "naturalGrowth": 51147,
+    "totalGrowth": 46823
+  },
+  "1915": {
+    "births": 122997,
+    "deaths": 83587,
+    "immigrants": 6357,
+    "emigrants": 7512,
+    "netMigration": -1155,
+    "naturalGrowth": 39410,
+    "totalGrowth": 38255
+  },
+  "1916": {
+    "births": 121679,
+    "deaths": 77771,
+    "immigrants": 6713,
+    "emigrants": 10571,
+    "netMigration": -3858,
+    "naturalGrowth": 43908,
+    "totalGrowth": 40050
+  },
+  "1917": {
+    "births": 120855,
+    "deaths": 77385,
+    "immigrants": 5811,
+    "emigrants": 6440,
+    "netMigration": -629,
+    "naturalGrowth": 43470,
+    "totalGrowth": 42841
+  },
+  "1918": {
+    "births": 117955,
+    "deaths": 104591,
+    "immigrants": 4932,
+    "emigrants": 4853,
+    "netMigration": 79,
+    "naturalGrowth": 13364,
+    "totalGrowth": 13443
+  },
+  "1919": {
+    "births": 115193,
+    "deaths": 84289,
+    "immigrants": 7809,
+    "emigrants": 7337,
+    "netMigration": 472,
+    "naturalGrowth": 30904,
+    "totalGrowth": 31376
+  },
+  "1920": {
+    "births": 138753,
+    "deaths": 78128,
+    "immigrants": 10841,
+    "emigrants": 10242,
+    "netMigration": 599,
+    "naturalGrowth": 60625,
+    "totalGrowth": 61224
+  },
+  "1921": {
+    "births": 127723,
+    "deaths": 73536,
+    "immigrants": 8551,
+    "emigrants": 8950,
+    "netMigration": -399,
+    "naturalGrowth": 54187,
+    "totalGrowth": 53788
+  },
+  "1922": {
+    "births": 116946,
+    "deaths": 76343,
+    "immigrants": 6303,
+    "emigrants": 11797,
+    "netMigration": -5494,
+    "naturalGrowth": 40603,
+    "totalGrowth": 35109
+  },
+  "1923": {
+    "births": 113435,
+    "deaths": 68424,
+    "immigrants": 5827,
+    "emigrants": 29238,
+    "netMigration": -23411,
+    "naturalGrowth": 45011,
+    "totalGrowth": 21600
+  },
+  "1924": {
+    "births": 109055,
+    "deaths": 72001,
+    "immigrants": 5942,
+    "emigrants": 10671,
+    "netMigration": -4729,
+    "naturalGrowth": 37054,
+    "totalGrowth": 32325
+  },
+  "1925": {
+    "births": 106292,
+    "deaths": 70918,
+    "immigrants": 5053,
+    "emigrants": 11948,
+    "netMigration": -6895,
+    "naturalGrowth": 35374,
+    "totalGrowth": 28479
+  },
+  "1926": {
+    "births": 102007,
+    "deaths": 71344,
+    "immigrants": 5388,
+    "emigrants": 13043,
+    "netMigration": -7655,
+    "naturalGrowth": 30663,
+    "totalGrowth": 23008
+  },
+  "1927": {
+    "births": 97994,
+    "deaths": 77219,
+    "immigrants": 5678,
+    "emigrants": 12847,
+    "netMigration": -7169,
+    "naturalGrowth": 20775,
+    "totalGrowth": 13606
+  },
+  "1928": {
+    "births": 97868,
+    "deaths": 73267,
+    "immigrants": 5608,
+    "emigrants": 13450,
+    "netMigration": -7842,
+    "naturalGrowth": 24601,
+    "totalGrowth": 16759
+  },
+  "1929": {
+    "births": 92861,
+    "deaths": 74538,
+    "immigrants": 6336,
+    "emigrants": 11019,
+    "netMigration": -4683,
+    "naturalGrowth": 18323,
+    "totalGrowth": 13640
+  },
+  "1930": {
+    "births": 94220,
+    "deaths": 71790,
+    "immigrants": 7515,
+    "emigrants": 5682,
+    "netMigration": 1833,
+    "naturalGrowth": 22430,
+    "totalGrowth": 24263
+  },
+  "1931": {
+    "births": 91074,
+    "deaths": 77121,
+    "immigrants": 8390,
+    "emigrants": 2971,
+    "netMigration": 5419,
+    "naturalGrowth": 13953,
+    "totalGrowth": 19372
+  },
+  "1932": {
+    "births": 89779,
+    "deaths": 71459,
+    "immigrants": 8990,
+    "emigrants": 2117,
+    "netMigration": 6873,
+    "naturalGrowth": 18320,
+    "totalGrowth": 25193
+  },
+  "1933": {
+    "births": 85020,
+    "deaths": 69607,
+    "immigrants": 7256,
+    "emigrants": 2417,
+    "netMigration": 4839,
+    "naturalGrowth": 15413,
+    "totalGrowth": 20252
+  },
+  "1934": {
+    "births": 85092,
+    "deaths": 69921,
+    "immigrants": 5707,
+    "emigrants": 2400,
+    "netMigration": 3307,
+    "naturalGrowth": 15171,
+    "totalGrowth": 18478
+  },
+  "1935": {
+    "births": 85906,
+    "deaths": 72813,
+    "immigrants": 5412,
+    "emigrants": 2454,
+    "netMigration": 2958,
+    "naturalGrowth": 13093,
+    "totalGrowth": 16051
+  },
+  "1936": {
+    "births": 88938,
+    "deaths": 74836,
+    "immigrants": 4679,
+    "emigrants": 2371,
+    "netMigration": 2308,
+    "naturalGrowth": 14102,
+    "totalGrowth": 16410
+  },
+  "1937": {
+    "births": 90373,
+    "deaths": 75392,
+    "immigrants": 4470,
+    "emigrants": 2289,
+    "netMigration": 2181,
+    "naturalGrowth": 14981,
+    "totalGrowth": 17162
+  },
+  "1938": {
+    "births": 93946,
+    "deaths": 72693,
+    "immigrants": 5756,
+    "emigrants": 2062,
+    "netMigration": 3694,
+    "naturalGrowth": 21253,
+    "totalGrowth": 24947
+  },
+  "1939": {
+    "births": 97380,
+    "deaths": 72876,
+    "immigrants": 7178,
+    "emigrants": 3580,
+    "netMigration": 3598,
+    "naturalGrowth": 24504,
+    "totalGrowth": 28102
+  },
+  "1940": {
+    "births": 95778,
+    "deaths": 72748,
+    "immigrants": 6784,
+    "emigrants": 3102,
+    "netMigration": 3682,
+    "naturalGrowth": 23030,
+    "totalGrowth": 26712
+  },
+  "1941": {
+    "births": 99727,
+    "deaths": 71910,
+    "immigrants": 4254,
+    "emigrants": 1101,
+    "netMigration": 3153,
+    "naturalGrowth": 27817,
+    "totalGrowth": 30970
+  },
+  "1942": {
+    "births": 113961,
+    "deaths": 63741,
+    "immigrants": 3053,
+    "emigrants": 940,
+    "netMigration": 2113,
+    "naturalGrowth": 50220,
+    "totalGrowth": 52333
+  },
+  "1943": {
+    "births": 125392,
+    "deaths": 66105,
+    "immigrants": 6249,
+    "emigrants": 687,
+    "netMigration": 5562,
+    "naturalGrowth": 59287,
+    "totalGrowth": 64849
+  },
+  "1944": {
+    "births": 134991,
+    "deaths": 72284,
+    "immigrants": 13340,
+    "emigrants": 549,
+    "netMigration": 12791,
+    "naturalGrowth": 62707,
+    "totalGrowth": 75498
+  },
+  "1945": {
+    "births": 135373,
+    "deaths": 71901,
+    "immigrants": 21126,
+    "emigrants": 8261,
+    "netMigration": 12865,
+    "naturalGrowth": 63472,
+    "totalGrowth": 76337
+  },
+  "1946": {
+    "births": 132597,
+    "deaths": 70635,
+    "immigrants": 31422,
+    "emigrants": 6915,
+    "netMigration": 24507,
+    "naturalGrowth": 61962,
+    "totalGrowth": 86469
+  },
+  "1947": {
+    "births": 128779,
+    "deaths": 73579,
+    "immigrants": 31399,
+    "emigrants": 6451,
+    "netMigration": 24948,
+    "naturalGrowth": 55200,
+    "totalGrowth": 80148
+  },
+  "1948": {
+    "births": 126683,
+    "deaths": 67693,
+    "immigrants": 32935,
+    "emigrants": 9784,
+    "netMigration": 23151,
+    "naturalGrowth": 58990,
+    "totalGrowth": 82141
+  },
+  "1949": {
+    "births": 121272,
+    "deaths": 69537,
+    "immigrants": 23997,
+    "emigrants": 14174,
+    "netMigration": 9823,
+    "naturalGrowth": 51735,
+    "totalGrowth": 61558
+  },
+  "1950": {
+    "births": 115414,
+    "deaths": 70296,
+    "immigrants": 27940,
+    "emigrants": 12860,
+    "netMigration": 15080,
+    "naturalGrowth": 45118,
+    "totalGrowth": 60198
+  },
+  "1951": {
+    "births": 110168,
+    "deaths": 69799,
+    "immigrants": 31603,
+    "emigrants": 16580,
+    "netMigration": 15023,
+    "naturalGrowth": 40369,
+    "totalGrowth": 55392
+  },
+  "1952": {
+    "births": 110192,
+    "deaths": 68270,
+    "immigrants": 26259,
+    "emigrants": 14998,
+    "netMigration": 11261,
+    "naturalGrowth": 41922,
+    "totalGrowth": 53183
+  },
+  "1953": {
+    "births": 110144,
+    "deaths": 69553,
+    "immigrants": 19175,
+    "emigrants": 17480,
+    "netMigration": 1695,
+    "naturalGrowth": 40591,
+    "totalGrowth": 42286
+  },
+  "1954": {
+    "births": 105096,
+    "deaths": 69030,
+    "immigrants": 20817,
+    "emigrants": 13822,
+    "netMigration": 6995,
+    "naturalGrowth": 36066,
+    "totalGrowth": 43061
+  },
+  "1955": {
+    "births": 107305,
+    "deaths": 68634,
+    "immigrants": 30069,
+    "emigrants": 12675,
+    "netMigration": 17394,
+    "naturalGrowth": 38671,
+    "totalGrowth": 56065
+  },
+  "1956": {
+    "births": 107960,
+    "deaths": 70205,
+    "immigrants": 28029,
+    "emigrants": 14737,
+    "netMigration": 13292,
+    "naturalGrowth": 37755,
+    "totalGrowth": 51047
+  },
+  "1957": {
+    "births": 107168,
+    "deaths": 73132,
+    "immigrants": 33023,
+    "emigrants": 15071,
+    "netMigration": 17952,
+    "naturalGrowth": 34036,
+    "totalGrowth": 51988
+  },
+  "1958": {
+    "births": 105502,
+    "deaths": 71065,
+    "immigrants": 22097,
+    "emigrants": 14247,
+    "netMigration": 7850,
+    "naturalGrowth": 34437,
+    "totalGrowth": 42287
+  },
+  "1959": {
+    "births": 104743,
+    "deaths": 70889,
+    "immigrants": 19089,
+    "emigrants": 15607,
+    "netMigration": 3482,
+    "naturalGrowth": 33854,
+    "totalGrowth": 37336
+  },
+  "1960": {
+    "births": 102219,
+    "deaths": 75093,
+    "immigrants": 26143,
+    "emigrants": 15138,
+    "netMigration": 11005,
+    "naturalGrowth": 27126,
+    "totalGrowth": 38131
+  },
+  "1961": {
+    "births": 104501,
+    "deaths": 73555,
+    "immigrants": 29619,
+    "emigrants": 15019,
+    "netMigration": 14600,
+    "naturalGrowth": 30946,
+    "totalGrowth": 45546
+  },
+  "1962": {
+    "births": 107284,
+    "deaths": 76791,
+    "immigrants": 25084,
+    "emigrants": 14928,
+    "netMigration": 10156,
+    "naturalGrowth": 30493,
+    "totalGrowth": 40649
+  },
+  "1963": {
+    "births": 112903,
+    "deaths": 76460,
+    "immigrants": 26950,
+    "emigrants": 15340,
+    "netMigration": 11610,
+    "naturalGrowth": 36443,
+    "totalGrowth": 48053
+  },
+  "1964": {
+    "births": 122664,
+    "deaths": 76661,
+    "immigrants": 38334,
+    "emigrants": 15705,
+    "netMigration": 22629,
+    "naturalGrowth": 46003,
+    "totalGrowth": 68632
+  },
+  "1965": {
+    "births": 122806,
+    "deaths": 78194,
+    "immigrants": 49586,
+    "emigrants": 15977,
+    "netMigration": 33609,
+    "naturalGrowth": 44612,
+    "totalGrowth": 78221
+  },
+  "1966": {
+    "births": 123354,
+    "deaths": 78440,
+    "immigrants": 46970,
+    "emigrants": 19730,
+    "netMigration": 27240,
+    "naturalGrowth": 44914,
+    "totalGrowth": 72154
+  },
+  "1967": {
+    "births": 121360,
+    "deaths": 79783,
+    "immigrants": 29983,
+    "emigrants": 19979,
+    "netMigration": 10004,
+    "naturalGrowth": 41577,
+    "totalGrowth": 51581
+  },
+  "1968": {
+    "births": 113087,
+    "deaths": 82476,
+    "immigrants": 35978,
+    "emigrants": 23162,
+    "netMigration": 12816,
+    "naturalGrowth": 30611,
+    "totalGrowth": 43427
+  },
+  "1969": {
+    "births": 107622,
+    "deaths": 83352,
+    "immigrants": 64503,
+    "emigrants": 20360,
+    "netMigration": 44143,
+    "naturalGrowth": 24270,
+    "totalGrowth": 68413
+  },
+  "1970": {
+    "births": 110150,
+    "deaths": 80026,
+    "immigrants": 77326,
+    "emigrants": 28653,
+    "netMigration": 48673,
+    "naturalGrowth": 30124,
+    "totalGrowth": 78797
+  },
+  "1971": {
+    "births": 114484,
+    "deaths": 82717,
+    "immigrants": 42615,
+    "emigrants": 39560,
+    "netMigration": 3055,
+    "naturalGrowth": 31767,
+    "totalGrowth": 34822
+  },
+  "1972": {
+    "births": 112273,
+    "deaths": 84056,
+    "immigrants": 29894,
+    "emigrants": 41579,
+    "netMigration": -11685,
+    "naturalGrowth": 28217,
+    "totalGrowth": 16532
+  },
+  "1973": {
+    "births": 109663,
+    "deaths": 85640,
+    "immigrants": 29443,
+    "emigrants": 40342,
+    "netMigration": -10899,
+    "naturalGrowth": 24023,
+    "totalGrowth": 13124
+  },
+  "1974": {
+    "births": 109874,
+    "deaths": 86316,
+    "immigrants": 37430,
+    "emigrants": 28352,
+    "netMigration": 9078,
+    "naturalGrowth": 23558,
+    "totalGrowth": 32636
+  },
+  "1975": {
+    "births": 103632,
+    "deaths": 88208,
+    "immigrants": 44133,
+    "emigrants": 27249,
+    "netMigration": 16884,
+    "naturalGrowth": 15424,
+    "totalGrowth": 32308
+  },
+  "1976": {
+    "births": 98345,
+    "deaths": 90677,
+    "immigrants": 45492,
+    "emigrants": 25522,
+    "netMigration": 19970,
+    "naturalGrowth": 7668,
+    "totalGrowth": 27638
+  },
+  "1977": {
+    "births": 96057,
+    "deaths": 88202,
+    "immigrants": 44005,
+    "emigrants": 21078,
+    "netMigration": 22927,
+    "naturalGrowth": 7855,
+    "totalGrowth": 30782
+  },
+  "1978": {
+    "births": 93248,
+    "deaths": 89681,
+    "immigrants": 36187,
+    "emigrants": 22168,
+    "netMigration": 14019,
+    "naturalGrowth": 3567,
+    "totalGrowth": 17586
+  },
+  "1979": {
+    "births": 96255,
+    "deaths": 91074,
+    "immigrants": 37025,
+    "emigrants": 23467,
+    "netMigration": 13558,
+    "naturalGrowth": 5181,
+    "totalGrowth": 18739
+  },
+  "1980": {
+    "births": 97064,
+    "deaths": 91800,
+    "immigrants": 39426,
+    "emigrants": 29839,
+    "netMigration": 9587,
+    "naturalGrowth": 5264,
+    "totalGrowth": 14851
+  },
+  "1981": {
+    "births": 94065,
+    "deaths": 92034,
+    "immigrants": 32272,
+    "emigrants": 29440,
+    "netMigration": 2832,
+    "naturalGrowth": 2031,
+    "totalGrowth": 4863
+  },
+  "1982": {
+    "births": 92748,
+    "deaths": 90671,
+    "immigrants": 30381,
+    "emigrants": 28381,
+    "netMigration": 2000,
+    "naturalGrowth": 2077,
+    "totalGrowth": 4077
+  },
+  "1983": {
+    "births": 91780,
+    "deaths": 90791,
+    "immigrants": 27495,
+    "emigrants": 25269,
+    "netMigration": 2226,
+    "naturalGrowth": 989,
+    "totalGrowth": 3215
+  },
+  "1984": {
+    "births": 93889,
+    "deaths": 90483,
+    "immigrants": 31486,
+    "emigrants": 22825,
+    "netMigration": 8661,
+    "naturalGrowth": 3406,
+    "totalGrowth": 12067
+  },
+  "1985": {
+    "births": 98463,
+    "deaths": 94032,
+    "immigrants": 33127,
+    "emigrants": 22036,
+    "netMigration": 11091,
+    "naturalGrowth": 4431,
+    "totalGrowth": 15522
+  },
+  "1986": {
+    "births": 101950,
+    "deaths": 93295,
+    "immigrants": 39487,
+    "emigrants": 24495,
+    "netMigration": 14992,
+    "naturalGrowth": 8655,
+    "totalGrowth": 23647
+  },
+  "1987": {
+    "births": 104699,
+    "deaths": 93307,
+    "immigrants": 42666,
+    "emigrants": 20673,
+    "netMigration": 21993,
+    "naturalGrowth": 11392,
+    "totalGrowth": 33385
+  },
+  "1988": {
+    "births": 112080,
+    "deaths": 96743,
+    "immigrants": 51092,
+    "emigrants": 21461,
+    "netMigration": 29631,
+    "naturalGrowth": 15337,
+    "totalGrowth": 44968
+  },
+  "1989": {
+    "births": 116023,
+    "deaths": 92110,
+    "immigrants": 65866,
+    "emigrants": 21484,
+    "netMigration": 44382,
+    "naturalGrowth": 23913,
+    "totalGrowth": 68295
+  },
+  "1990": {
+    "births": 123938,
+    "deaths": 95161,
+    "immigrants": 60048,
+    "emigrants": 25196,
+    "netMigration": 34852,
+    "naturalGrowth": 28777,
+    "totalGrowth": 63629
+  },
+  "1991": {
+    "births": 123737,
+    "deaths": 95202,
+    "immigrants": 49731,
+    "emigrants": 24745,
+    "netMigration": 24986,
+    "naturalGrowth": 28535,
+    "totalGrowth": 53521
+  },
+  "1992": {
+    "births": 122848,
+    "deaths": 94710,
+    "immigrants": 45348,
+    "emigrants": 25726,
+    "netMigration": 19622,
+    "naturalGrowth": 28138,
+    "totalGrowth": 47760
+  },
+  "1993": {
+    "births": 117998,
+    "deaths": 97008,
+    "immigrants": 61872,
+    "emigrants": 29874,
+    "netMigration": 31998,
+    "naturalGrowth": 20990,
+    "totalGrowth": 52988
+  },
+  "1994": {
+    "births": 112257,
+    "deaths": 91844,
+    "immigrants": 83598,
+    "emigrants": 32661,
+    "netMigration": 50937,
+    "naturalGrowth": 20413,
+    "totalGrowth": 71350
+  },
+  "1995": {
+    "births": 103422,
+    "deaths": 93955,
+    "immigrants": 45887,
+    "emigrants": 33984,
+    "netMigration": 11903,
+    "naturalGrowth": 9467,
+    "totalGrowth": 21370
+  },
+  "1996": {
+    "births": 95297,
+    "deaths": 94133,
+    "immigrants": 39895,
+    "emigrants": 33884,
+    "netMigration": 6011,
+    "naturalGrowth": 1164,
+    "totalGrowth": 7175
+  },
+  "1997": {
+    "births": 90502,
+    "deaths": 93326,
+    "immigrants": 44818,
+    "emigrants": 38543,
+    "netMigration": 6275,
+    "naturalGrowth": -2824,
+    "totalGrowth": 3451
+  },
+  "1998": {
+    "births": 89028,
+    "deaths": 93271,
+    "immigrants": 49391,
+    "emigrants": 38518,
+    "netMigration": 10873,
+    "naturalGrowth": -4243,
+    "totalGrowth": 6630
+  },
+  "1999": {
+    "births": 88173,
+    "deaths": 94726,
+    "immigrants": 49839,
+    "emigrants": 35705,
+    "netMigration": 14134,
+    "naturalGrowth": -6553,
+    "totalGrowth": 7581
+  },
+  "2000": {
+    "births": 90441,
+    "deaths": 93461,
+    "immigrants": 58659,
+    "emigrants": 34091,
+    "netMigration": 24568,
+    "naturalGrowth": -3020,
+    "totalGrowth": 21548
+  },
+  "2001": {
+    "births": 91466,
+    "deaths": 93752,
+    "immigrants": 60795,
+    "emigrants": 32141,
+    "netMigration": 28654,
+    "naturalGrowth": -2286,
+    "totalGrowth": 26368
+  },
+  "2002": {
+    "births": 95815,
+    "deaths": 95009,
+    "immigrants": 64087,
+    "emigrants": 33009,
+    "netMigration": 31078,
+    "naturalGrowth": 806,
+    "totalGrowth": 31884
+  },
+  "2003": {
+    "births": 99157,
+    "deaths": 92961,
+    "immigrants": 63795,
+    "emigrants": 35023,
+    "netMigration": 28772,
+    "naturalGrowth": 6196,
+    "totalGrowth": 34968
+  },
+  "2004": {
+    "births": 100928,
+    "deaths": 90532,
+    "immigrants": 62028,
+    "emigrants": 36586,
+    "netMigration": 25442,
+    "naturalGrowth": 10396,
+    "totalGrowth": 35838
+  },
+  "2005": {
+    "births": 101346,
+    "deaths": 91710,
+    "immigrants": 65229,
+    "emigrants": 38118,
+    "netMigration": 27111,
+    "naturalGrowth": 9636,
+    "totalGrowth": 36747
+  },
+  "2006": {
+    "births": 105913,
+    "deaths": 91177,
+    "immigrants": 95750,
+    "emigrants": 44908,
+    "netMigration": 50842,
+    "naturalGrowth": 14736,
+    "totalGrowth": 65578
+  },
+  "2007": {
+    "births": 107421,
+    "deaths": 91729,
+    "immigrants": 99485,
+    "emigrants": 45418,
+    "netMigration": 54067,
+    "naturalGrowth": 15692,
+    "totalGrowth": 69759
+  },
+  "2008": {
+    "births": 109301,
+    "deaths": 91449,
+    "immigrants": 101171,
+    "emigrants": 45294,
+    "netMigration": 55877,
+    "naturalGrowth": 17852,
+    "totalGrowth": 73729
+  },
+  "2009": {
+    "births": 111801,
+    "deaths": 90080,
+    "immigrants": 102280,
+    "emigrants": 39240,
+    "netMigration": 63040,
+    "naturalGrowth": 21721,
+    "totalGrowth": 84761
+  },
+  "2010": {
+    "births": 115641,
+    "deaths": 90487,
+    "immigrants": 98801,
+    "emigrants": 48853,
+    "netMigration": 49948,
+    "naturalGrowth": 25154,
+    "totalGrowth": 75102
+  },
+  "2011": {
+    "births": 111770,
+    "deaths": 89938,
+    "immigrants": 96467,
+    "emigrants": 51179,
+    "netMigration": 45288,
+    "naturalGrowth": 21832,
+    "totalGrowth": 67120
+  },
+  "2012": {
+    "births": 113177,
+    "deaths": 91938,
+    "immigrants": 103059,
+    "emigrants": 51747,
+    "netMigration": 51312,
+    "naturalGrowth": 21239,
+    "totalGrowth": 72551
+  },
+  "2013": {
+    "births": 113593,
+    "deaths": 90402,
+    "immigrants": 115845,
+    "emigrants": 50715,
+    "netMigration": 65130,
+    "naturalGrowth": 23191,
+    "totalGrowth": 88321
+  },
+  "2014": {
+    "births": 114907,
+    "deaths": 88976,
+    "immigrants": 126966,
+    "emigrants": 51237,
+    "netMigration": 75729,
+    "naturalGrowth": 25931,
+    "totalGrowth": 101660
+  },
+  "2015": {
+    "births": 114870,
+    "deaths": 90907,
+    "immigrants": 134240,
+    "emigrants": 55830,
+    "netMigration": 78410,
+    "naturalGrowth": 23963,
+    "totalGrowth": 102373
+  },
+  "2016": {
+    "births": 117425,
+    "deaths": 90982,
+    "immigrants": 163005,
+    "emigrants": 45878,
+    "netMigration": 117127,
+    "naturalGrowth": 26443,
+    "totalGrowth": 143570
+  },
+  "2017": {
+    "births": 115416,
+    "deaths": 91972,
+    "immigrants": 144489,
+    "emigrants": 45620,
+    "netMigration": 98869,
+    "naturalGrowth": 23444,
+    "totalGrowth": 122313
+  },
+  "2018": {
+    "births": 115832,
+    "deaths": 92185,
+    "immigrants": 132602,
+    "emigrants": 46981,
+    "netMigration": 85621,
+    "naturalGrowth": 23647,
+    "totalGrowth": 109268
+  },
+  "2019": {
+    "births": 114523,
+    "deaths": 88766,
+    "immigrants": 115805,
+    "emigrants": 47718,
+    "netMigration": 68087,
+    "naturalGrowth": 25757,
+    "totalGrowth": 93844
+  },
+  "2020": {
+    "births": 113077,
+    "deaths": 98124,
+    "immigrants": 82518,
+    "emigrants": 48937,
+    "netMigration": 33581,
+    "naturalGrowth": 14953,
+    "totalGrowth": 48534
+  },
+  "2021": {
+    "births": 114263,
+    "deaths": 91958,
+    "immigrants": 90631,
+    "emigrants": 48284,
+    "netMigration": 42347,
+    "naturalGrowth": 22305,
+    "totalGrowth": 64652
+  },
+  "2022": {
+    "births": 104734,
+    "deaths": 94737,
+    "immigrants": 102436,
+    "emigrants": 50592,
+    "netMigration": 51844,
+    "naturalGrowth": 9997,
+    "totalGrowth": 61841
+  },
+  "2023": {
+    "births": 100051,
+    "deaths": 94385,
+    "immigrants": 94514,
+    "emigrants": 73434,
+    "netMigration": 21080,
+    "naturalGrowth": 5666,
+    "totalGrowth": 26746
+  },
+  "2024": {
+    "births": 98451,
+    "deaths": 91268,
+    "immigrants": 116197,
+    "emigrants": 86449,
+    "netMigration": 29748,
+    "naturalGrowth": 7183,
+    "totalGrowth": 36931
+  },
+  "2025": {
+    "births": 97491,
+    "deaths": 92212,
+    "immigrants": 89434,
+    "emigrants": 77483,
+    "netMigration": 11951,
+    "naturalGrowth": 5279,
+    "totalGrowth": 17230
+  }
+}
