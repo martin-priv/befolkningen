@@ -403,10 +403,37 @@ class ViewportCanvas {
     setViewMode(mode) {
         if (this.currentViewMode === mode) return;
         this.currentViewMode = mode;
+        this.clearTransientBeads();
         this.createRipple(0, 0, 0.70, 0.42, 28.0);
         if (this.lastPopData) {
             this.updateFromPopulation(this.lastPopData);
         }
+    }
+
+    clearTransientBeads() {
+        for (let b of this.fallingBeads) {
+            this.scene.remove(b.group);
+            if (b.sphere) {
+                b.sphere.geometry.dispose();
+                b.sphere.material.dispose();
+            }
+            if (b.sprite) {
+                b.sprite.material.dispose();
+            }
+        }
+        this.fallingBeads = [];
+
+        for (let b of this.departingBeads) {
+            this.scene.remove(b.group);
+            if (b.sphere) {
+                b.sphere.geometry.dispose();
+                b.sphere.material.dispose();
+            }
+            if (b.sprite) {
+                b.sprite.material.dispose();
+            }
+        }
+        this.departingBeads = [];
     }
 
     /**
@@ -913,6 +940,9 @@ class ViewportCanvas {
      *   till sin vuxna ålder, precis som ett vertikalt drag med musen, och lämnar kölvatten (wake ripples)!
      */
     spawnDroppingBead(type = 'birth') {
+        // Pausa animerade 3D-droppar när Havet inte är aktivt för att hålla diagrammen rena
+        if (this.currentViewMode !== 'sea') return;
+
         const topY = (this.worldHeight / 2) + 2.0;
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
         const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
@@ -1085,6 +1115,9 @@ class ViewportCanvas {
      *   skapar uppåtriktade kölvattensvågor, bryter igenom ytan och försvinner ut i rymden!
      */
     spawnDepartingBead(type = 'death') {
+        // Pausa animerade 3D-avtåg när Havet inte är aktivt för att hålla diagrammen rena
+        if (this.currentViewMode !== 'sea') return;
+
         const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
         const popHeight = Math.max(1.0, surfaceY - botY);
