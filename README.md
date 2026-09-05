@@ -39,11 +39,36 @@ I kontrollpanelen kan du när som helst omvandla burken till specialdesignade da
 3. **🏙️ Stad vs Landsbygd (SCB TAB5328):**  
    Två vertikala pelare: **Landsbygd** och **Tätort**.  
    När tidsreglaget dras från 1860 (11 % i tätort) till 2026 (88 % i tätort) ser man bokstavligen tiotusentals kulor migrera från landsbygdsstapeln in till tätortspelaren.
-4. **🌍 Härkomst (SCB TAB4822):**  
-   Två vertikala pelare: **Inrikes födda** och **Utrikes födda**.  
-   Visar hur andelen utrikes födda ökar från under 1 % före andra världskriget till 20 % (ca 21 000 pärlor) år 2026.
+4. **🌍 Härkomst (SCB TAB4822 & TAB5240):**  
+   Två vertikala pelare: **Inrikes födda** (vänster) och **Utrikes födda** (höger).  
+   * **Verklig åldersfördelning:** Följer SCB:s ålderskurva där spädbarn (0 år) till 99,2 % är inrikes födda (endast 0,8 % har hunnit invandra), medan andelen utrikes födda toppar vid 25–45 år (~32 %) och avtar i äldre åldrar.
+   * **Garanterad stapelprecision:** Klick i vänster stapel identifierar alltid en inrikes född svensk; klick i höger stapel identifierar alltid en invandrad person.
+   * **Dynamisk scenarioframtid:** Andelen utrikes födda anpassas automatiskt fram till 2070 beroende på valt scenario (t.ex. ~13,5 % vid stram migration upp till 28,5 % vid hög invandring).
 
 *När en formation är aktiv visas flytande, glasartade informationsskyltar i skärmens topp med exakta invånarantal och procent i realtid.*
+
+---
+
+## 🔮 Framtidsscenarier: SCB vs Egen modell (2025–2070)
+
+Från och med år 2025 fälls en framtidspanel ut i kontrollgränssnittet där användaren kan växla mellan officiella prognoser och en egen demografisk framskrivningsmotor:
+
+### 1. SCB:s 7 officiella framskrivningsscenarier
+Direkt integration med SCB:s alternativa beräkningar (TAB4161/TAB5240):
+* **HU (Huvudalternativ):** SCB:s baslinje där fruktsamheten stiger mot 1,66 och befolkningen når ~11,8 miljoner år 2070.
+* **LI / HI (Lägre / Högre invandring):** Utforskar hur olika migrationsströmmar påverkar folkmängd och åldersstruktur (10,4 till 13,3 miljoner år 2070).
+* **LF / HF (Lägre / Högre fruktsamhet):** TFR varierar mellan 1,45 och 1,85 barn per kvinna.
+* **LD / HD (Lägre / Högre dödlighet):** Effekter av livslängdsökningens takt.
+
+### 2. Egen demografisk kohort-komponentmodell
+SCB:s officiella prognoser har ofta antagit att dagens låga barnafödande (TFR ~1,43) automatiskt studsar upp mot 1,66–1,70, samt att dödsfallsöverskottet vänder till plus. Den egna modellen låter dig testa vad som faktiskt händer om dagens trender består eller politiken ändras:
+* **Snabbval / Presets:**
+  * **🧊 Dagens trend (Frozen 2024):** Fryser TFR på 1,426 och bibehåller dagens migrations- och dödlighetstakter. Visar hur det födelseunderskott som inleddes 2024 ackumuleras.
+  * **🛡️ Stram migration:** Halverad invandring (`immigScale = 0.5`) med oförändrad utvandring.
+  * **⚖️ Nettomigration noll:** Invandringen anpassas exakt till utvandringens volym (netto = 0).
+  * **👶 Babyboom:** Fruktsamheten stiger till 1,85 barn per kvinna (motsvarande 1990 års topp).
+* **Interaktiva reglage:** Fintrimma **TFR (1,10–2,20)**, **Invandring (20–200 %)** och **Utvandring (50–150 %)** individuellt och se resultatet i realtid.
+* **Metodtransparens:** Information om modellens avgränsningar och skillnader mot SCB:s makroekonomiska antaganden nås direkt via infopanelen.
 
 ---
 
@@ -66,12 +91,13 @@ Klicka på valfri pärla i myllret (oavsett formation) för att inspektera den m
 
 * **Titel & Ålder:** Barn under 18 år benämns naturligt som **`Nyfödd pojke/flicka`**, **`7-årig pojke`**, **`14-årig flicka`** osv., och vuxna som **`18-årig man`**, **`42-årig kvinna`**.
 * **Barnantal:** Sannolikhetsberäknat utifrån personens ålder, civilstånd och epokens fruktsamhetstal (TFR).
-* **Boendemiljö:** Följer SCB:s definitioner (*Tätort* vs *Landsbygd*).
+* **Boendemiljö:** Följer SCB:s definitioner (*Tätort* vs *Landsbygd*). Klick i Landsbygds- eller Tätortspelarna respekterar 100 % pelarens kontext.
+* **Härkomst & Födelseland:** Klick i *Födda i Sverige*-pelaren ger alltid svenskfödd profil; klick i *Utrikes födda* ger alltid invandrad profil och härkomstland. I fria vyer (Havet/Pyramiden) används SCB:s åldersspecifika sannolikhet.
 * **Sysselsättning / Yrke:**  
   * *Historisk tid (1860–1970):* Dåtida yrken och näringsgrenar (*Dräng, Piga, Statare, Sömmerska, Mejeribiträde, Verkstadsarbetare*).  
   * *Nutid och framtid (1975–2070):* Strikt förankrat i **SCB SSYK 2012** (*Undersköterska, Mjukvaruutvecklare, Civilingenjör, Grundskollärare, Sjuksköterska, Elektriker*) utan fiktiva eller spekulativa sci-fi-titlar.  
   * *Pensionsålder:* Följer SCB:s och Pensionsmyndighetens officiella riktåldersformel (67 år före 1976, 65 år 1976–2022, 66 år 2023–2026, 67–69 år framåt mot 2070).
-* **Kommun & Födelseland:** Geografiskt viktat efter SCB:s kommunstorlekar samt utlandsfödd-register.
+* **Kommun & Viktning:** Geografiskt viktat efter SCB:s kommunstorlekar (inklusive landsortskommuner som Krokom).
 
 ---
 
@@ -79,10 +105,25 @@ Klicka på valfri pärla i myllret (oavsett formation) för att inspektera den m
 
 Alla fyra demografiska krafter drivs av oberoende **Poisson-processer** (exponentialfördelning) baserade på SCB:s verkliga årstakter:
 
-* 👶 **Födslar (~var 5,5 min):** Faller ner från himlen, plaskar i ytan och skapar expanderande ringvågor.
-* 🛬 **Invandring (~var 6,1 min):** Faller ner från skyn, plaskar och glider ner i sitt vuxna skikt. Visar ursprungsland baserat på SCB:s data.
-* 🕊️ **Dödsfall (~var 5,4 min):** En seniorpärla i botten flammar upp i ett mjukt silverskimmer, ger ifrån sig en stillsam suck/implosionsvåg och tonar bort i mörkret.
-* 🛫 **Utvandring (~var 8,6 min):** En vuxen pärla lyser upp i himmelsblått, svävar stilla uppåt mot rymden, lämnar kölvattensvågor och försvinner.
+* 👶 **Födslar (~var 5,5 min)**
+* 🛬 **Invandring (~var 6,1 min)**
+* 🕊️ **Dödsfall (~var 5,4 min)**
+* 🛫 **Utvandring (~var 8,6 min)**
+
+### Två visuella uttrycksformer:
+1. **I Havet (Vätskefysik & Vågor):**
+   * *Födslar & Invandring:* Faller ner från himlen som skimrande 3D-kulor, bryter vattenytan med ett plask och dyker ner till sin generation medan ringvågor sprider sig.
+   * *Dödsfall & Utvandring:* Flammar upp respektive stiger mot rymden och lämnar stilla kölvattensvågor.
+2. **I Pyramiden och Pelarna (Diagram-pulser):**
+   * För att inte störa eller skaka om de exakta statistiska staplarna pausas regnande kulor och ringvågor.
+   * Istället tänds **subtila demografiska ljusauror** på exakt rätt plats:
+     * **Födelse:** Tänds vid pyramidens bas (pojke till vänster, flicka till höger) eller toppen av *Födda i Sverige*-pelaren.
+     * **Dödsfall:** En stilla champagne-vit gnista tänds i pyramidens spets bland de äldsta (75–98 år) och tonas sakta bort.
+     * **Invandring:** Tänds i vuxen ålder (20–40 år) och i utrikes-pelaren.
+     * **Utvandring:** Lyfter mjukt från vuxen ålder.
+   * Diagrammens fasta geometri och pärlantal förblir 100 % rena och intakta.
+
+*Genvägar för demo/test:* Tryck tangenterna **`B`** (födelse), **`I`** (invandring), **`D`** (dödsfall) eller **`E`** (utvandring) för att omedelbart trigga händelser i den aktiva vyn.
 
 ---
 
@@ -98,13 +139,17 @@ I kontrollpanelen finns en dedikerad indikatorrad som interpolerar 4 officiella 
 
 ## 🕹️ Funktioner & Interaktion
 
-* **⚙️ Kontrollgränssnitt:**  
-  Startar i minimerat läge för en ren konstupplevelse. Klicka på **`⚙️`** i nedre högra hörnet (eller tryck **`T`**) för att öppna panelen.
+* **⚙️ Kontrollgränssnitt:** Startar i minimerat läge för en ren konstupplevelse. Klicka på **`⚙️`** i nedre högra hörnet (eller tryck **`T`**) för att öppna panelen.
 * **⏱️ Tidslinje (1860–2070):** Dra i reglaget för att resa genom 210 års svensk historia.
 * **▶ Spela:** Automatisk cinematisk tidsresa genom 210 år.
 * **🔍 Hitta din årskull:** Skriv in ditt födelseår så tänds din generation upp som en lysande skiva med statistik om antal och könsfördelning.
 * **⚡ Tempon:** Växla mellan `⚡ 1x Real` (realtid), `⚡ 10x Fart` och `⚡ 60x Demo`.
 * **⛶ Fullskärm:** Tryck `F` eller klicka på `⛶`.
+* **⌨️ Snabbkommandon:**
+  * `T`: Öppna/stäng kontrollpanelen
+  * `Space`: Starta/pausa tidsresan
+  * `F`: Fullskärm
+  * `B`, `I`, `D`, `E`: Utlös födelse, invandring, dödsfall eller utvandring i realtid
 
 ---
 
@@ -113,11 +158,12 @@ I kontrollpanelen finns en dedikerad indikatorrad som interpolerar 4 officiella 
 All data hämtad från **Statistiska centralbyrån (SCB)** via PxWebAPI 2.0 och officiella tabellverk:
 1. **Historisk befolkning 1860–2024:** Tabell `TAB5890` (folkmängd per ettårsklass 0–110+ år och kön).
 2. **Befolkningsframskrivning 2025–2070:** Tabell `TAB4161` (Sveriges framtida befolkning, födda, döda, invandring och utvandring).
-3. **Urbanisering & boende 1800–2023:** Tabell `TAB5328` (befolkning i tätort vs utanför tätort).
-4. **Spädbarnsdödlighet 1749–2025:** Tabell `TAB4376` (döda under första levnadsåret per 1 000 födda).
-5. **Utrikes födda 1900–2024:** Tabell `TAB4822` (utrikes och inrikes födda per födelseland).
-6. **Yrkesklassificering:** SCB **SSYK 2012** samt rapporten *Trender och prognoser om utbildning och arbetsmarknad*.
-7. **Pensionsålder:** Officiell pensionsålder och riktålder enligt SCB och Pensionsmyndigheten.
+3. **Framskrivning härkomst 2025–2070:** Tabell `TAB5240` (inrikes och utrikes födda efter ålder och kön).
+4. **Urbanisering & boende 1800–2023:** Tabell `TAB5328` (befolkning i tätort vs utanför tätort).
+5. **Spädbarnsdödlighet 1749–2025:** Tabell `TAB4376` (döda under första levnadsåret per 1 000 födda).
+6. **Utrikes födda 1900–2024:** Tabell `TAB4822` (utrikes och inrikes födda per födelseland).
+7. **Yrkesklassificering:** SCB **SSYK 2012** samt rapporten *Trender och prognoser om utbildning och arbetsmarknad*.
+8. **Pensionsålder:** Officiell pensionsålder och riktålder enligt SCB och Pensionsmyndigheten.
 
 ---
 
