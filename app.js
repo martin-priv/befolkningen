@@ -93,7 +93,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Callback när användaren klickar på en specifik pärla i myllret!
     const onPersonClick = (nearestBead, clientX, clientY) => {
-        const profile = engine.generatePersonProfile(nearestBead.age, nearestBead.sex, engine.currentYear);
+        let forcedOrigin = null;
+        let forcedHousing = null;
+
+        if (canvas.currentViewMode === 'origin') {
+            forcedOrigin = (nearestBead.origin === 1 || nearestBead.x > 0) ? 'foreign' : 'native';
+        } else if (canvas.currentViewMode === 'urban_rural') {
+            forcedHousing = (nearestBead.x > 0) ? 'urban' : 'rural';
+        }
+
+        const profile = engine.generatePersonProfile(nearestBead.age, nearestBead.sex, engine.currentYear, {
+            forcedOrigin,
+            forcedHousing
+        });
 
         personTitle.textContent = profile.displayTitle;
         personLocation.textContent = `📍 ${profile.displayLocation}`;
@@ -124,6 +136,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Skapa Viewport Canvas
     const canvas = new ViewportCanvas("canvasContainer", onPersonClick);
     canvas.getYearStats = () => engine.getEraStats(engine.currentYear);
+    canvas.getOriginStats = (year) => engine.getOriginStats(year);
+    canvas.getForeignRatioForAge = (age, ratio) => engine.getForeignRatioForAge(age, ratio);
 
     // Stäng person-kort
     if (closePersonBtn) {
@@ -165,17 +179,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             formColRightTitle.textContent = "🏙️ TÄTORT";
             formColRightStat.textContent = `${formatNumber(urbanPop)} (${urbanPct} %)`;
         } else if (mode === 'origin') {
-            let foreignRatio = 0.20;
-            if (year < 1945) foreignRatio = 0.01;
-            else if (year < 1970) foreignRatio = 0.01 + ((year - 1945) / 25.0) * 0.057;
-            else if (year < 2000) foreignRatio = 0.067 + ((year - 1970) / 30.0) * 0.046;
-            else if (year < 2026) foreignRatio = 0.113 + ((year - 2000) / 26.0) * 0.087;
-            else foreignRatio = 0.20 + ((year - 2026) / 44.0) * 0.025;
+            const originStats = engine.getOriginStats(year);
+            const foreignRatio = originStats.foreignRatio;
 
             const foreignPop = Math.round(total * foreignRatio);
             const nativePop = total - foreignPop;
-            const foreignPct = Math.round(foreignRatio * 100);
-            const nativePct = 100 - foreignPct;
+            const foreignPct = (foreignRatio * 100).toFixed(1).replace('.', ',');
+            const nativePct = ((1.0 - foreignRatio) * 100).toFixed(1).replace('.', ',');
 
             formColLeftTitle.textContent = "🇸🇪 FÖDDA I SVERIGE";
             formColLeftStat.textContent = `${formatNumber(nativePop)} (${nativePct} %)`;

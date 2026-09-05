@@ -30,6 +30,7 @@ class ViewportCanvas {
         this.colors = null;
         this.ages = null;
         this.sexes = null;
+        this.origins = null; // 0 = inrikes född (Sverige), 1 = utrikes född
 
         // Ringvågor (Ripples) - Inga tomma hål, bara mjuka vågor!
         this.ripples = [];
@@ -51,6 +52,8 @@ class ViewportCanvas {
         this.isFirstInit = true;
         this.previousActiveBeadCount = 0;
         this.getYearStats = null;
+        this.getOriginStats = null;
+        this.getForeignRatioForAge = null;
 
         this.init();
     }
@@ -240,6 +243,7 @@ class ViewportCanvas {
         this.colors = new Float32Array(count * 3);
         this.ages = new Float32Array(count);
         this.sexes = new Uint8Array(count);
+        this.origins = new Uint8Array(count);
 
         this.beadsGeometry = new THREE.BufferGeometry();
         this.beadsGeometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
@@ -409,7 +413,7 @@ class ViewportCanvas {
      * TILLDELA MÅLPOSITION FÖR PÄRLA
      * Mjuka övergångar: befintliga pärlor flyter, nya pärlor glider in från toppen
      */
-    setBeadTarget(beadIndex, x, y, age, sex) {
+    setBeadTarget(beadIndex, x, y, age, sex, origin = 0) {
         const i3 = beadIndex * 3;
 
         this.homePositions[i3] = x;
@@ -440,6 +444,9 @@ class ViewportCanvas {
 
         this.ages[beadIndex] = age;
         this.sexes[beadIndex] = sex;
+        if (this.origins) {
+            this.origins[beadIndex] = origin;
+        }
     }
 
     /**
@@ -608,17 +615,23 @@ class ViewportCanvas {
     layoutOrigin(popData, halfW, fillHeight) {
         const total = popData.total;
         let beadIndex = 0;
-
         const year = popData.year || 2026;
-        let foreignRatio = 0.20;
-        if (year < 1945) foreignRatio = 0.01;
-        else if (year < 1970) foreignRatio = 0.01 + ((year - 1945) / 25.0) * 0.057;
-        else if (year < 2000) foreignRatio = 0.067 + ((year - 1970) / 30.0) * 0.046;
-        else if (year < 2026) foreignRatio = 0.113 + ((year - 2000) / 26.0) * 0.087;
-        else foreignRatio = 0.20 + ((year - 2026) / 44.0) * 0.025;
+
+        let foreignRatio = 0.202;
+        if (typeof this.getOriginStats === 'function') {
+            const stats = this.getOriginStats(year);
+            if (stats && stats.foreignRatio !== undefined) {
+                foreignRatio = stats.foreignRatio;
+            }
+        } else {
+            if (year < 1945) foreignRatio = 0.01;
+            else if (year < 1970) foreignRatio = 0.01 + ((year - 1945) / 25.0) * 0.057;
+            else if (year < 2000) foreignRatio = 0.067 + ((year - 1970) / 30.0) * 0.046;
+            else if (year < 2026) foreignRatio = 0.113 + ((year - 2000) / 26.0) * 0.087;
+            else foreignRatio = 0.202 + ((year - 2026) / 44.0) * 0.025;
+        }
 
         const nativeRatio = 1.0 - foreignRatio;
-
         const colHalfW = halfW * 0.38;
         const leftCenterX = -halfW * 0.50;  // Inrikes födda
         const rightCenterX = +halfW * 0.50; // Utrikes födda
@@ -627,42 +640,73 @@ class ViewportCanvas {
         const nativeHeight = maxColHeight * (nativeRatio * (total / 12200000));
         const foreignHeight = maxColHeight * (foreignRatio * (total / 12200000));
 
-        let currentYNative = this.botY;
-        let currentYForeign = this.botY;
+        // Pass 1: Beräkna exakta pärlkvoter per årskull baserat på SCB:s åldersspecifika härkomst
+        let totalForeignBeads = 0;
+        let totalNativeBeads = 0;
+        const cohortData = [];
 
         for (let age = 105; age >= 0; age--) {
             const cohort = popData.ages[age] || [0, 0];
             const menCount = cohort[0];
             const womenCount = cohort[1];
             const cohortTotal = menCount + womenCount;
-            if (cohortTotal <= 0) continue;
+            if (cohortTotal <= 0) {
+                cohortData[age] = null;
+                continue;
+            }
 
-            const cohortFraction = cohortTotal / total;
             const countForAge = Math.max(1, Math.round(cohortTotal / 100));
+            const cohortForeignRatio = typeof this.getForeignRatioForAge === 'function'
+                ? this.getForeignRatioForAge(age, foreignRatio)
+                : foreignRatio;
 
-            const foreignCount = Math.round(countForAge * foreignRatio);
+            let foreignCount = Math.round(countForAge * cohortForeignRatio);
+            if (foreignCount > countForAge) foreignCount = countForAge;
+            if (foreignCount < 0) foreignCount = 0;
             const nativeCount = countForAge - foreignCount;
 
-            const nativeBandH = cohortFraction * nativeHeight;
-            const foreignBandH = cohortFraction * foreignHeight;
+            totalForeignBeads += foreignCount;
+            totalNativeBeads += nativeCount;
 
-            // Inrikes födda (vänster pelare)
-            for (let i = 0; i < nativeCount && beadIndex < this.maxBeads; i++) {
+            cohortData[age] = {
+                menCount,
+                womenCount,
+                cohortTotal,
+                foreignCount,
+                nativeCount
+            };
+        }
+
+        let currentYNative = this.botY;
+        let currentYForeign = this.botY;
+
+        // Pass 2: Placera pärlorna snyggt i respektive pelare
+        for (let age = 105; age >= 0; age--) {
+            const d = cohortData[age];
+            if (!d) continue;
+
+            const nativeBandH = totalNativeBeads > 0 ? (d.nativeCount / totalNativeBeads) * nativeHeight : 0;
+            const foreignBandH = totalForeignBeads > 0 ? (d.foreignCount / totalForeignBeads) * foreignHeight : 0;
+
+            // Inrikes födda (vänster pelare, origin = 0)
+            for (let i = 0; i < d.nativeCount && beadIndex < this.maxBeads; i++) {
                 const x = leftCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
                 const disp = (Math.random() - 0.5) * Math.max(0.18, nativeBandH * 0.95);
                 const y = Math.max(this.botY, currentYNative + disp + nativeBandH * 0.5);
 
-                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                const sex = (Math.random() < (d.menCount / d.cohortTotal)) ? 1 : 2;
+                this.setBeadTarget(beadIndex, x, y, age, sex, 0);
                 beadIndex++;
             }
 
-            // Utrikes födda (höger pelare)
-            for (let i = 0; i < foreignCount && beadIndex < this.maxBeads; i++) {
+            // Utrikes födda (höger pelare, origin = 1)
+            for (let i = 0; i < d.foreignCount && beadIndex < this.maxBeads; i++) {
                 const x = rightCenterX + (Math.random() - 0.5) * 2.0 * colHalfW;
                 const disp = (Math.random() - 0.5) * Math.max(0.18, foreignBandH * 0.95);
                 const y = Math.max(this.botY, currentYForeign + disp + foreignBandH * 0.5);
 
-                this.setBeadTarget(beadIndex, x, y, age, (Math.random() < (menCount / cohortTotal)) ? 1 : 2);
+                const sex = (Math.random() < (d.menCount / d.cohortTotal)) ? 1 : 2;
+                this.setBeadTarget(beadIndex, x, y, age, sex, 1);
                 beadIndex++;
             }
 
@@ -1290,7 +1334,8 @@ class ViewportCanvas {
                 age: Math.round(this.ages[closestIndex]),
                 sex: this.sexes[closestIndex] === 1 ? 'män' : 'kvinnor',
                 x: this.positions[closestIndex * 3],
-                y: this.positions[closestIndex * 3 + 1]
+                y: this.positions[closestIndex * 3 + 1],
+                origin: this.origins ? this.origins[closestIndex] : (this.positions[closestIndex * 3] > 0 ? 1 : 0)
             };
         }
         return null;

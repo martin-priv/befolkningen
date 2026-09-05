@@ -830,6 +830,95 @@ class PopulationEngine {
     }
 
     /**
+     * HÄMTA HÄRKOMSTSTATISTIK (Inrikes vs Utrikes födda) FÖR ETT ÅRTAL (1860–2070)
+     * Baserat på SCB TAB4822 (historik) och TAB5240 / framskrivningsmodell för framtid.
+     */
+    getOriginStats(year) {
+        const y = parseInt(year, 10) || 2026;
+        let foreignRatio = 0.202;
+
+        if (y < 1945) {
+            foreignRatio = 0.008 + ((y - 1860) / 85.0) * 0.007; // 0.8% till 1.5%
+        } else if (y < 1970) {
+            foreignRatio = 0.015 + ((y - 1945) / 25.0) * 0.052; // 1.5% till 6.7%
+        } else if (y < 2000) {
+            foreignRatio = 0.067 + ((y - 1970) / 30.0) * 0.046; // 6.7% till 11.3%
+        } else if (y <= 2024) {
+            foreignRatio = 0.113 + ((y - 2000) / 24.0) * 0.089; // 11.3% till 20.2%
+        } else {
+            // Framtid 2025–2070: Koppla till vald modell och scenario!
+            const fProg = Math.min(1.0, (y - 2024) / 46.0);
+            let target2070 = 0.226; // SCB HU grundprognos (TAB5240: 22.6% utrikes födda)
+
+            if (this.projectionModel === 'scb') {
+                if (this.scbScenario === 'LI') target2070 = 0.165; // SCB Lägre migration (~16.5%)
+                else if (this.scbScenario === 'HI') target2070 = 0.285; // SCB Högre migration (~28.5%)
+                else if (this.scbScenario === 'LF') target2070 = 0.235; // SCB Lägre fruktsamhet
+                else if (this.scbScenario === 'HF') target2070 = 0.218; // SCB Högre fruktsamhet
+                else if (this.scbScenario === 'LD') target2070 = 0.228; // SCB Lägre dödlighet
+                else if (this.scbScenario === 'HD') target2070 = 0.224; // SCB Högre dödlighet
+                else target2070 = 0.226; // SCB Huvudalternativ
+            } else {
+                // Egen modell: Skala efter invandrings- och fruktsamhetsreglage
+                const imm = this.trendParams.immigScale ?? 1.0;
+                const tfr = this.trendParams.tfr || 1.426;
+                target2070 = Math.max(0.04, Math.min(0.42, 0.05 + 0.17 * imm * (1.426 / tfr)));
+            }
+
+            foreignRatio = 0.202 + fProg * (target2070 - 0.202);
+        }
+
+        return {
+            year: y,
+            foreignRatio: foreignRatio,
+            nativeRatio: 1.0 - foreignRatio
+        };
+    }
+
+    /**
+     * ÅLDERSSPECIFIK ANDEL UTRIKES FÖDDA (SCB TAB5240 & TAB4822)
+     * Småbarn (0–4 år) föds i Sverige (även med invandrade föräldrar) och är inrikes födda.
+     * Andelen utrikes födda toppar i åldern 25–45 år och avtar i de äldsta åldrarna.
+     */
+    getForeignRatioForAge(age, overallRatio = 0.202) {
+        const scbPoints = [
+            { a: 0, r: 0.008 },
+            { a: 1, r: 0.020 },
+            { a: 5, r: 0.055 },
+            { a: 10, r: 0.109 },
+            { a: 15, r: 0.142 },
+            { a: 20, r: 0.182 },
+            { a: 25, r: 0.300 },
+            { a: 35, r: 0.320 },
+            { a: 45, r: 0.330 },
+            { a: 55, r: 0.270 },
+            { a: 65, r: 0.200 },
+            { a: 75, r: 0.160 },
+            { a: 85, r: 0.100 },
+            { a: 105, r: 0.060 }
+        ];
+
+        let baseFactor = 0.20;
+        if (age <= scbPoints[0].a) {
+            baseFactor = scbPoints[0].r;
+        } else if (age >= scbPoints[scbPoints.length - 1].a) {
+            baseFactor = scbPoints[scbPoints.length - 1].r;
+        } else {
+            for (let i = 0; i < scbPoints.length - 1; i++) {
+                if (age >= scbPoints[i].a && age <= scbPoints[i + 1].a) {
+                    const f = (age - scbPoints[i].a) / (scbPoints[i + 1].a - scbPoints[i].a);
+                    baseFactor = scbPoints[i].r + f * (scbPoints[i + 1].r - scbPoints[i].r);
+                    break;
+                }
+            }
+        }
+
+        // Skala med övergripande andel utrikes födda (normerat mot 2024 referens ~0.202)
+        const scale = overallRatio / 0.202;
+        return Math.min(0.85, Math.max(0.002, baseFactor * scale));
+    }
+
+    /**
      * SCB OFFICIELL RIKTÅLDER FÖR PENSION
      * 1913-1975: 67 år (Sveriges ursprungliga folkpensionsålder)
      * 1976-2022: 65 år (pensionsåldersreformen 1976)
@@ -1042,9 +1131,10 @@ class PopulationEngine {
 
     /**
      * GENERERA EN DETALJERAD MÄNSKLIG PROFIL VID KLICK
-     * Baserat på SCB:s verkliga sannolikheter och historiska epoker
+     * Baserat på SCB:s verkliga sannolikheter och historiska epoker.
+     * Stödjer tvingad härkomst/boende när användaren klickar i en specifik stapel.
      */
-    generatePersonProfile(age, sex = 'män', year = 2026) {
+    generatePersonProfile(age, sex = 'män', year = 2026, options = {}) {
         const birthYear = year - age;
 
         // Välj kommun slumpmässigt viktat efter befolkning
@@ -1077,17 +1167,33 @@ class PopulationEngine {
         // Yrke / Sysselsättning
         const occupation = this.getHistoricalOccupation(age, sexTitle, year);
 
-        // Boendemiljö
-        const housing = this.getHistoricalHousing(year);
+        // Boendemiljö (styrd om man klickar i stad/land-pelare)
+        let housing;
+        if (options.forcedHousing === 'rural') {
+            housing = "Landsbygd / Småort";
+        } else if (options.forcedHousing === 'urban') {
+            housing = "Tätort / Stad";
+        } else {
+            housing = this.getHistoricalHousing(year);
+        }
 
-        // Födelseland baserat på SCB:s utlandsfödda över tid
+        // Födelseland (styrd om man klickar i svensk/utländsk härkomst-pelare)
         let isForeignBorn = false;
         let birthCountry = "Sverige";
         let countryStat = null;
 
-        const foreignProp = year < 1945 ? 0.01 : (year < 1980 ? 0.07 : (year < 2010 ? 0.14 : 0.20));
-        if (Math.random() < foreignProp) {
+        if (options.forcedOrigin === 'foreign') {
             isForeignBorn = true;
+        } else if (options.forcedOrigin === 'native') {
+            isForeignBorn = false;
+        } else {
+            // Om ingen specifik stapel klickas (t.ex. Havet/Pyramid): använd åldersspecifik SCB-sannolikhet
+            const originStats = this.getOriginStats(year);
+            const prob = this.getForeignRatioForAge(age, originStats.foreignRatio);
+            isForeignBorn = Math.random() < prob;
+        }
+
+        if (isForeignBorn) {
             const cChoice = this.foreignBirthCountries[Math.floor(Math.random() * this.foreignBirthCountries.length)];
             birthCountry = cChoice.name;
             countryStat = `En av ca ${cChoice.countInSweden.toLocaleString('sv-SE')} personer födda i ${cChoice.name} i Sverige`;
