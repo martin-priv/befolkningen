@@ -46,6 +46,8 @@ class ViewportCanvas {
         this.fallingBeads = [];
         // Lämnande pärlor (dödsfall & utvandrare)
         this.departingBeads = [];
+        // Pulserande händelse-pärlor i diagramlägen (pyramid, härkomst, stad/land)
+        this.diagramPulses = [];
 
         // Visningsläge / Formation: 'sea' (standard) | 'pyramid' | 'urban_rural' | 'origin'
         this.currentViewMode = 'sea';
@@ -414,10 +416,10 @@ class ViewportCanvas {
         for (let b of this.fallingBeads) {
             this.scene.remove(b.group);
             if (b.sphere) {
-                b.sphere.geometry.dispose();
-                b.sphere.material.dispose();
+                if (b.sphere.geometry && b.sphere.geometry.dispose) b.sphere.geometry.dispose();
+                if (b.sphere.material && b.sphere.material.dispose) b.sphere.material.dispose();
             }
-            if (b.sprite) {
+            if (b.sprite && b.sprite.material && b.sprite.material.dispose) {
                 b.sprite.material.dispose();
             }
         }
@@ -426,14 +428,26 @@ class ViewportCanvas {
         for (let b of this.departingBeads) {
             this.scene.remove(b.group);
             if (b.sphere) {
-                b.sphere.geometry.dispose();
-                b.sphere.material.dispose();
+                if (b.sphere.geometry && b.sphere.geometry.dispose) b.sphere.geometry.dispose();
+                if (b.sphere.material && b.sphere.material.dispose) b.sphere.material.dispose();
             }
-            if (b.sprite) {
+            if (b.sprite && b.sprite.material && b.sprite.material.dispose) {
                 b.sprite.material.dispose();
             }
         }
         this.departingBeads = [];
+
+        for (let p of this.diagramPulses) {
+            this.scene.remove(p.group);
+            if (p.sphere) {
+                if (p.sphere.geometry && p.sphere.geometry.dispose) p.sphere.geometry.dispose();
+                if (p.sphere.material && p.sphere.material.dispose) p.sphere.material.dispose();
+            }
+            if (p.sprite && p.sprite.material && p.sprite.material.dispose) {
+                p.sprite.material.dispose();
+            }
+        }
+        this.diagramPulses = [];
     }
 
     /**
@@ -940,8 +954,11 @@ class ViewportCanvas {
      *   till sin vuxna ålder, precis som ett vertikalt drag med musen, och lämnar kölvatten (wake ripples)!
      */
     spawnDroppingBead(type = 'birth') {
-        // Pausa animerade 3D-droppar när Havet inte är aktivt för att hålla diagrammen rena
-        if (this.currentViewMode !== 'sea') return;
+        // I diagramlägena (pyramid, härkomst, stad/land): pulsera en mjuk ljusaura på rätt plats utan regn/vågor
+        if (this.currentViewMode !== 'sea') {
+            this.spawnDiagramPulse(type);
+            return;
+        }
 
         const topY = (this.worldHeight / 2) + 2.0;
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
@@ -1115,8 +1132,11 @@ class ViewportCanvas {
      *   skapar uppåtriktade kölvattensvågor, bryter igenom ytan och försvinner ut i rymden!
      */
     spawnDepartingBead(type = 'death') {
-        // Pausa animerade 3D-avtåg när Havet inte är aktivt för att hålla diagrammen rena
-        if (this.currentViewMode !== 'sea') return;
+        // I diagramlägena (pyramid, härkomst, stad/land): pulsera en mjuk ljusaura på rätt plats utan regn/vågor
+        if (this.currentViewMode !== 'sea') {
+            this.spawnDiagramPulse(type);
+            return;
+        }
 
         const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
         const surfaceY = (this.currentSurfaceY !== undefined) ? this.currentSurfaceY : (this.worldHeight * 0.25);
@@ -1226,6 +1246,226 @@ class ViewportCanvas {
                 d.sphere.material.dispose();
                 d.sprite.material.dispose();
                 this.departingBeads.splice(i, 1);
+            }
+        }
+    }
+
+    /**
+     * DIAGRAM-PULS FÖR STATISTISKA VYER (Pyramid, Härkomst, Stad vs Landsbygd):
+     * Istället för att droppar regnar genom luften eller skapar ringvågor,
+     * tänds en mjuk ljusaura på exakt rätt demografisk koordinat (x, y) i diagrammet.
+     */
+    spawnDiagramPulse(type = 'birth') {
+        const mode = this.currentViewMode;
+        if (mode === 'sea') return;
+
+        const halfW = (this.worldWidth / 2) * 0.94;
+        const botY = (this.botY !== undefined) ? this.botY : (-this.worldHeight / 2 + 1.2);
+        let x = 0;
+        let y = 0;
+        let colorHex = 0x00f5d4;
+
+        if (mode === 'pyramid') {
+            const pyramidH = this.worldHeight * 0.74;
+            const yBottom = botY + 0.5;
+
+            if (type === 'birth') {
+                // Spädbarn (0 år) vid pyramidens bas (pojke till vänster, flicka till höger)
+                const isMale = Math.random() < 0.514;
+                const dist = 0.35 + Math.random() * (halfW * 0.38);
+                x = isMale ? -dist : +dist;
+                y = yBottom + (Math.random() - 0.5) * 0.10;
+                const birthColors = [0xff2a7a, 0xfee440, 0x00f5d4, 0xff7b00, 0xa855f7];
+                colorHex = birthColors[Math.floor(Math.random() * birthColors.length)];
+            } else if (type === 'death') {
+                // Dödsfall bland äldre (75–98 år) i pyramidens topp
+                const age = 75 + Math.random() * 23;
+                const isMale = Math.random() < 0.48;
+                const dist = 0.28 + Math.random() * (halfW * 0.22);
+                x = isMale ? -dist : +dist;
+                y = yBottom + (Math.min(100, age) / 100.0) * pyramidH + (Math.random() - 0.5) * 0.10;
+                colorHex = 0xfffbeb; // Varm champagne-gnista
+            } else if (type === 'immigrate') {
+                // Invandring: Vuxna (20–40 år)
+                const age = 20 + Math.random() * 20;
+                const isMale = Math.random() < 0.52;
+                const dist = 0.35 + Math.random() * (halfW * 0.48);
+                x = isMale ? -dist : +dist;
+                y = yBottom + (age / 100.0) * pyramidH + (Math.random() - 0.5) * 0.10;
+                colorHex = 0x00f5a0; // Smaragd / Mint
+            } else if (type === 'emigrate') {
+                // Utvandring: Unga vuxna (22–40 år)
+                const age = 22 + Math.random() * 18;
+                const isMale = Math.random() < 0.51;
+                const dist = 0.35 + Math.random() * (halfW * 0.48);
+                x = isMale ? -dist : +dist;
+                y = yBottom + (age / 100.0) * pyramidH + (Math.random() - 0.5) * 0.10;
+                colorHex = 0x38bdf8; // Himmelsblå
+            }
+        } else if (mode === 'origin') {
+            // Härkomst: Vänster pelare = Födda i Sverige, Höger pelare = Utrikes födda
+            const colHalfW = halfW * 0.38;
+            const leftCenterX = -halfW * 0.50;
+            const rightCenterX = +halfW * 0.50;
+            const maxColHeight = this.worldHeight * 0.72;
+
+            const total = this.lastPopData ? this.lastPopData.total : 10500000;
+            const year = this.lastPopData ? this.lastPopData.year : 2026;
+            const originStats = typeof this.getOriginStats === 'function' ? this.getOriginStats(year) : { foreignRatio: 0.202 };
+            const foreignRatio = originStats.foreignRatio;
+            const nativeRatio = 1.0 - foreignRatio;
+
+            const nativeHeight = maxColHeight * (nativeRatio * (total / 12200000));
+            const foreignHeight = maxColHeight * (foreignRatio * (total / 12200000));
+
+            if (type === 'birth') {
+                // Födda i Sverige -> Alltid vänster pelare, på toppen (ålder 0)
+                x = leftCenterX + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + nativeHeight + (Math.random() - 0.5) * 0.10;
+                const birthColors = [0xff2a7a, 0xfee440, 0x00f5d4, 0xff7b00, 0xa855f7];
+                colorHex = birthColors[Math.floor(Math.random() * birthColors.length)];
+            } else if (type === 'death') {
+                // Dödsfall bland äldre (75–98 år) -> 85% inrikes, 15% utrikes
+                const isForeign = Math.random() < 0.15;
+                const age = 75 + Math.random() * 23;
+                const colH = isForeign ? foreignHeight : nativeHeight;
+                const cX = isForeign ? rightCenterX : leftCenterX;
+                x = cX + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * colH);
+                colorHex = 0xfffbeb;
+            } else if (type === 'immigrate') {
+                // Invandring -> Alltid höger pelare (Utrikes födda)! Ålder 20–40 år
+                const age = 20 + Math.random() * 20;
+                x = rightCenterX + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * foreignHeight);
+                colorHex = 0x00f5a0;
+            } else if (type === 'emigrate') {
+                // Utvandring -> 55% utrikes födda som återvandrar, 45% inrikes födda
+                const isForeign = Math.random() < 0.55;
+                const age = 22 + Math.random() * 18;
+                const colH = isForeign ? foreignHeight : nativeHeight;
+                const cX = isForeign ? rightCenterX : leftCenterX;
+                x = cX + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * colH);
+                colorHex = 0x38bdf8;
+            }
+        } else if (mode === 'urban_rural') {
+            // Stad vs Landsbygd: Vänster pelare = Landsbygd, Höger pelare = Tätort
+            const colHalfW = halfW * 0.38;
+            const leftCenterX = -halfW * 0.50;
+            const rightCenterX = +halfW * 0.50;
+            const maxColHeight = this.worldHeight * 0.72;
+
+            const total = this.lastPopData ? this.lastPopData.total : 10500000;
+            let urbanRatio = 0.88;
+            if (typeof this.getYearStats === 'function') {
+                const stats = this.getYearStats();
+                if (stats && stats.urbanRaw !== undefined) urbanRatio = stats.urbanRaw / 100.0;
+            }
+            const ruralRatio = 1.0 - urbanRatio;
+            const ruralHeight = maxColHeight * (ruralRatio * (total / 12200000));
+            const urbanHeight = maxColHeight * (urbanRatio * (total / 12200000));
+
+            if (type === 'birth') {
+                const isUrban = Math.random() < urbanRatio;
+                x = (isUrban ? rightCenterX : leftCenterX) + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + (isUrban ? urbanHeight : ruralHeight);
+                const birthColors = [0xff2a7a, 0xfee440, 0x00f5d4, 0xff7b00, 0xa855f7];
+                colorHex = birthColors[Math.floor(Math.random() * birthColors.length)];
+            } else if (type === 'death') {
+                const isUrban = Math.random() < (urbanRatio * 0.95);
+                const age = 75 + Math.random() * 23;
+                const colH = isUrban ? urbanHeight : ruralHeight;
+                x = (isUrban ? rightCenterX : leftCenterX) + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * colH);
+                colorHex = 0xfffbeb;
+            } else if (type === 'immigrate') {
+                const isUrban = Math.random() < 0.92;
+                const age = 20 + Math.random() * 20;
+                const colH = isUrban ? urbanHeight : ruralHeight;
+                x = (isUrban ? rightCenterX : leftCenterX) + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * colH);
+                colorHex = 0x00f5a0;
+            } else if (type === 'emigrate') {
+                const isUrban = Math.random() < 0.90;
+                const age = 22 + Math.random() * 18;
+                const colH = isUrban ? urbanHeight : ruralHeight;
+                x = (isUrban ? rightCenterX : leftCenterX) + (Math.random() - 0.5) * 1.8 * colHalfW;
+                y = botY + Math.max(0.2, ((105 - age) / 105.0) * colH);
+                colorHex = 0x38bdf8;
+            }
+        }
+
+        // Skapa den lysande pulspärlan
+        const { group, sphere, sprite } = this.createLuminousBead(colorHex, 0.20, 1.45);
+        group.position.set(x, y, 0.6);
+        group.scale.set(0.1, 0.1, 0.1);
+        this.scene.add(group);
+
+        this.diagramPulses.push({
+            group: group,
+            sphere: sphere,
+            sprite: sprite,
+            type: type,
+            x: x,
+            y: y,
+            life: 0,
+            maxLife: 75 // ca 1.25 sekunder
+        });
+    }
+
+    updateDiagramPulses() {
+        for (let i = this.diagramPulses.length - 1; i >= 0; i--) {
+            const p = this.diagramPulses[i];
+            p.life++;
+            const prog = p.life / p.maxLife;
+
+            if (prog >= 1.0) {
+                this.scene.remove(p.group);
+                if (p.sphere) {
+                    if (p.sphere.geometry && p.sphere.geometry.dispose) p.sphere.geometry.dispose();
+                    if (p.sphere.material && p.sphere.material.dispose) p.sphere.material.dispose();
+                }
+                if (p.sprite && p.sprite.material && p.sprite.material.dispose) {
+                    p.sprite.material.dispose();
+                }
+                this.diagramPulses.splice(i, 1);
+                continue;
+            }
+
+            let scale = 1.0;
+            let opacity = 1.0;
+
+            if (prog < 0.22) {
+                // Tänds snabbt och sväller mjukt upp
+                const f = prog / 0.22;
+                scale = 0.2 + f * 1.15;
+                opacity = f;
+            } else if (prog < 0.60) {
+                // Glöder klart med en subtil mikropuls
+                const f = (prog - 0.22) / 0.38;
+                scale = 1.35 - 0.20 * Math.sin(f * Math.PI);
+                opacity = 1.0;
+            } else {
+                // Tonas mjukt bort och smälter in
+                const f = (prog - 0.60) / 0.40;
+                scale = 1.15 * (1.0 - f * 0.35);
+                opacity = 1.0 - f;
+            }
+
+            p.group.scale.set(scale, scale, 1.0);
+            if (p.sphere && p.sphere.material) {
+                p.sphere.material.opacity = opacity;
+            }
+            if (p.sprite && p.sprite.material) {
+                p.sprite.material.opacity = opacity * 0.85;
+            }
+
+            // Subtil lyftning för utvandring och dödsfall
+            if (p.type === 'emigrate') {
+                p.group.position.y += 0.007;
+            } else if (p.type === 'death') {
+                p.group.position.y += 0.002;
             }
         }
     }
@@ -1494,6 +1734,7 @@ class ViewportCanvas {
         this.updateFluidPhysics();
         this.updateFallingBeads();
         this.updateDepartingBeads();
+        this.updateDiagramPulses();
 
         // Mjuk andning och positionsföljning för precisions-siktet runt den valda personen
         if (this.selectionReticle && this.selectionReticle.visible && this.selectedBeadIndex !== null) {
