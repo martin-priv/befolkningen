@@ -161,6 +161,30 @@ class PopulationEngine {
         this.monthlyData = null;
         this.currentLivePopulation = 10626026;
         this.lastDriftSync = Date.now();
+
+        // Framskrivningsdata & Alternativa scenarier (SCB TAB5966 + Egen modell)
+        this.scbFramskrivning = null;
+        this.projektionBas = null;
+        this.projectionModel = 'scb'; // 'scb' | 'trend'
+        this.scbScenario = 'HU'; // 'HU' | 'LF' | 'HF' | 'LI' | 'HI' | 'LD' | 'HD'
+        this.trendPreset = 'frozen'; // 'frozen' | 'stram' | 'noll' | 'babyboom' | 'custom'
+        this.trendParams = {
+            immigScale: 1.0,
+            emigScale: 1.0,
+            tfr: 1.426,
+            mortScale: 1.0,
+            ageShift: 0
+        };
+        this._trendCache = null;
+        this.scbScenarioMeta = {
+            'HU': { name: 'Huvudalternativ', desc: 'SCB:s officiella grundprognos. Fruktsamhet antas stiga mot 1,66 barn/kvinna, medellivslängd 87,7 år, nettoinvandring ~30 000/år.' },
+            'LF': { name: 'Lägre fruktsamhet', desc: 'SCB: Fruktsamheten stannar kring ~1,40 barn/kvinna (i nivå med dagens faktiska utfall).' },
+            'HF': { name: 'Högre fruktsamhet', desc: 'SCB: Fruktsamheten antas öka kraftigt mot ~1,85 barn/kvinna.' },
+            'LI': { name: 'Lägre migration', desc: 'SCB: Nettoinvandringen sjunker till ca 12 000 personer per år.' },
+            'HI': { name: 'Högre migration', desc: 'SCB: Nettoinvandringen ökar till ca 47 000 personer per år.' },
+            'LD': { name: 'Lägre dödlighet', desc: 'SCB: Medellivslängden ökar snabbare (till 90,1 år 2070).' },
+            'HD': { name: 'Högre dödlighet', desc: 'SCB: Medellivslängden ökar långsammare (till 85,3 år 2070).' }
+        };
     }
 
     async load() {
@@ -182,6 +206,24 @@ class PopulationEngine {
 
             // 2. Försök även direkt live-anrop mot SCB:s öppna PxWebApi v2 i bakgrunden
             this.fetchLiveSCBMonthly().catch(() => {});
+
+            // 3. Läs in framskrivningsscenarier och kohort-komponent basdata
+            try {
+                const [scbResp, basResp] = await Promise.all([
+                    fetch('data/scb_framskrivning.json'),
+                    fetch('data/projektion_bas.json')
+                ]);
+                if (scbResp.ok) {
+                    this.scbFramskrivning = await scbResp.json();
+                    console.log('✅ SCB-framskrivning (7 scenarier) laddad');
+                }
+                if (basResp.ok) {
+                    this.projektionBas = await basResp.json();
+                    console.log('✅ Kohort-komponent basdata laddad');
+                }
+            } catch (fe) {
+                console.warn('Framskrivningsdata kunde inte laddas:', fe);
+            }
 
             return true;
         } catch (e) {
@@ -294,6 +336,149 @@ class PopulationEngine {
         };
     }
 
+    /**
+     * Beräkna förväntad medellivslängd vid födelsen ur dödsriskerna
+     */
+    medellivslangd(mortScale = 1.0) {
+        if (!this.projektionBas) return { man: 81.6, kvinna: 84.9 };
+        const bas = this.projektionBas;
+        const A = bas.ageMax;
+        const SCB_E0 = { man: 81.6, kvinna: 84.9 };
+        const e0 = (q, sc) => {
+            let l = 1, T = 0;
+            for (let a = 0; a <= A; a++) {
+                const m = q[a] * sc;
+                if (a < A) {
+                    const qx = Math.min(1, m / (1 + 0.5 * m));
+                    const d = l * qx;
+                    const ax = a === 0 ? 0.1 : 0.5;
+                    T += l - (1 - ax) * d;
+                    l -= d;
+                } else if (m > 0) {
+                    T += l / m;
+                }
+            }
+            return T;
+        };
+        const calc = (q, scb) => e0(q, mortScale) - (e0(q, 1) - scb);
+        return { man: calc(bas.mort.man, SCB_E0.man), kvinna: calc(bas.mort.kvinna, SCB_E0.kvinna) };
+    }
+
+    setTrendParams(params) {
+        Object.assign(this.trendParams, params);
+        this._trendCache = null;
+    }
+
+    getTrendRow(year) {
+        if (!this._trendCache) {
+            this._trendCache = this.runTrendProjection(this.trendParams);
+        }
+        return this._trendCache ? this._trendCache[year] : null;
+    }
+
+    runTrendProjection(params = this.trendParams) {
+        if (!this.projektionBas) return null;
+        const bas = this.projektionBas;
+        const years = 51; // 2024..2075
+        const immigScale = params.immigScale ?? 1.0;
+        const emigScale = params.emigScale ?? 1.0;
+        const tfr = params.tfr ?? bas.tfrRef;
+        const mortScale = params.mortScale ?? 1.0;
+        const A = bas.ageMax;
+        const { boyShare } = bas;
+        const asfr = bas.asfr;
+        const qM = bas.mort.man.map(q => Math.min(1, q * mortScale));
+        const qK = bas.mort.kvinna.map(q => Math.min(1, q * mortScale));
+        const iM = bas.immig.man;
+        const iK = bas.immig.kvinna;
+        const erM = bas.emig.man.map((e, a) => (bas.pop.man[a] > 0 ? e / bas.pop.man[a] : 0));
+        const erK = bas.emig.kvinna.map((e, a) => (bas.pop.kvinna[a] > 0 ? e / bas.pop.kvinna[a] : 0));
+        const tfrScale = tfr / bas.tfrRef;
+
+        let M = bas.pop.man.slice();
+        let K = bas.pop.kvinna.slice();
+        const rows = {};
+
+        for (let y = bas.baseYear; y <= bas.baseYear + years; y++) {
+            let tot = 0, births = 0, deaths = 0, ung = 0, arb = 0, gml = 0;
+            let menTot = 0, womenTot = 0;
+            const ages = {};
+            for (let a = 0; a <= A; a++) {
+                const ma = Math.round(M[a]);
+                const ka = Math.round(K[a]);
+                ages[a] = [ma, ka];
+                menTot += ma;
+                womenTot += ka;
+                const n = M[a] + K[a];
+                tot += n;
+                if (a <= 19) ung += n;
+                else if (a <= 64) arb += n;
+                else gml += n;
+            }
+            for (let a = 0; a <= A; a++) births += asfr[a] * tfrScale * K[a];
+            for (let a = 0; a <= A; a++) deaths += qM[a] * M[a] + qK[a] * K[a];
+            const fk = arb > 0 ? ((ung + gml) / arb) * 100 : 0;
+
+            let immigTot = 0, emigTot = 0;
+            for (let a = 0; a <= A; a++) {
+                immigTot += (iM[a] + iK[a]) * immigScale;
+                emigTot += (M[a] * erM[a] + K[a] * erK[a]) * emigScale;
+            }
+
+            rows[y] = {
+                year: y,
+                total: Math.round(tot),
+                men: menTot,
+                women: womenTot,
+                births: Math.round(births),
+                deaths: Math.round(deaths),
+                immigrants: Math.round(immigTot),
+                emigrants: Math.round(emigTot),
+                netMigration: Math.round(immigTot - emigTot),
+                fk: Number(fk.toFixed(1)),
+                ages: ages
+            };
+
+            const newM = new Float64Array(A + 1);
+            const newK = new Float64Array(A + 1);
+            const sM = new Float64Array(A + 1);
+            const sK = new Float64Array(A + 1);
+            for (let a = 0; a <= A; a++) {
+                sM[a] = M[a] * (1 - qM[a]);
+                sK[a] = K[a] * (1 - qK[a]);
+            }
+            newM[0] = births * boyShare;
+            newK[0] = births * (1 - boyShare);
+            for (let a = 1; a < A; a++) {
+                newM[a] = sM[a - 1];
+                newK[a] = sK[a - 1];
+            }
+            newM[A] = sM[A - 1] + sM[A];
+            newK[A] = sK[A - 1] + sK[A];
+            for (let a = 0; a <= A; a++) {
+                newM[a] = Math.max(0, newM[a] * (1 - erM[a] * emigScale) + iM[a] * immigScale);
+                newK[a] = Math.max(0, newK[a] * (1 - erK[a] * emigScale) + iK[a] * immigScale);
+            }
+            M = newM;
+            K = newK;
+        }
+        return rows;
+    }
+
+    calculateDependencyRatio(ages) {
+        if (!ages) return null;
+        let ung = 0, arb = 0, gml = 0;
+        for (let aStr in ages) {
+            const a = parseInt(aStr, 10);
+            const pair = ages[aStr];
+            const n = pair[0] + pair[1];
+            if (a <= 19) ung += n;
+            else if (a <= 64) arb += n;
+            else gml += n;
+        }
+        return arb > 0 ? Number((((ung + gml) / arb) * 100).toFixed(1)) : null;
+    }
+
     getEraNote(year) {
         if (year === 2026 && this.isLive) {
             if (this.monthlyData && this.monthlyData.latestMonth) {
@@ -301,19 +486,144 @@ class PopulationEngine {
             }
             return "Idag: Realtidskalkyl utifrån aktuell SCB-månadsstatistik.";
         }
+        if (year >= 2025) {
+            if (this.projectionModel === 'trend') {
+                const names = {
+                    'frozen': 'Dagens trend (frysta 2024-rater)',
+                    'stram': 'Stram migration (-50 % invandring)',
+                    'noll': 'Nollnetto i migration',
+                    'babyboom': 'Babyboom (1,85 barn/kvinna)',
+                    'custom': 'Egna anpassade parametrar'
+                };
+                return `Egen modell: ${names[this.trendPreset] || 'Dagens trend'}`;
+            } else {
+                const meta = this.scbScenarioMeta[this.scbScenario];
+                return `SCB Framskrivning: ${meta ? meta.name : 'Huvudalternativ'}`;
+            }
+        }
         if (this.eraNotes[year]) return this.eraNotes[year];
         if (year < 1900) return "Tidig industrialisering och utvandring.";
         if (year < 1940) return "Mellankrigstid och folkhemsbygge.";
         if (year < 1975) return "Rekordåren i svensk industri.";
         if (year < 2025) return "Modern tid och globalisering.";
-        if (year === 2026) return "Idag: Aktuell SCB-framskrivning.";
-        return "SCB:s officiella befolkningsframskrivning.";
+        return "Befolkningsutveckling och framskrivning.";
     }
 
     getDataForYear(year) {
         if (!this.data) return null;
         const yStr = String(year);
 
+        // Historiska år (1860–2024): Använd alltid faktisk SCB-historik
+        if (year <= 2024 && this.data.history[yStr]) {
+            const h = this.data.history[yStr];
+            const ev = h.events || this.data.annualEvents?.[yStr] || null;
+            return {
+                year: year,
+                isProjection: false,
+                total: h.total,
+                men: h.men,
+                women: h.women,
+                ages: h.ages,
+                events: ev,
+                births: ev ? ev.births : undefined,
+                deaths: ev ? ev.deaths : undefined,
+                immigrants: ev ? ev.immigrants : undefined,
+                emigrants: ev ? ev.emigrants : undefined,
+                netMigration: ev ? ev.netMigration : undefined,
+                fk: this.calculateDependencyRatio(h.ages)
+            };
+        }
+
+        // Framtida år (2025–2070): Vald framtidsmodell (SCB eller Egen modell)
+        if (year >= 2025) {
+            if (this.projectionModel === 'trend') {
+                const trendRow = this.getTrendRow(year);
+                if (trendRow) {
+                    return {
+                        year: year,
+                        isProjection: true,
+                        projectionModel: 'trend',
+                        trendPreset: this.trendPreset,
+                        total: trendRow.total,
+                        men: trendRow.men,
+                        women: trendRow.women,
+                        ages: trendRow.ages,
+                        events: {
+                            births: trendRow.births,
+                            deaths: trendRow.deaths,
+                            naturalIncrease: trendRow.births - trendRow.deaths,
+                            immigrants: trendRow.immigrants,
+                            emigrants: trendRow.emigrants,
+                            netMigration: trendRow.netMigration
+                        },
+                        births: trendRow.births,
+                        deaths: trendRow.deaths,
+                        immigrants: trendRow.immigrants,
+                        emigrants: trendRow.emigrants,
+                        netMigration: trendRow.netMigration,
+                        fk: trendRow.fk
+                    };
+                }
+            } else {
+                // SCB:s 7 officiella scenarier (TAB5966)
+                const idx = this.scbFramskrivning ? this.scbFramskrivning.ar.indexOf(year) : -1;
+                if (idx !== -1 && this.scbFramskrivning?.data[this.scbScenario]) {
+                    const scbData = this.scbFramskrivning.data[this.scbScenario];
+                    const total = scbData.folkmangd[idx];
+                    const births = scbData.fodda[idx];
+                    const deaths = scbData.doda[idx];
+                    const netMigration = scbData.nettomigration[idx];
+                    const fk = scbData.fk ? scbData.fk[idx] : null;
+
+                    const huProj = this.data.projections?.[year];
+                    let immigrants = huProj ? huProj.immigrants : Math.round(88000 + (netMigration - 28000) / 2);
+                    let emigrants = huProj ? huProj.emigrants : Math.round(60000 - (netMigration - 28000) / 2);
+                    if (this.scbScenario === 'LI' || this.scbScenario === 'HI') {
+                        const emigRef = huProj ? huProj.emigrants : 60000;
+                        immigrants = emigRef + netMigration;
+                        emigrants = emigRef;
+                    }
+
+                    // Skala referenskohorter (2024) proportionellt
+                    const base2024 = this.data.history['2024'] || this.data.history['2026'];
+                    const scale = total / base2024.total;
+                    const scaledAges = {};
+                    for (let a in base2024.ages) {
+                        scaledAges[a] = [
+                            Math.round(base2024.ages[a][0] * scale),
+                            Math.round(base2024.ages[a][1] * scale)
+                        ];
+                    }
+
+                    return {
+                        year: year,
+                        isProjection: true,
+                        projectionModel: 'scb',
+                        scbScenario: this.scbScenario,
+                        total: total,
+                        men: Math.round(total * 0.503),
+                        women: Math.round(total * 0.497),
+                        ages: scaledAges,
+                        events: {
+                            births: births,
+                            deaths: deaths,
+                            naturalIncrease: births - deaths,
+                            immigrants: immigrants,
+                            emigrants: emigrants,
+                            netMigration: netMigration
+                        },
+                        births: births,
+                        deaths: deaths,
+                        immigrants: immigrants,
+                        emigrants: emigrants,
+                        netMigration: netMigration,
+                        fk: fk
+                    };
+                }
+            }
+        }
+
+        // Fallback till data.history eller data.projections om data saknas
         if (this.data.history[yStr]) {
             const h = this.data.history[yStr];
             const ev = h.events || this.data.annualEvents?.[yStr] || null;
@@ -329,17 +639,18 @@ class PopulationEngine {
                 deaths: ev ? ev.deaths : undefined,
                 immigrants: ev ? ev.immigrants : undefined,
                 emigrants: ev ? ev.emigrants : undefined,
-                netMigration: ev ? ev.netMigration : undefined
+                netMigration: ev ? ev.netMigration : undefined,
+                fk: this.calculateDependencyRatio(h.ages)
             };
         } else if (this.data.projections[year]) {
             const p = this.data.projections[year];
-            const base2026 = this.data.history['2026'] || this.data.history['2024'];
-            const scale = p.total / base2026.total;
+            const base2024 = this.data.history['2024'] || this.data.history['2026'];
+            const scale = p.total / base2024.total;
             const scaledAges = {};
-            for (let a in base2026.ages) {
+            for (let a in base2024.ages) {
                 scaledAges[a] = [
-                    Math.round(base2026.ages[a][0] * scale),
-                    Math.round(base2026.ages[a][1] * scale)
+                    Math.round(base2024.ages[a][0] * scale),
+                    Math.round(base2024.ages[a][1] * scale)
                 ];
             }
             return {
@@ -353,7 +664,8 @@ class PopulationEngine {
                 deaths: p.deaths,
                 immigrants: p.immigrants,
                 emigrants: p.emigrants,
-                netMigration: (p.immigrants !== undefined && p.emigrants !== undefined) ? (p.immigrants - p.emigrants) : p.netMigration
+                netMigration: (p.immigrants !== undefined && p.emigrants !== undefined) ? (p.immigrants - p.emigrants) : p.netMigration,
+                fk: this.calculateDependencyRatio(scaledAges)
             };
         }
         return null;
@@ -382,16 +694,86 @@ class PopulationEngine {
     }
 
     /**
-     * HÄMTA HISTORISKA SAMHÄLLS员NDIKATORER FÖR ETT ÅRTAL (1860–2070)
+     * HÄMTA HISTORISKA SAMHÄLLSINDICATORER FÖR ETT ÅRTAL (1860–2070)
      * Källor: SCB TAB4365, TAB5328, TAB4376, TAB5634, TAB5960
      */
     getEraStats(year) {
         const y = Math.max(1860, Math.min(2070, parseInt(year, 10) || 2026));
-        const keys = Object.keys(this.eraDataPoints).map(Number).sort((a, b) => a - b);
 
+        // Framtida år 2025–2070: Modellanpassade indikatorer
+        if (y >= 2025) {
+            if (this.projectionModel === 'trend') {
+                const mortLife = this.medellivslangd(this.trendParams.mortScale);
+                const avgLife = ((mortLife.man + mortLife.kvinna) / 2);
+                const row = this.getTrendRow(y);
+                return {
+                    year: y,
+                    tfr: (this.trendParams.tfr || 1.43).toFixed(2).replace('.', ','),
+                    tfrRaw: this.trendParams.tfr || 1.43,
+                    lifeExp: avgLife.toFixed(1).replace('.', ',') + " år",
+                    lifeExpRaw: avgLife,
+                    urban: "91 %",
+                    rural: "9 %",
+                    urbanRaw: 91,
+                    infant: "1,5 ‰",
+                    infantRaw: 1.5,
+                    fk: row ? row.fk : 82.2,
+                    note: "Egen modell: Dagens trend (frysta 2024-rater)"
+                };
+            } else {
+                let targetTfr = 1.66;
+                let targetLife = 87.7;
+                let scenNote = "SCB: Huvudalternativ";
+
+                if (this.scbScenario === 'LF') {
+                    targetTfr = 1.40;
+                    scenNote = "SCB: Lägre fruktsamhet";
+                } else if (this.scbScenario === 'HF') {
+                    targetTfr = 1.85;
+                    scenNote = "SCB: Högre fruktsamhet";
+                } else if (this.scbScenario === 'LD') {
+                    targetLife = 90.1;
+                    scenNote = "SCB: Lägre dödlighet";
+                } else if (this.scbScenario === 'HD') {
+                    targetLife = 85.3;
+                    scenNote = "SCB: Högre dödlighet";
+                } else if (this.scbScenario === 'LI') {
+                    scenNote = "SCB: Lägre migration";
+                } else if (this.scbScenario === 'HI') {
+                    scenNote = "SCB: Högre migration";
+                }
+
+                const factor = Math.max(0, Math.min(1, (y - 2024) / (2070 - 2024)));
+                const curTfr = 1.43 + factor * (targetTfr - 1.43);
+                const curLife = 83.5 + factor * (targetLife - 83.5);
+
+                const idx = this.scbFramskrivning ? this.scbFramskrivning.ar.indexOf(y) : -1;
+                const scbFk = (idx !== -1 && this.scbFramskrivning?.data[this.scbScenario]?.fk) ? 
+                              this.scbFramskrivning.data[this.scbScenario].fk[idx] : 89.3;
+
+                return {
+                    year: y,
+                    tfr: curTfr.toFixed(2).replace('.', ','),
+                    tfrRaw: curTfr,
+                    lifeExp: curLife.toFixed(1).replace('.', ',') + " år",
+                    lifeExpRaw: curLife,
+                    urban: "91 %",
+                    rural: "9 %",
+                    urbanRaw: 91,
+                    infant: "1,5 ‰",
+                    infantRaw: 1.5,
+                    fk: scbFk,
+                    note: scenNote
+                };
+            }
+        }
+
+        // Historiska år 1860–2024
+        const keys = Object.keys(this.eraDataPoints).map(Number).sort((a, b) => a - b);
+        let curData = null;
         if (this.eraDataPoints[y]) {
             const p = this.eraDataPoints[y];
-            return {
+            curData = {
                 year: y,
                 tfr: p.tfr.toFixed(2).replace('.', ','),
                 tfrRaw: p.tfr,
@@ -404,40 +786,47 @@ class PopulationEngine {
                 infantRaw: p.infant,
                 note: p.note
             };
-        }
-
-        let prevKey = keys[0];
-        let nextKey = keys[keys.length - 1];
-        for (let i = 0; i < keys.length - 1; i++) {
-            if (y >= keys[i] && y <= keys[i + 1]) {
-                prevKey = keys[i];
-                nextKey = keys[i + 1];
-                break;
+        } else {
+            let prevKey = keys[0];
+            let nextKey = keys[keys.length - 1];
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (y >= keys[i] && y <= keys[i + 1]) {
+                    prevKey = keys[i];
+                    nextKey = keys[i + 1];
+                    break;
+                }
             }
+
+            const factor = (y - prevKey) / (nextKey - prevKey);
+            const p0 = this.eraDataPoints[prevKey];
+            const p1 = this.eraDataPoints[nextKey];
+
+            const tfr = p0.tfr + factor * (p1.tfr - p0.tfr);
+            const lifeExp = p0.lifeExp + factor * (p1.lifeExp - p0.lifeExp);
+            const urban = p0.urban + factor * (p1.urban - p0.urban);
+            const infant = p0.infant + factor * (p1.infant - p0.infant);
+
+            curData = {
+                year: y,
+                tfr: tfr.toFixed(2).replace('.', ','),
+                tfrRaw: tfr,
+                lifeExp: lifeExp.toFixed(1).replace('.', ',') + " år",
+                lifeExpRaw: lifeExp,
+                urban: Math.round(urban) + " %",
+                rural: Math.round(100 - urban) + " %",
+                urbanRaw: urban,
+                infant: infant.toFixed(1).replace('.', ',') + " ‰",
+                infantRaw: infant,
+                note: p0.note
+            };
         }
 
-        const factor = (y - prevKey) / (nextKey - prevKey);
-        const p0 = this.eraDataPoints[prevKey];
-        const p1 = this.eraDataPoints[nextKey];
-
-        const tfr = p0.tfr + factor * (p1.tfr - p0.tfr);
-        const lifeExp = p0.lifeExp + factor * (p1.lifeExp - p0.lifeExp);
-        const urban = p0.urban + factor * (p1.urban - p0.urban);
-        const infant = p0.infant + factor * (p1.infant - p0.infant);
-
-        return {
-            year: y,
-            tfr: tfr.toFixed(2).replace('.', ','),
-            tfrRaw: tfr,
-            lifeExp: lifeExp.toFixed(1).replace('.', ',') + " år",
-            lifeExpRaw: lifeExp,
-            urban: Math.round(urban) + " %",
-            rural: Math.round(100 - urban) + " %",
-            urbanRaw: urban,
-            infant: infant.toFixed(1).replace('.', ',') + " ‰",
-            infantRaw: infant,
-            note: p0.note
-        };
+        // Hämta historisk försörjningskvot från faktisk åldersdata
+        const hData = this.data?.history?.[String(y)];
+        if (hData && hData.ages) {
+            curData.fk = this.calculateDependencyRatio(hData.ages);
+        }
+        return curData;
     }
 
     /**

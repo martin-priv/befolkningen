@@ -62,6 +62,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     const eraStatLifeExp = document.getElementById("eraStatLifeExp");
     const eraStatUrban = document.getElementById("eraStatUrban");
     const eraStatInfant = document.getElementById("eraStatInfant");
+    const eraStatFk = document.getElementById("eraStatFk");
+    const eraStatFkItem = document.getElementById("eraStatFkItem");
+
+    // Framtidsmodeller UI Referenser (SCB vs Egen modell)
+    const futureScenarioPanel = document.getElementById("futureScenarioPanel");
+    const modelScbBtn = document.getElementById("modelScbBtn");
+    const modelTrendBtn = document.getElementById("modelTrendBtn");
+    const scenarioInfoBtn = document.getElementById("scenarioInfoBtn");
+    const scbScenarioStrip = document.getElementById("scbScenarioStrip");
+    const trendScenarioStrip = document.getElementById("trendScenarioStrip");
+    const scbScenarioDesc = document.getElementById("scbScenarioDesc");
+    const trendScenarioDesc = document.getElementById("trendScenarioDesc");
+    const trendTfrSlider = document.getElementById("trendTfrSlider");
+    const trendTfrVal = document.getElementById("trendTfrVal");
+    const trendImmigSlider = document.getElementById("trendImmigSlider");
+    const trendImmigVal = document.getElementById("trendImmigVal");
+    const trendEmigSlider = document.getElementById("trendEmigSlider");
+    const trendEmigVal = document.getElementById("trendEmigVal");
+    const trendNettoBadge = document.getElementById("trendNettoBadge");
+
 
     // Formation & Vyväljare (Morfande partikelsvärm)
     const viewButtons = document.querySelectorAll(".view-btn");
@@ -229,6 +249,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (eraStatLifeExp) eraStatLifeExp.textContent = eraStats.lifeExp;
         if (eraStatUrban) eraStatUrban.textContent = `${eraStats.urban} tätort`;
         if (eraStatInfant) eraStatInfant.textContent = eraStats.infant;
+        if (eraStatFk && eraStatFkItem) {
+            if (popData.fk !== null && popData.fk !== undefined) {
+                eraStatFk.textContent = (typeof popData.fk === 'number' ? popData.fk.toFixed(1) : popData.fk).replace('.', ',');
+                eraStatFkItem.style.display = "flex";
+            } else {
+                eraStatFkItem.style.display = "none";
+            }
+        }
 
         // Uppdatera årets faktiska befolkningsrörelser (SCB TAB4365)
         const eraBirthsDeaths = document.getElementById("eraBirthsDeaths");
@@ -253,6 +281,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
+        // Hantera framtidsmodell-panel (visas 2025–2070)
+        if (futureScenarioPanel) {
+            if (year >= 2025) {
+                futureScenarioPanel.classList.remove("hidden");
+                updateScenarioPanelUI(year, popData);
+            } else {
+                futureScenarioPanel.classList.add("hidden");
+            }
+        }
+
         canvas.updateFromPopulation(popData);
         updateAgeRuler(canvas, popData);
         updateFormationOverlay(year, popData);
@@ -260,6 +298,70 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (liveRhythmBar) {
             liveRhythmBar.style.opacity = (year === 2026 && engine.isLive) ? "1.0" : "0.30";
             liveRhythmBar.style.filter = (year === 2026 && engine.isLive) ? "none" : "grayscale(0.6)";
+        }
+    }
+
+    // Uppdatera framtidsmodell-panelens kontroller, värden och texter
+    function updateScenarioPanelUI(year, popData) {
+        if (!futureScenarioPanel) return;
+
+        if (engine.projectionModel === 'scb') {
+            modelScbBtn?.classList.add("active");
+            modelTrendBtn?.classList.remove("active");
+            scbScenarioStrip?.classList.remove("hidden");
+            trendScenarioStrip?.classList.add("hidden");
+
+            document.querySelectorAll(".scen-pill").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.scen === engine.scbScenario);
+            });
+
+            if (scbScenarioDesc) {
+                const meta = engine.scbScenarioMeta[engine.scbScenario];
+                const popM = (popData.total / 1e6).toFixed(2).replace('.', ',');
+                const natInc = (popData.births !== undefined && popData.deaths !== undefined) ? 
+                    (popData.births - popData.deaths) : 0;
+                const sign = natInc >= 0 ? "+" : "";
+                scbScenarioDesc.innerHTML = `<strong>${meta ? meta.name : engine.scbScenario}:</strong> ${meta ? meta.desc : ''} <span style="color: #00f5d4;">(${year}: ${popM} milj, netto födda/döda ${sign}${natInc.toLocaleString('sv-SE')})</span>`;
+            }
+        } else {
+            modelTrendBtn?.classList.add("active");
+            modelScbBtn?.classList.remove("active");
+            trendScenarioStrip?.classList.remove("hidden");
+            scbScenarioStrip?.classList.add("hidden");
+
+            document.querySelectorAll(".trend-preset-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.preset === engine.trendPreset);
+            });
+
+            if (trendTfrSlider) {
+                trendTfrSlider.value = engine.trendParams.tfr || 1.43;
+                if (trendTfrVal) trendTfrVal.textContent = `${Number(engine.trendParams.tfr || 1.43).toFixed(2).replace('.', ',')} barn/kvinna`;
+            }
+            if (trendImmigSlider) {
+                trendImmigSlider.value = engine.trendParams.immigScale ?? 1.0;
+                const cnt = Math.round(116197 * (engine.trendParams.immigScale ?? 1.0));
+                if (trendImmigVal) trendImmigVal.textContent = `${cnt.toLocaleString('sv-SE')} / år (${Math.round((engine.trendParams.immigScale ?? 1.0) * 100)} %)`;
+            }
+            if (trendEmigSlider) {
+                trendEmigSlider.value = engine.trendParams.emigScale ?? 1.0;
+                const cnt = Math.round(86449 * (engine.trendParams.emigScale ?? 1.0));
+                if (trendEmigVal) trendEmigVal.textContent = `${cnt.toLocaleString('sv-SE')} / år (${Math.round((engine.trendParams.emigScale ?? 1.0) * 100)} %)`;
+            }
+
+            if (trendNettoBadge) {
+                const curNet = (popData.immigrants !== undefined && popData.emigrants !== undefined) ?
+                    (popData.immigrants - popData.emigrants) : 
+                    Math.round(116197 * (engine.trendParams.immigScale ?? 1.0) - 86449 * (engine.trendParams.emigScale ?? 1.0));
+                const sign = curNet >= 0 ? "+" : "−";
+                trendNettoBadge.innerHTML = `Nettomigration: <strong>${sign}${Math.abs(curNet).toLocaleString('sv-SE')} / år</strong>`;
+                trendNettoBadge.classList.toggle("negative", curNet < 0);
+            }
+
+            if (trendScenarioDesc) {
+                const popM = (popData.total / 1e6).toFixed(2).replace('.', ',');
+                const fkStr = popData.fk ? `${popData.fk.toFixed(1).replace('.', ',')}` : '—';
+                trendScenarioDesc.innerHTML = `<strong>${engine.getEraNote(year)}:</strong> Kohort-beräknad befolkning år ${year}: <strong>${popM} miljoner</strong> • Försörjningskvot: <strong>${fkStr}</strong> (0–19 + 65+ per 100 i arbete).`;
+            }
         }
     }
 
@@ -332,6 +434,98 @@ document.addEventListener("DOMContentLoaded", async () => {
         const yr = parseInt(e.target.value, 10);
         showYear(yr);
     });
+
+    // Framtidsmodell: Växla SCB vs Egen modell
+    if (modelScbBtn) {
+        modelScbBtn.addEventListener("click", () => {
+            engine.projectionModel = 'scb';
+            showYear(engine.currentYear);
+        });
+    }
+    if (modelTrendBtn) {
+        modelTrendBtn.addEventListener("click", () => {
+            engine.projectionModel = 'trend';
+            showYear(engine.currentYear);
+        });
+    }
+
+    // SCB: Alternativa scenarier (HU, LF, HF, LI, HI, LD, HD)
+    document.querySelectorAll(".scen-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+            const scen = pill.dataset.scen;
+            if (scen) {
+                engine.scbScenario = scen;
+                showYear(engine.currentYear);
+            }
+        });
+    });
+
+    // Egen modell: Snabbval / Presets
+    document.querySelectorAll(".trend-preset-btn").forEach(presetBtn => {
+        presetBtn.addEventListener("click", () => {
+            const preset = presetBtn.dataset.preset;
+            if (!preset) return;
+            engine.trendPreset = preset;
+            if (preset === 'frozen') {
+                engine.setTrendParams({ immigScale: 1.0, emigScale: 1.0, tfr: 1.426, mortScale: 1.0 });
+            } else if (preset === 'stram') {
+                engine.setTrendParams({ immigScale: 0.5, emigScale: 1.0, tfr: 1.426, mortScale: 1.0 });
+            } else if (preset === 'noll') {
+                engine.setTrendParams({ immigScale: 0.744, emigScale: 1.0, tfr: 1.426, mortScale: 1.0 });
+            } else if (preset === 'babyboom') {
+                engine.setTrendParams({ immigScale: 1.0, emigScale: 1.0, tfr: 1.85, mortScale: 1.0 });
+            }
+            showYear(engine.currentYear);
+        });
+    });
+
+    // Egen modell: Reglage för TFR, Invandring och Utvandring
+    if (trendTfrSlider) {
+        trendTfrSlider.addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            engine.trendPreset = 'custom';
+            engine.setTrendParams({ tfr: val });
+            showYear(engine.currentYear);
+        });
+    }
+    if (trendImmigSlider) {
+        trendImmigSlider.addEventListener("input", (e) => {
+            const scale = parseFloat(e.target.value);
+            engine.trendPreset = 'custom';
+            engine.setTrendParams({ immigScale: scale });
+            showYear(engine.currentYear);
+        });
+    }
+    if (trendEmigSlider) {
+        trendEmigSlider.addEventListener("input", (e) => {
+            const scale = parseFloat(e.target.value);
+            engine.trendPreset = 'custom';
+            engine.setTrendParams({ emigScale: scale });
+            showYear(engine.currentYear);
+        });
+    }
+
+    // Länk till metod & begränsningar (öppnar info-modalen och scrollar till Card 5)
+    if (scenarioInfoBtn) {
+        scenarioInfoBtn.addEventListener("click", () => {
+            if (infoPanel) {
+                infoPanel.classList.remove("collapsed");
+                const card5 = document.getElementById("infoCardFramtid");
+                if (card5) {
+                    setTimeout(() => {
+                        card5.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        card5.style.outline = "2px solid #00f5d4";
+                        card5.style.boxShadow = "0 0 20px rgba(0, 245, 212, 0.4)";
+                        setTimeout(() => {
+                            card5.style.outline = "none";
+                            card5.style.boxShadow = "none";
+                        }, 2500);
+                    }, 200);
+                }
+            }
+        });
+    }
+
 
     // Toast-meddelande vid händelser i live-rytmen
     let toastTimer = null;

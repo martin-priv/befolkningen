@@ -1344,6 +1344,357 @@ body.mouse-idle .timeline-panel {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ==========================================================================
+   Framtidsmodeller: SCB vs Egen modell (2025–2070)
+   ========================================================================== */
+.future-scenario-panel {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(0, 245, 212, 0.22);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.future-scenario-panel.hidden {
+    display: none !important;
+}
+
+.scenario-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 9px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scenario-model-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.scen-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #94a3b8;
+    font-family: 'SF Mono', Monaco, monospace;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.model-toggle-btns {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 2px 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.model-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.model-btn.active {
+    background: rgba(0, 245, 212, 0.22);
+    color: #00f5d4;
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.2);
+}
+
+.model-btn:hover:not(.active) {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.scenario-info-link {
+    background: rgba(0, 245, 212, 0.08);
+    border: 1px solid rgba(0, 245, 212, 0.25);
+    color: #00f5d4;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.scenario-info-link:hover {
+    background: rgba(0, 245, 212, 0.18);
+    border-color: rgba(0, 245, 212, 0.5);
+    transform: translateY(-1px);
+}
+
+.info-icon-small {
+    font-size: 11px;
+}
+
+.scenario-subpanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scenario-subpanel.hidden {
+    display: none !important;
+}
+
+.scb-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.scen-pill-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pill-group-tag {
+    font-size: 9px;
+    color: #64748b;
+    font-family: 'SF Mono', Monaco, monospace;
+    text-transform: uppercase;
+    margin-right: 2px;
+}
+
+.scen-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.scen-pill.active {
+    background: rgba(0, 245, 212, 0.22);
+    border-color: rgba(0, 245, 212, 0.5);
+    color: #00f5d4;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0, 245, 212, 0.15);
+}
+
+.scen-pill:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
+.scen-desc-bar {
+    font-size: 10.5px;
+    color: #94a3b8;
+    line-height: 1.4;
+    background: rgba(0, 0, 0, 0.28);
+    padding: 6px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #00f5d4;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.scen-desc-bar strong {
+    color: #e2e8f0;
+}
+
+.trend-presets-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.trend-preset-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 10.5px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.trend-preset-btn.active {
+    background: rgba(0, 245, 212, 0.22);
+    border-color: rgba(0, 245, 212, 0.5);
+    color: #00f5d4;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0, 245, 212, 0.15);
+}
+
+.trend-preset-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
+.trend-controls-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 1.2fr auto;
+    gap: 12px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.28);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.trend-slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9.5px;
+    color: #64748b;
+    font-family: 'SF Mono', Monaco, monospace;
+}
+
+.slider-label-row strong {
+    color: #00f5d4;
+    font-weight: 600;
+}
+
+.trend-slider-group input[type="range"] {
+    width: 100%;
+    height: 4px;
+    accent-color: #00f5d4;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.trend-kpi-badge {
+    font-size: 10px;
+    font-family: 'SF Mono', Monaco, monospace;
+    background: rgba(0, 245, 212, 0.1);
+    border: 1px solid rgba(0, 245, 212, 0.3);
+    color: #00f5d4;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.trend-kpi-badge.negative {
+    background: rgba(244, 63, 94, 0.12);
+    border-color: rgba(244, 63, 94, 0.35);
+    color: #f43f5e;
+}
+
+/* Card 5 i Info Modal */
+.info-card-wide {
+    grid-column: 1 / -1;
+}
+
+.method-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 12px 0;
+}
+
+.method-compare-col {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.method-compare-col h5 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #00f5d4;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.3px;
+}
+
+.method-compare-col ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.method-compare-col li {
+    margin-bottom: 6px;
+}
+
+.method-compare-col li strong {
+    color: #e2e8f0;
+}
+
+.method-limitations-box {
+    background: rgba(244, 63, 94, 0.08);
+    border: 1px solid rgba(244, 63, 94, 0.28);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 10px;
+}
+
+.limitations-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fb7185;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+.method-limitations-box ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 11px;
+    color: #cbd5e1;
+    line-height: 1.55;
+}
+
+.method-limitations-box li {
+    margin-bottom: 6px;
+}
+
+.method-limitations-box li strong {
+    color: #f1f5f9;
+}
+
+.method-limitations-box code {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 10px;
+    color: #00f5d4;
+}
+
 /* Responsivitet & Mobil-anpassning (iPhone / Android / tablets upp till 860px) */
 @media (max-width: 860px) {
     /* Header & Befolkningsräknare */
@@ -1705,4 +2056,35 @@ body.mouse-idle .timeline-panel {
         max-width: 100%;
         padding: 16px;
     }
+
+    /* Framtidsmodeller i mobil */
+    .trend-controls-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .trend-presets-row {
+        gap: 4px;
+    }
+
+    .trend-preset-btn {
+        font-size: 9.5px;
+        padding: 3px 6px;
+    }
+
+    .scb-pills-row {
+        gap: 6px;
+    }
+
+    .scen-pill {
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+
+    .method-compare-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
 }
+

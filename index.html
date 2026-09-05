@@ -12,7 +12,7 @@
     <meta property="og:title" content="Sveriges befolkning 1860–2070">
     <meta property="og:description" content="Sveriges befolkning i realtid från 1860 till 2070. Födslar, dödsfall, invandring och utvandring.">
 
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
     <!-- Three.js & OrbitControls via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -163,6 +163,11 @@
                 <span class="era-stat-label">Barnadödlighet</span>
                 <span class="era-stat-val" id="eraStatInfant">2,1 ‰</span>
             </div>
+            <div class="era-stat-item" id="eraStatFkItem" title="Demografisk försörjningskvot (SCB): (0–19 år + 65+ år) / (20–64 år) × 100">
+                <span class="era-stat-icon">⚖️</span>
+                <span class="era-stat-label">Försörjningskvot</span>
+                <span class="era-stat-val" id="eraStatFk">76,9</span>
+            </div>
         </div>
 
         <!-- Årets faktiska befolkningsrörelser och migration (SCB TAB4365) -->
@@ -174,6 +179,87 @@
             <div class="era-mig-item" title="Invandringar och utvandringar i Sverige under året (SCB TAB4365)">
                 <span class="era-mig-label">MIGRATION:</span>
                 <span class="era-mig-val" id="eraMigrationFlow">🛬 116 200 &nbsp;•&nbsp; 🛫 86 450 &nbsp;<span class="delta-tag plus" id="eraMigrationNet">(Netto +29 750)</span></span>
+            </div>
+        </div>
+
+        <!-- Framtidsmodeller: SCB vs Egen modell (Visas endast för år >= 2025) -->
+        <div class="future-scenario-panel hidden" id="futureScenarioPanel">
+            <div class="scenario-top-row">
+                <div class="scenario-model-toggle">
+                    <span class="scen-label">FRAMTIDSMODELL:</span>
+                    <div class="model-toggle-btns">
+                        <button id="modelScbBtn" class="model-btn active" title="SCB:s officiella befolkningsframskrivning med 7 alternativa scenarier">SCB:s Scenarier</button>
+                        <button id="modelTrendBtn" class="model-btn" title="Egen kohort-komponentmodell med frysta 2024-rater och justerbara reglage">Egen modell (Dagens trend)</button>
+                    </div>
+                </div>
+                <button id="scenarioInfoBtn" class="scenario-info-link" title="Läs om metod, antaganden och begränsningar">
+                    <span class="info-icon-small">ℹ️</span> Begränsningar &amp; metod
+                </button>
+            </div>
+
+            <!-- SCB Scenarier Strip -->
+            <div class="scenario-subpanel" id="scbScenarioStrip">
+                <div class="scb-pills-row">
+                    <button class="scen-pill active" data-scen="HU" title="Huvudalternativ (SCB:s officiella grundprognos)">Huvudalternativ (HU)</button>
+                    <div class="scen-pill-group">
+                        <span class="pill-group-tag">Fruktsamhet:</span>
+                        <button class="scen-pill" data-scen="LF" title="Lägre fruktsamhet (~1,40 barn/kvinna)">Lägre (LF)</button>
+                        <button class="scen-pill" data-scen="HF" title="Högre fruktsamhet (~1,85 barn/kvinna)">Högre (HF)</button>
+                    </div>
+                    <div class="scen-pill-group">
+                        <span class="pill-group-tag">Migration:</span>
+                        <button class="scen-pill" data-scen="LI" title="Lägre migration (netto ~12 000/år)">Lägre (LI)</button>
+                        <button class="scen-pill" data-scen="HI" title="Högre migration (netto ~47 000/år)">Högre (HI)</button>
+                    </div>
+                    <div class="scen-pill-group">
+                        <span class="pill-group-tag">Dödlighet:</span>
+                        <button class="scen-pill" data-scen="LD" title="Lägre dödlighet (längre livslängd)">Lägre (LD)</button>
+                        <button class="scen-pill" data-scen="HD" title="Högre dödlighet (kortare livslängd)">Högre (HD)</button>
+                    </div>
+                </div>
+                <div class="scen-desc-bar" id="scbScenarioDesc">
+                    <strong>Huvudalternativ:</strong> Fruktsamhet antas stiga mot 1,66 barn/kvinna, medellivslängd 87,7 år, nettoinvandring ~30 000/år. Befolkning 2070: 11,84 miljoner.
+                </div>
+            </div>
+
+            <!-- Egen Modell Strip -->
+            <div class="scenario-subpanel hidden" id="trendScenarioStrip">
+                <div class="trend-presets-row">
+                    <span class="pill-group-tag">Snabbval:</span>
+                    <button class="trend-preset-btn active" data-preset="frozen" title="Fryser 2024 års observerade rater för fruktsamhet (1,43), dödlighet och migration">Dagens trend (2024)</button>
+                    <button class="trend-preset-btn" data-preset="stram" title="Halverad invandring mot 2024 års nivå (~58 000/år)">Stram migration</button>
+                    <button class="trend-preset-btn" data-preset="noll" title="Invandringen minskas för att matcha utvandringen (netto 0)">Nollnetto</button>
+                    <button class="trend-preset-btn" data-preset="babyboom" title="Ökat barnafödande upp till 1,85 barn/kvinna">Babyboom (1,85)</button>
+                </div>
+                <div class="trend-controls-row">
+                    <div class="trend-slider-group">
+                        <div class="slider-label-row">
+                            <span>Barnafödande (TFR):</span>
+                            <strong id="trendTfrVal">1,43 barn/kvinna</strong>
+                        </div>
+                        <input type="range" id="trendTfrSlider" min="1.10" max="2.10" step="0.05" value="1.43">
+                    </div>
+                    <div class="trend-slider-group">
+                        <div class="slider-label-row">
+                            <span>Invandring:</span>
+                            <strong id="trendImmigVal">116 200 / år (100 %)</strong>
+                        </div>
+                        <input type="range" id="trendImmigSlider" min="0" max="2.0" step="0.05" value="1.0">
+                    </div>
+                    <div class="trend-slider-group">
+                        <div class="slider-label-row">
+                            <span>Utvandring:</span>
+                            <strong id="trendEmigVal">86 450 / år (100 %)</strong>
+                        </div>
+                        <input type="range" id="trendEmigSlider" min="0" max="2.0" step="0.05" value="1.0">
+                    </div>
+                    <div class="trend-kpi-badge" id="trendNettoBadge">
+                        Nettomigration: <strong>+29 750 / år</strong>
+                    </div>
+                </div>
+                <div class="scen-desc-bar" id="trendScenarioDesc">
+                    <strong>Dagens trend:</strong> Mekanisk kohort-framskrivning med frysta 2024-rater. Befolkningstopp ~2048, därefter minskning till ~10,72 milj år 2070. Födda &lt; döda redan från start.
+                </div>
             </div>
         </div>
 
@@ -323,6 +409,47 @@
                     💡 <strong>Interaktivitet:</strong> Klicka på valfri pärla för att möta en individ, eller <strong>håll ned musen och dra sökaren</strong> genom havet för att scanna befolkningen i realtid.
                 </div>
             </div>
+
+            <div class="info-card info-card-wide" id="infoCardFramtid">
+                <div class="info-card-header">
+                    <div class="info-card-title-wrap">
+                        <span class="info-icon">📊</span>
+                        <h4>Framtidsmodeller: SCB vs Egen modell &amp; Begränsningar</h4>
+                    </div>
+                    <span class="info-badge">SCB TAB5966 &amp; Kohort-komponent</span>
+                </div>
+                <p>
+                    Från år 2025 och framåt kan du utforska Sveriges demografiska framtid genom att växla mellan SCB:s officiella framskrivning och en egen kohort-komponentmodell med frysta 2024-rater och justerbara reglage.
+                </p>
+
+                <div class="method-compare-grid">
+                    <div class="method-compare-col">
+                        <h5>🏛️ SCB:s 7 officiella scenarier</h5>
+                        <ul>
+                            <li><strong>Huvudalternativ (HU):</strong> SCB:s officiella grundprognos antar att dagens låga fruktsamhet är en tillfällig svacka och återhämtar sig mot 1,66 barn/kvinna, att medellivslängden når 87,7 år och att nettoinvandringen är ca +30 000/år. Befolkningen växer till 11,84 miljoner 2070.</li>
+                            <li><strong>Envariabelscenarier:</strong> Sex alternativa kalkyler (LF/HF, LI/HI, LD/HD) som isolerar effekten av en förändrad variabel i taget. SCB kombinerar dem inte med varandra.</li>
+                        </ul>
+                    </div>
+                    <div class="method-compare-col">
+                        <h5>⚙️ Egen modell (Dagens trend &amp; reglage)</h5>
+                        <ul>
+                            <li><strong>Kohort-komponent i realtid:</strong> Modellen åldrar befolkningen år för år med 1-årsåldersklasser utifrån observerade basdata för år 2024 (fruktsamhet 1,43, mortalitet samt in- och utvandring).</li>
+                            <li><strong>Dynamisk utvandringsrisk:</strong> Utvandring beräknas som en åldersspecifik risk per åldersgrupp, vilket innebär att utvandringen skalas realistiskt när befolkningens åldersstruktur förändras.</li>
+                            <li><strong>Dagens trend:</strong> Fryser 2024 års nivåer. Ger en befolkningstopp kring år 2048 och 10,72 miljoner invånare år 2070 med kontinuerligt födelseunderskott.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="method-limitations-box">
+                    <div class="limitations-title">⚠️ Viktiga begränsningar att känna till (Metoddeklaration)</div>
+                    <ol>
+                        <li><strong>Egen modell är ett "vad-händer-om"-scenario:</strong> Modellen antar frysta beteenden och förutsäger inte framtida politiska reformer, medicinska framsteg eller förändrade flyktingströmmar. Den visar vad som mekaniskt sker om dagens nivåer består.</li>
+                        <li><strong>SCB:s inbyggda optimism:</strong> SCB:s modeller tenderar historiskt att anta återgång mot medelvärden ("mean reversion"), vilket gör att fruktsamheten alltid skrivs upp på sikt trots att den fallit stadigt i över ett decennium.</li>
+                        <li><strong>Kommunal begränsning (SCB:s metodgap):</strong> SCB publicerar <em>inte</em> alternativa scenarier nedbrutna per kommun. SCB:s kommunala framskrivningar (TAB6008) bygger enbart på huvudalternativet (HU). Kommun- och individprofilerna i denna visualiserare följer därför den nationella åldersfördelningen i valt scenario, men den geografiska strukturen baseras på SCB:s grundfördelning.</li>
+                        <li><strong>Demografisk försörjningskvot:</strong> Beräknas enligt SCB:s officiella formel: <code>(personer 0–19 år + personer 65+ år) / personer 20–64 år × 100</code>. Visar hur många unga och äldre 100 personer i arbetsför ålder (20–64 år) behöver försörja.</li>
+                    </ol>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -385,8 +512,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="population_engine.js?v=28"></script>
-    <script src="viewport_canvas.js?v=28"></script>
-    <script src="app.js?v=28"></script>
+    <script src="population_engine.js?v=29"></script>
+    <script src="viewport_canvas.js?v=29"></script>
+    <script src="app.js?v=29"></script>
 </body>
 </html>
