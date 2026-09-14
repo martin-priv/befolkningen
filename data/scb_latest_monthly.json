@@ -3,7 +3,7 @@
   "tableName": "Folkmängden per månad efter region, ålder och kön",
   "source": "Statistiska centralbyrån (SCB) PxWebApi v2",
   "scbUpdated": "2026-09-07T06:00:00Z",
-  "fetchedAt": "2026-09-07T11:22:23.276399+00:00",
+  "fetchedAt": "2026-09-14T11:31:54.495117+00:00",
   "latestMonth": {
     "code": "2026M07",
     "year": 2026,
@@ -20,8 +20,8 @@
     "personsPerDay": 81.66666666666667
   },
   "estimatedAtFetch": {
-    "timestamp": "2026-09-07T11:22:23.276399+00:00",
-    "population": 10616591
+    "timestamp": "2026-09-14T11:31:54.495117+00:00",
+    "population": 10617164
   },
   "monthlySeries": {
     "2025M01": 10588020,
