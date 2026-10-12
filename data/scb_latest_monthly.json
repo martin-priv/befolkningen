@@ -2,26 +2,26 @@
   "tableId": "TAB6471",
   "tableName": "Folkmängden per månad efter region, ålder och kön",
   "source": "Statistiska centralbyrån (SCB) PxWebApi v2",
-  "scbUpdated": "2026-09-07T06:00:00Z",
-  "fetchedAt": "2026-10-05T13:22:10.364984+00:00",
+  "scbUpdated": "2026-10-07T06:00:00Z",
+  "fetchedAt": "2026-10-12T14:11:40.767328+00:00",
   "latestMonth": {
-    "code": "2026M07",
+    "code": "2026M08",
     "year": 2026,
-    "month": 7,
-    "name": "juli 2026",
-    "endDate": "2026-07-31T23:59:59Z",
-    "population": 10613531
+    "month": 8,
+    "name": "augusti 2026",
+    "endDate": "2026-08-31T23:59:59Z",
+    "population": 10621103
   },
   "projectionTarget": {
     "year": 2026,
     "endDate": "2026-12-31T23:59:59Z",
     "population": 10626026,
-    "growthPerSecond": 0.000945216049382716,
-    "personsPerDay": 81.66666666666667
+    "growthPerSecond": 0.00046704234972677595,
+    "personsPerDay": 40.35245901639344
   },
   "estimatedAtFetch": {
-    "timestamp": "2026-10-05T13:22:10.364984+00:00",
-    "population": 10618885
+    "timestamp": "2026-10-12T14:11:40.767328+00:00",
+    "population": 10622781
   },
   "monthlySeries": {
     "2025M01": 10588020,
@@ -42,6 +42,7 @@
     "2026M04": 10605725,
     "2026M05": 10608128,
     "2026M06": 10610483,
-    "2026M07": 10613531
+    "2026M07": 10613531,
+    "2026M08": 10621103
   }
 }
